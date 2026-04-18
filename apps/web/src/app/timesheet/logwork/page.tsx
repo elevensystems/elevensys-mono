@@ -1,0 +1,521 @@
+'use client';
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { useRouter } from 'next/navigation';
+
+import { Clock, Plus, Send } from 'lucide-react';
+import { toast } from 'sonner';
+
+import { ActionButton } from '@/components/action-button';
+import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
+import MainLayout from '@/components/layouts/main-layout';
+import { ToolPageHeader } from '@/components/layouts/tool-page-header';
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@workspace/ui/components/card';
+import { Spinner } from '@workspace/ui/components/spinner';
+import { useLogWorkSubmission } from '@/hooks/use-log-work-submission';
+import { useMissingWorklogs } from '@/hooks/use-missing-worklogs';
+import { useTimesheetSettings } from '@/hooks/use-timesheet-settings';
+import {
+  STANDARD_HOURS,
+  formatDateForApi,
+  formatHours,
+  generateEntryId,
+  isValidIssueKey,
+} from '@/lib/timesheet';
+import type {
+  LogWorkResult,
+  RowErrors,
+  ValidationErrors,
+  WorkEntry,
+} from '@/types/timesheet';
+
+import { ConfirmDialog } from './_components/confirm-dialog';
+import { MissingWorklogsCard } from './_components/missing-worklogs-card';
+import { SubmissionModal } from './_components/submission-modal';
+import { WorkEntryRow } from './_components/work-entry-row';
+
+const SAVED_ENTRIES_KEY = 'timesheet_saved_entries';
+
+const createDefaultEntry = (): WorkEntry => ({
+  id: generateEntryId(),
+  issueKey: '',
+  typeOfWork: 'Create',
+  description: '',
+  hours: 1,
+});
+
+function getSavedEntriesKey(projectId?: string): string {
+  return projectId
+    ? `${SAVED_ENTRIES_KEY}::project::${projectId}`
+    : SAVED_ENTRIES_KEY;
+}
+
+function loadSavedEntries(projectId?: string): WorkEntry[] {
+  if (typeof window === 'undefined') return [createDefaultEntry()];
+  try {
+    const saved = localStorage.getItem(getSavedEntriesKey(projectId));
+    if (saved) {
+      const parsed = JSON.parse(saved) as Omit<WorkEntry, 'id'>[];
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map(entry => ({
+          ...entry,
+          id: generateEntryId(),
+        }));
+      }
+    }
+  } catch {
+    // Ignore corrupted data
+  }
+  return [createDefaultEntry()];
+}
+
+function saveEntriesToStorage(entries: WorkEntry[], projectId?: string): void {
+  try {
+    const toSave = entries
+      .filter(e => e.issueKey.trim())
+      .map(({ id: _id, ...rest }) => rest);
+    if (toSave.length > 0) {
+      localStorage.setItem(
+        getSavedEntriesKey(projectId),
+        JSON.stringify(toSave)
+      );
+    }
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+/** Convert a Date to DD/Mon/YY API format */
+function dateToApiFormat(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return formatDateForApi(`${y}-${m}-${d}`);
+}
+
+export default function LogWorkPage() {
+  const router = useRouter();
+  const { settings, isConfigured, isLoaded } = useTimesheetSettings();
+
+  const {
+    projects,
+    selectedProjectId,
+    setSelectedProjectId,
+    selectedProject,
+    issues,
+    issuesByKey,
+    isLoadingProjects,
+    isLoadingIssues,
+    warningFromDate,
+    setWarningFromDate,
+    warningToDate,
+    setWarningToDate,
+    isSearchingWarnings,
+    handleSearchWarnings,
+    fetchIssueTypeOfWork,
+  } = useMissingWorklogs({ settings, isConfigured });
+
+  const {
+    isSubmitting,
+    isCancelled,
+    results,
+    requestStatuses,
+    submitEntries,
+    retryFailed,
+    cancelSubmission,
+    resetResults,
+  } = useLogWorkSubmission(settings);
+
+  const [entries, setEntries] = useState<WorkEntry[]>([createDefaultEntry()]);
+  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
+  const [includeWeekends, setIncludeWeekends] = useState(false);
+  const [errors, setErrors] = useState<ValidationErrors>({
+    global: {},
+    rows: new Map(),
+  });
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [submissionModalOpen, setSubmissionModalOpen] = useState(false);
+  const pendingResultsRef = useRef<LogWorkResult[]>([]);
+
+  // Derive parsedDates (DD/Mon/YY strings) from selectedDates
+  const parsedDates = useMemo(
+    () =>
+      [...selectedDates]
+        .sort((a, b) => a.getTime() - b.getTime())
+        .map(dateToApiFormat),
+    [selectedDates]
+  );
+
+  const clearAllDates = useCallback(() => setSelectedDates([]), []);
+
+  const clearRowError = useCallback(
+    (entryId: string, field: keyof RowErrors) => {
+      setErrors(prev => {
+        const rowErrors = prev.rows.get(entryId);
+        if (!rowErrors) return prev;
+        const updated = { ...rowErrors };
+        delete updated[field];
+        const nextRows = new Map(prev.rows);
+        if (updated.issueKey || updated.description) {
+          nextRows.set(entryId, updated);
+        } else {
+          nextRows.delete(entryId);
+        }
+        return { ...prev, rows: nextRows };
+      });
+    },
+    []
+  );
+
+  // Warn before navigating away if there are unsaved entries
+  useEffect(() => {
+    const hasEntries = entries.some(e => e.issueKey.trim());
+    if (!hasEntries) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [entries]);
+
+  const handleProjectChange = useCallback(
+    (projectId: string) => {
+      setSelectedProjectId(projectId);
+      const saved = loadSavedEntries(projectId);
+      if (saved.length > 0 && saved[0].issueKey) {
+        setEntries(saved);
+      } else {
+        setEntries([createDefaultEntry()]);
+      }
+    },
+    [setSelectedProjectId]
+  );
+
+  const validEntryCount = useMemo(
+    () => entries.filter(e => e.issueKey.trim()).length,
+    [entries]
+  );
+
+  const totalHours = useMemo(
+    () => entries.reduce((sum, entry) => sum + (entry.hours || 0), 0),
+    [entries]
+  );
+
+  const addEntry = useCallback(() => {
+    setEntries(prev => [...prev, createDefaultEntry()]);
+  }, []);
+
+  const removeEntry = useCallback((id: string) => {
+    setEntries(prev =>
+      prev.length > 1 ? prev.filter(e => e.id !== id) : prev
+    );
+  }, []);
+
+  const updateEntry = useCallback(
+    (id: string, field: keyof WorkEntry, value: string | number) => {
+      setEntries(prev =>
+        prev.map(entry =>
+          entry.id === id ? { ...entry, [field]: value } : entry
+        )
+      );
+    },
+    []
+  );
+
+  const validateEntries = useCallback((): ValidationErrors => {
+    const result: ValidationErrors = { global: {}, rows: new Map() };
+
+    if (!isConfigured) {
+      result.global.config = 'Please configure your Jira settings first.';
+    }
+
+    if (parsedDates.length === 0) {
+      result.global.dates = 'Please select at least one date.';
+    }
+
+    const validEntries = entries.filter(e => e.issueKey.trim());
+    if (validEntries.length === 0) {
+      result.global.entries =
+        'Please add at least one work entry with an issue key.';
+    }
+
+    for (const entry of validEntries) {
+      const rowErrors: RowErrors = {};
+      if (!isValidIssueKey(entry.issueKey)) {
+        rowErrors.issueKey = 'Expected format: PROJECT-123';
+      }
+      if (!entry.description.trim()) {
+        rowErrors.description = 'Description is required';
+      }
+      if (rowErrors.issueKey || rowErrors.description) {
+        result.rows.set(entry.id, rowErrors);
+      }
+    }
+
+    return result;
+  }, [isConfigured, parsedDates, entries]);
+
+  const hasErrors = useCallback(
+    (v: ValidationErrors) =>
+      Object.values(v.global).some(Boolean) || v.rows.size > 0,
+    []
+  );
+
+  const handleSubmitClick = useCallback(() => {
+    const validationResult = validateEntries();
+    setErrors(validationResult);
+    if (hasErrors(validationResult)) return;
+    setShowConfirmDialog(true);
+  }, [validateEntries, hasErrors]);
+
+  const processResults = useCallback(
+    (logResults: LogWorkResult[]) => {
+      const successCount = logResults.filter(r => r.success).length;
+      const errorCount = logResults.filter(r => !r.success).length;
+
+      if (errorCount === 0) {
+        toast.success(`All ${successCount} entries logged successfully!`, {
+          action: {
+            label: 'View Worklogs',
+            onClick: () => router.push('/timesheet/my-worklogs'),
+          },
+          duration: 10000,
+        });
+      } else if (successCount > 0) {
+        toast.warning(`${successCount} succeeded, ${errorCount} failed`);
+        const failedIssueKeys = new Set(
+          logResults.filter(r => !r.success).map(r => r.entry.issueKey)
+        );
+        setEntries(prev => prev.filter(e => failedIssueKeys.has(e.issueKey)));
+      } else {
+        toast.error(`All ${errorCount} entries failed`);
+      }
+    },
+    [router]
+  );
+
+  const handleLogWork = useCallback(async () => {
+    setShowConfirmDialog(false);
+    setSubmissionModalOpen(true);
+
+    const validEntries = entries.filter(e => e.issueKey.trim());
+    saveEntriesToStorage(validEntries, selectedProjectId);
+
+    const logResults = await submitEntries({
+      entries,
+      dates: parsedDates,
+    });
+
+    // Results are processed when modal closes
+    pendingResultsRef.current = logResults;
+  }, [entries, parsedDates, selectedProjectId, submitEntries]);
+
+  const handleRetryFailed = useCallback(async () => {
+    const failedResults = results.filter(
+      r => !r.success && r.error !== 'Cancelled'
+    );
+    if (failedResults.length === 0) return;
+
+    const logResults = await retryFailed({
+      failedResults,
+    });
+
+    pendingResultsRef.current = logResults;
+  }, [results, retryFailed]);
+
+  const handleSubmissionModalClose = useCallback(() => {
+    setSubmissionModalOpen(false);
+    const logResults = pendingResultsRef.current;
+    pendingResultsRef.current = [];
+    if (logResults.length > 0) {
+      processResults(logResults);
+    }
+    resetResults();
+  }, [processResults, resetResults]);
+
+  if (!isLoaded) {
+    return (
+      <MainLayout>
+        <section className="container mx-auto px-4 py-12">
+          <div className="flex items-center justify-center h-40">
+            <Spinner className="size-6 text-muted-foreground" />
+          </div>
+        </section>
+      </MainLayout>
+    );
+  }
+
+  const hoursColor =
+    totalHours === STANDARD_HOURS
+      ? 'text-green-600 dark:text-green-400'
+      : totalHours > STANDARD_HOURS
+        ? 'text-orange-600 dark:text-orange-400'
+        : 'text-foreground';
+
+  return (
+    <MainLayout>
+      <section className="container mx-auto px-4 py-12">
+        <div className="max-w-full mx-auto space-y-8">
+          <ToolPageHeader
+            title="Log Work"
+            description="Log your work entries to Jira timesheet. Select dates, add work entries, and submit them in bulk."
+          />
+
+          <NotConfiguredAlert isConfigured={isConfigured} />
+
+          <MissingWorklogsCard
+            projects={projects}
+            selectedProjectId={selectedProjectId}
+            onProjectChange={handleProjectChange}
+            isLoadingProjects={isLoadingProjects}
+            warningFromDate={warningFromDate}
+            warningToDate={warningToDate}
+            onWarningFromDateChange={setWarningFromDate}
+            onWarningToDateChange={setWarningToDate}
+            isSearchingWarnings={isSearchingWarnings}
+            onSearchWarnings={handleSearchWarnings}
+            selectedDates={selectedDates}
+            onSelectedDatesChange={dates => {
+              setSelectedDates(dates);
+              setErrors(prev =>
+                prev.global.dates
+                  ? { ...prev, global: { ...prev.global, dates: undefined } }
+                  : prev
+              );
+            }}
+            parsedDates={parsedDates}
+            onClearAllDates={clearAllDates}
+            includeWeekends={includeWeekends}
+            onIncludeWeekendsChange={setIncludeWeekends}
+            dateError={errors.global.dates}
+          />
+
+          {/* Work Entries Card */}
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col gap-1">
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Work Entries
+                </CardTitle>
+                <CardDescription>
+                  Add work entries for each Jira issue. Every entry will be
+                  logged for all selected dates.
+                </CardDescription>
+              </div>
+              <CardAction>
+                <div className="flex flex-col items-end gap-0.5 text-sm">
+                  <span className="text-muted-foreground text-xs">
+                    Daily target
+                  </span>
+                  <span className={`font-semibold ${hoursColor}`}>
+                    {formatHours(totalHours)}h / {formatHours(STANDARD_HOURS)}h
+                  </span>
+                </div>
+              </CardAction>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Entries Table */}
+              <div className="flex mb-3 items-center gap-2 text-sm font-medium text-muted-foreground">
+                <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                  3
+                </span>
+                Add work entries
+              </div>
+              <div className="overflow-hidden rounded-lg border">
+                {/* Grid header */}
+                <div className="grid grid-cols-[230px_1fr_150px_140px_50px] gap-2 bg-muted/50 px-3 py-2 text-sm font-semibold text-muted-foreground">
+                  <span>Key</span>
+                  <span>Description</span>
+                  <span>Type of Work</span>
+                  <span>Hours</span>
+                  <span />
+                </div>
+                {/* Entry rows */}
+                {entries.map(entry => (
+                  <WorkEntryRow
+                    key={entry.id}
+                    entry={entry}
+                    issues={issues}
+                    issuesByKey={issuesByKey}
+                    isLoadingIssues={isLoadingIssues}
+                    onUpdate={updateEntry}
+                    onRemove={removeEntry}
+                    onFetchTypeOfWork={fetchIssueTypeOfWork}
+                    onClearError={clearRowError}
+                    errors={errors.rows.get(entry.id)}
+                    isLastRow={entries.length === 1}
+                  />
+                ))}
+              </div>
+
+              {/* Global entries error */}
+              {errors.global.entries && (
+                <p className="text-sm text-destructive" role="alert">
+                  {errors.global.entries}
+                </p>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-3 border-t pt-6">
+                <ActionButton
+                  variant="outline"
+                  onClick={addEntry}
+                  disabled={isSubmitting || !isConfigured}
+                  className="w-full sm:w-auto"
+                  leftIcon={<Plus />}
+                >
+                  Add Entry
+                </ActionButton>
+                <ActionButton
+                  onClick={handleSubmitClick}
+                  disabled={isSubmitting || !isConfigured}
+                  className="w-full sm:w-auto"
+                  leftIcon={<Send />}
+                  isLoading={isSubmitting}
+                  loadingText="Submitting..."
+                  title={
+                    parsedDates.length > 0 && validEntryCount > 0
+                      ? `Will submit ${validEntryCount * parsedDates.length} worklogs (${validEntryCount} entr${validEntryCount !== 1 ? 'ies' : 'y'} × ${parsedDates.length} date${parsedDates.length !== 1 ? 's' : ''})`
+                      : undefined
+                  }
+                >
+                  Submit Work Logs
+                </ActionButton>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <SubmissionModal
+          open={submissionModalOpen}
+          onClose={handleSubmissionModalClose}
+          isSubmitting={isSubmitting}
+          isCancelled={isCancelled}
+          requestStatuses={requestStatuses}
+          results={results}
+          onCancel={cancelSubmission}
+          onRetryFailed={handleRetryFailed}
+        />
+
+        <ConfirmDialog
+          open={showConfirmDialog}
+          onOpenChange={setShowConfirmDialog}
+          onConfirm={handleLogWork}
+          entries={entries}
+          parsedDates={parsedDates}
+          selectedProject={selectedProject ?? undefined}
+          totalHours={totalHours}
+        />
+      </section>
+    </MainLayout>
+  );
+}

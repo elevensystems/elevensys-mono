@@ -1,0 +1,305 @@
+'use client';
+
+import { useState } from 'react';
+
+import { CalendarDays, CalendarPlus, Search, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+
+import { ActionButton } from '@/components/action-button';
+import { Badge } from '@workspace/ui/components/badge';
+import { Calendar } from '@workspace/ui/components/calendar';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@workspace/ui/components/card';
+import { Checkbox } from '@workspace/ui/components/checkbox';
+import { DateRangePicker } from '@workspace/ui/components/date-range-picker';
+import { Label } from '@workspace/ui/components/label';
+import { NativeSelect } from '@workspace/ui/components/native-select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@workspace/ui/components/popover';
+import { parseApiDate } from '@/lib/timesheet';
+import type { JiraProject } from '@/types/timesheet';
+
+import { DateChipList } from './date-chip-list';
+
+const isWeekend = (date: Date) => {
+  const day = date.getDay();
+  return day === 0 || day === 6;
+};
+
+function toDateKey(date: Date): string {
+  return date.toISOString().split('T')[0];
+}
+
+interface MissingWorklogsCardProps {
+  projects: JiraProject[];
+  selectedProjectId: string;
+  onProjectChange: (id: string) => void;
+  isLoadingProjects: boolean;
+  warningFromDate: string;
+  warningToDate: string;
+  onWarningFromDateChange: (date: string) => void;
+  onWarningToDateChange: (date: string) => void;
+  isSearchingWarnings: boolean;
+  onSearchWarnings: () => Promise<{ dates: string; count: number } | null>;
+  selectedDates: Date[];
+  onSelectedDatesChange: (dates: Date[]) => void;
+  parsedDates: string[];
+  onClearAllDates: () => void;
+  includeWeekends: boolean;
+  onIncludeWeekendsChange: (value: boolean) => void;
+  dateError?: string;
+}
+
+export function MissingWorklogsCard({
+  projects,
+  selectedProjectId,
+  onProjectChange,
+  isLoadingProjects,
+  warningFromDate,
+  warningToDate,
+  onWarningFromDateChange,
+  onWarningToDateChange,
+  isSearchingWarnings,
+  onSearchWarnings,
+  selectedDates,
+  onSelectedDatesChange,
+  parsedDates,
+  onClearAllDates,
+  includeWeekends,
+  onIncludeWeekendsChange,
+  dateError,
+}: MissingWorklogsCardProps) {
+  const [manualDateKeys, setManualDateKeys] = useState<Set<string>>(new Set());
+
+  const handleRemoveDate = (date: Date) => {
+    onSelectedDatesChange(
+      selectedDates.filter(d => d.getTime() !== date.getTime())
+    );
+    setManualDateKeys(prev => {
+      const next = new Set(prev);
+      next.delete(toDateKey(date));
+      return next;
+    });
+  };
+
+  const handleClearAll = () => {
+    onClearAllDates();
+    setManualDateKeys(new Set());
+  };
+
+  const handleCalendarSelect = (newDates: Date[] | undefined) => {
+    const next = newDates ?? [];
+    const prevKeys = new Set(selectedDates.map(toDateKey));
+    const addedKeys = next
+      .filter(d => !prevKeys.has(toDateKey(d)))
+      .map(toDateKey);
+    const removedKeys = selectedDates
+      .filter(d => !next.some(n => n.getTime() === d.getTime()))
+      .map(toDateKey);
+    setManualDateKeys(prev => {
+      const updated = new Set(prev);
+      addedKeys.forEach(k => updated.add(k));
+      removedKeys.forEach(k => updated.delete(k));
+      return updated;
+    });
+    onSelectedDatesChange(next);
+  };
+
+  const handleSearchClick = async () => {
+    const result = await onSearchWarnings();
+    if (result) {
+      const dates = result.dates
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean)
+        .map(parseApiDate)
+        .filter((d): d is Date => {
+          if (d === null) return false;
+          if (!includeWeekends && isWeekend(d)) return false;
+          return true;
+        });
+      onSelectedDatesChange(dates);
+      setManualDateKeys(new Set());
+      toast.success(`Found missing dates for ${result.count} user(s)`);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex flex-col gap-1">
+          <CardTitle className="flex items-center gap-2">
+            <CalendarDays className="h-5 w-5 text-primary" />
+            Find Missing Worklogs
+          </CardTitle>
+          <CardDescription>
+            Search for dates with missing worklogs in a project, then select
+            dates on the calendar below
+          </CardDescription>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Step 1 — Search Controls */}
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+            1
+          </span>
+          Select project &amp; date range
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+          <div className="space-y-2">
+            <Label htmlFor="project-select">
+              Project <span className="text-destructive">*</span>
+            </Label>
+            <NativeSelect
+              id="project-select"
+              value={selectedProjectId}
+              onChange={e => onProjectChange(e.target.value)}
+              disabled={isLoadingProjects}
+            >
+              <option value="">
+                {isLoadingProjects ? 'Loading projects...' : 'Select a project'}
+              </option>
+              {projects.map(project => (
+                <option key={project.id} value={project.id}>
+                  {project.key} — {project.name}
+                </option>
+              ))}
+            </NativeSelect>
+          </div>
+          <div className="space-y-2 sm:col-span-2">
+            <Label>Date Range</Label>
+            <div className="flex flex-col sm:flex-row items-end gap-3">
+              <DateRangePicker
+                id="warning-date-range"
+                from={warningFromDate}
+                to={warningToDate}
+                onRangeChange={(from, to) => {
+                  onWarningFromDateChange(from);
+                  onWarningToDateChange(to);
+                }}
+                className="flex-1 w-full"
+              />
+              <ActionButton
+                onClick={handleSearchClick}
+                disabled={
+                  !selectedProjectId || !warningFromDate || !warningToDate
+                }
+                className="w-full sm:w-auto"
+                leftIcon={<Search />}
+                isLoading={isSearchingWarnings}
+                loadingText="Searching..."
+              >
+                Find Dates
+              </ActionButton>
+            </div>
+          </div>
+        </div>
+
+        {/* Step 2 — Date Selection */}
+        <div className="space-y-3">
+          {/* Header row */}
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                2
+              </span>
+              Select dates
+              {parsedDates.length > 0 && (
+                <Badge
+                  variant="secondary"
+                  className="ml-1 bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-300 border-green-200 dark:border-green-800"
+                >
+                  {parsedDates.length} date
+                  {parsedDates.length !== 1 ? 's' : ''}
+                </Badge>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 ml-auto">
+              {/* Clear all */}
+              <ActionButton
+                variant="ghost"
+                size="sm"
+                onClick={handleClearAll}
+                className={`h-7 text-xs text-destructive hover:bg-destructive hover:text-white ${parsedDates.length > 0 ? 'visible' : 'invisible'}`}
+                leftIcon={<Trash2 />}
+              >
+                Clear all
+              </ActionButton>
+
+              {/* Add dates manually — Popover trigger */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <ActionButton
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    leftIcon={<CalendarPlus />}
+                  >
+                    Add manually
+                  </ActionButton>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-auto p-0"
+                  align="end"
+                  sideOffset={8}
+                >
+                  <div className="p-3 border-b">
+                    <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+                      <Checkbox
+                        checked={includeWeekends}
+                        onCheckedChange={checked =>
+                          onIncludeWeekendsChange(checked === true)
+                        }
+                      />
+                      Include weekends
+                    </label>
+                  </div>
+                  <Calendar
+                    mode="multiple"
+                    selected={selectedDates}
+                    onSelect={handleCalendarSelect}
+                    disabled={includeWeekends ? undefined : isWeekend}
+                    numberOfMonths={3}
+                    showOutsideDays={false}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          {/* Chip list — bordered box only when dates exist */}
+          {selectedDates.length > 0 ? (
+            <div className="rounded-md border border-border bg-muted/30 p-2">
+              <DateChipList
+                dates={selectedDates}
+                manualDateKeys={manualDateKeys}
+                onRemove={handleRemoveDate}
+              />
+            </div>
+          ) : (
+            <span className="text-xs text-muted-foreground italic">
+              No dates selected. Use &quot;Find Dates&quot; or add manually
+              below.
+            </span>
+          )}
+          {dateError && (
+            <p className="text-sm text-destructive" role="alert">
+              {dateError}
+            </p>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

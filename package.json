@@ -1,0 +1,29 @@
+{
+  "name": "elevensys-mono",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=20.9.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "test:coverage": "turbo run test:coverage",
+    "type-check": "turbo run type-check",
+    "format": "prettier --write \"**/*.{ts,tsx,md,html,css,json}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,md,html,css,json}\"",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.4.1",
+    "@commitlint/config-conventional": "^20.4.1",
+    "@trivago/prettier-plugin-sort-imports": "^5.2.2",
+    "husky": "^9.1.7",
+    "prettier": "^3.6.2",
+    "turbo": "^2.0.0"
+  }
+}

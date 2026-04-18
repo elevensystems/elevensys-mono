@@ -1,0 +1,670 @@
+# CLAUDE.md - AI Assistant Guide for Elevensys Mono
+
+This document provides comprehensive guidance for AI assistants working with the Elevensys Mono
+codebase.
+
+## Project Overview
+
+**Elevensys Mono** is a Turborepo monorepo containing multiple Next.js applications and shared
+packages. It provides AI-powered productivity tools and an admin dashboard. Built with Next.js 16
+(App Router), React 19, and TypeScript 5, using pnpm workspaces for dependency management.
+
+### Monorepo Structure
+
+| Workspace        | Package Name       | Description                                  | Port |
+| ---------------- | ------------------ | -------------------------------------------- | ---- |
+| `apps/web`       | `elevensys-web`    | Main web app with tools, auth, and timesheet | 3000 |
+| `apps/admin`     | `elevensys-admin`  | Admin dashboard (newly scaffolded)           | 3002 |
+| `packages/ui`    | `@workspace/ui`    | Shared UI components (shadcn/ui + Radix)     | —    |
+
+### Quick Start
+
+```bash
+# Install dependencies (uses pnpm)
+pnpm install
+
+# Start ALL apps in parallel via Turbo
+pnpm dev
+
+# Start a specific app
+pnpm --filter elevensys-web dev
+pnpm --filter elevensys-admin dev
+
+# Build all apps
+pnpm build
+
+# Run linting across all apps
+pnpm lint
+
+# Format code (root-level Prettier)
+pnpm format
+
+# Run tests (in a specific app)
+pnpm --filter elevensys-web test
+pnpm --filter elevensys-web test:coverage
+```
+
+## Tech Stack
+
+| Category        | Technology                              |
+| --------------- | --------------------------------------- |
+| Monorepo        | Turborepo + pnpm workspaces             |
+| Framework       | Next.js 16 (App Router, Turbopack)      |
+| UI Library      | React 19                                |
+| Language        | TypeScript 5 (strict mode)              |
+| Styling         | Tailwind CSS v4                         |
+| Components      | shadcn/ui + Radix UI primitives         |
+| Icons           | lucide-react                            |
+| Editor          | Monaco Editor                           |
+| Auth            | AWS Cognito OAuth2 (PKCE)               |
+| Theming         | next-themes                             |
+| Notifications   | sonner                                  |
+| Forms           | @tanstack/react-form                    |
+| Package Manager | pnpm 10                                 |
+
+## Directory Structure
+
+```
+elevensys-mono/
+├── apps/
+│   ├── web/                        # Main web application (elevensys-web)
+│   │   ├── src/
+│   │   │   ├── app/                # Next.js App Router
+│   │   │   │   ├── api/            # API route handlers
+│   │   │   │   │   ├── auth/       # OAuth2 endpoints (login, callback, logout, session, signup)
+│   │   │   │   │   ├── beatly/     # Song recommender API
+│   │   │   │   │   ├── passly/     # Password generator API
+│   │   │   │   │   ├── translately/# Translation API (Pro-only)
+│   │   │   │   │   ├── urlify/     # URL shortener create endpoint
+│   │   │   │   │   ├── timesheet/  # Timesheet feature (projects, issues, worklogs, logwork, auth)
+│   │   │   │   │   ├── templates/
+│   │   │   │   │   └── feedback/
+│   │   │   │   ├── tools/          # Tool pages (11 tools)
+│   │   │   │   │   ├── beatly/         # Song recommender
+│   │   │   │   │   ├── caseify/        # Case converter
+│   │   │   │   │   ├── json-diffinity/ # JSON diff tool
+│   │   │   │   │   ├── json-lens/      # JSON viewer
+│   │   │   │   │   ├── json-objectify/ # JSON object converter
+│   │   │   │   │   ├── npm-converter/
+│   │   │   │   │   ├── passly/         # Password generator
+│   │   │   │   │   ├── pr-link-shrinker/
+│   │   │   │   │   ├── prompt-templates/
+│   │   │   │   │   ├── translately/    # Translation tool
+│   │   │   │   │   └── urlify/         # URL shortener
+│   │   │   │   ├── timesheet/      # Timesheet feature pages
+│   │   │   │   │   ├── config/     # Timesheet settings
+│   │   │   │   │   ├── logwork/    # Log work page
+│   │   │   │   │   ├── project-worklogs/
+│   │   │   │   │   └── worklogs/   # My worklogs page
+│   │   │   │   ├── login/          # Login page
+│   │   │   │   ├── signup/         # Sign up page
+│   │   │   │   ├── forgot-password/
+│   │   │   │   ├── profile/        # User profile page
+│   │   │   │   ├── layout.tsx      # Root layout with providers
+│   │   │   │   └── page.tsx        # Homepage
+│   │   │   ├── components/
+│   │   │   │   ├── layouts/        # Layout components (main-layout, app-sidebar, nav-*, etc.)
+│   │   │   │   ├── features/       # Feature-specific components (auth, autolog, timesheet)
+│   │   │   │   ├── action-button.tsx
+│   │   │   │   ├── delete-confirm-dialog.tsx
+│   │   │   │   ├── header.tsx
+│   │   │   │   └── theme-provider.tsx
+│   │   │   ├── contexts/
+│   │   │   │   ├── auth-context.tsx    # Auth state via React Context
+│   │   │   │   ├── domain-context.tsx  # Multi-tenant domain config
+│   │   │   │   └── flags-context.tsx   # Feature flags
+│   │   │   ├── hooks/              # 11 custom hooks (timesheet, worklogs, autolog, etc.)
+│   │   │   ├── lib/                # Utilities, configs, schemas
+│   │   │   ├── types/              # Shared type definitions
+│   │   │   └── styles/
+│   │   │       └── globals.css
+│   │   ├── public/
+│   │   │   ├── templates/          # Markdown prompt templates
+│   │   │   └── assets/             # SVG icons, favicon
+│   │   ├── jest.config.ts
+│   │   ├── next.config.ts
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   │
+│   └── admin/                      # Admin dashboard (elevensys-admin)
+│       ├── src/
+│       │   ├── app/
+│       │   │   ├── layout.tsx      # Root layout (Inter font, ThemeProvider)
+│       │   │   └── page.tsx        # Admin dashboard page
+│       │   ├── components/
+│       │   │   └── theme-provider.tsx
+│       │   └── styles/
+│       │       └── globals.css
+│       ├── next.config.ts
+│       ├── package.json
+│       └── tsconfig.json
+│
+├── packages/
+│   └── ui/                         # Shared UI package (@workspace/ui)
+│       ├── src/
+│       │   ├── components/         # 42 shadcn/ui components
+│       │   ├── hooks/              # Shared hooks (use-mobile.ts)
+│       │   ├── lib/                # Shared utilities (cn(), hasRole())
+│       │   └── styles/
+│       │       └── globals.css     # Shared CSS variables, theme tokens
+│       ├── components.json         # shadcn/ui config
+│       ├── package.json
+│       └── tsconfig.json
+│
+├── turbo.json                      # Turborepo pipeline config
+├── pnpm-workspace.yaml             # Workspace: apps/*, packages/*
+├── package.json                    # Root scripts (dev, build, lint, format)
+├── .prettierrc.json                # Shared Prettier config
+├── commitlint.config.ts
+└── .github/                        # Dev guidelines (repo, copilot, nextjs instructions)
+```
+
+## Workspace Architecture
+
+### Package Dependencies
+
+```
+apps/web     ──depends on──▶  @workspace/ui
+apps/admin   ──depends on──▶  @workspace/ui
+```
+
+Both apps declare `"@workspace/ui": "workspace:*"` in their `package.json` and configure
+`transpilePackages: ['@workspace/ui']` in `next.config.ts`.
+
+### Shared UI Package (`@workspace/ui`)
+
+The `packages/ui` package exports via the `exports` field in `package.json`:
+
+```json
+{
+  "exports": {
+    "./components/*": "./src/components/*.tsx",
+    "./hooks/*": "./src/hooks/*.ts",
+    "./lib/*": "./src/lib/*.ts",
+    "./globals.css": "./src/styles/globals.css"
+  }
+}
+```
+
+**Import patterns from apps:**
+
+```tsx
+// Components
+import { Button } from '@workspace/ui/components/button';
+import { Sidebar } from '@workspace/ui/components/sidebar';
+import { Toaster } from '@workspace/ui/components/sonner';
+
+// Hooks
+import { useIsMobile } from '@workspace/ui/hooks/use-mobile';
+
+// Utilities
+import { cn, hasRole } from '@workspace/ui/lib/utils';
+
+// Styles (in app's globals.css or layout)
+import '@workspace/ui/globals.css';
+```
+
+### Adding shadcn/ui Components
+
+```bash
+# Add to the shared UI package (preferred)
+cd packages/ui
+pnpm dlx shadcn@latest add [component-name]
+```
+
+Components are installed to `packages/ui/src/components/`.
+
+## Code Conventions
+
+### Naming
+
+| Type                | Convention       | Example                                  |
+| ------------------- | ---------------- | ---------------------------------------- |
+| Components          | PascalCase       | `MainLayout`, `ProAccessOnly`            |
+| Files/Folders       | kebab-case       | `passly`, `auth-context.tsx`             |
+| Variables/Functions | camelCase        | `getUserFromSession`, `handleCopy`       |
+| Constants           | UPPER_SNAKE_CASE | `AUTH_COOKIES`, `COPY_FEEDBACK_DURATION` |
+| Types/Interfaces    | PascalCase       | `AuthUser`, `CharacterOptions`           |
+
+### File Organization
+
+- **Feature-based structure**: Colocate related code within tool/feature directories
+- **No barrel files**: Import directly from source files, not via `index.ts` re-exports
+- **Type definitions**: Place shared types in `/types` folder, not inside components
+- **Utilities**: General helpers go in `/lib` folder
+- **Shared UI**: Components used by multiple apps go in `packages/ui`
+
+### Path Aliases
+
+Each app configures its own `@/*` alias in `tsconfig.json`:
+
+```typescript
+// Within apps/web or apps/admin:
+@/*           → ./src/*
+@/components/* → ./src/components/*
+@/styles/*    → ./src/styles/*
+
+// Cross-workspace imports use the package name:
+@workspace/ui/components/*  → packages/ui/src/components/*
+@workspace/ui/hooks/*       → packages/ui/src/hooks/*
+@workspace/ui/lib/*         → packages/ui/src/lib/*
+```
+
+### Component Patterns
+
+```tsx
+// Always use 'use client' directive for client components
+'use client';
+
+// Import order (enforced by Prettier):
+// 1. React imports
+// 2. Next.js imports
+// 3. Third-party libraries
+// 4. @workspace/ui imports
+// 5. @/ aliased imports (app-local)
+// 6. Relative imports
+import { useCallback, useState } from 'react';
+
+import { useRouter } from 'next/navigation';
+
+import { toast } from 'sonner';
+
+import { Button } from '@workspace/ui/components/button';
+import { cn } from '@workspace/ui/lib/utils';
+
+import MainLayout from '@/components/layouts/main-layout';
+import type { AuthUser } from '@/types/auth';
+
+// Define interfaces above component
+interface MyComponentProps {
+  title: string;
+  user?: AuthUser;
+}
+
+// Functional components with explicit typing
+export default function MyComponent({ title, user }: MyComponentProps) {
+  const [loading, setLoading] = useState(false);
+
+  const handleAction = useCallback(async () => {
+    // Implementation
+  }, []);
+
+  return <MainLayout>{/* Component JSX */}</MainLayout>;
+}
+```
+
+### Tool Page Pattern (apps/web)
+
+Every tool page follows this structure:
+
+```tsx
+'use client';
+
+import MainLayout from '@/components/layouts/main-layout';
+import { ToolPageHeader } from '@/components/layouts/tool-page-header';
+
+export default function ToolPage() {
+  const [error, setError] = useState('');
+
+  return (
+    <MainLayout>
+      <section className="container mx-auto px-4 py-12">
+        <div className="max-w-full mx-auto">
+          <ToolPageHeader
+            title="Tool Name"
+            description="Tool description for SEO and users."
+            infoMessage="Optional info message."
+            error={error}
+          />
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Settings/Input Card */}
+            {/* Result/Output Card */}
+          </div>
+        </div>
+      </section>
+    </MainLayout>
+  );
+}
+```
+
+### API Route Pattern (apps/web)
+
+```tsx
+import { NextRequest, NextResponse } from 'next/server';
+
+// Define request/response interfaces
+interface MyRequest {
+  field: string;
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body: MyRequest = await request.json();
+
+    // Validate input
+    if (!body.field) {
+      return NextResponse.json({ error: 'Field is required' }, { status: 400 });
+    }
+
+    // Process request
+    const result = await processData(body);
+
+    return NextResponse.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    console.error('API error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+```
+
+## App-Specific Details
+
+### apps/web (elevensys-web)
+
+The main web application with tools, authentication, and timesheet management.
+
+- **Font**: Ubuntu (via `next/font/google`)
+- **Auth**: AWS Cognito OAuth2 (PKCE) with `AuthProvider` context
+- **Multi-tenant**: `DomainProvider` + `x-tenant` header for per-domain config
+- **Feature flags**: `FlagsProvider` wrapping `@flags-sdk/vercel`
+- **Providers chain**: `ThemeProvider` → `DomainProvider` → `AuthProvider` → `FlagsProvider`
+
+### apps/admin (elevensys-admin)
+
+The admin dashboard application. Currently a minimal scaffold sharing `@workspace/ui`.
+
+- **Font**: Inter (via `next/font/google`)
+- **Port**: 3002 (`next dev -p 3002`)
+- **Providers**: `ThemeProvider` only (no auth/domain/flags yet)
+
+## Authentication System (apps/web)
+
+### Architecture
+
+- **Provider**: AWS Cognito with OAuth2 + PKCE
+- **Token Storage**: HttpOnly cookies (`cognito_id_token`, `cognito_refresh_token`)
+- **Session**: Server-side JWT decoding in `src/lib/auth.ts`
+- **Auth pages**: `/login`, `/signup`, `/forgot-password` (self-contained pages)
+
+### User Roles
+
+```typescript
+type UserRole = 'pro' | 'free';
+```
+
+- **pro**: Access to premium features (translately, etc.)
+- **free**: Basic features only
+
+### Auth Context Usage
+
+```tsx
+'use client';
+
+import { useAuth } from '@/contexts/auth-context';
+import { hasRole } from '@workspace/ui/lib/utils';
+
+function MyComponent() {
+  const { user } = useAuth();
+
+  // Check if user has pro access
+  if (hasRole(user, ['pro'])) {
+    // Show pro features
+  }
+}
+```
+
+### Pro-Only Feature Gating
+
+```tsx
+import { ProAccessOnly } from '@/components/layouts/pro-access-only';
+
+function ProFeaturePage() {
+  return <ProAccessOnly>{/* Pro-only content */}</ProAccessOnly>;
+}
+```
+
+## Styling
+
+### Tailwind CSS v4
+
+- Use utility classes directly in JSX
+- Use `cn()` helper from `@workspace/ui/lib/utils` for conditional classes:
+
+```tsx
+import { cn } from '@workspace/ui/lib/utils';
+
+<div
+  className={cn(
+    'base-classes',
+    condition && 'conditional-class',
+    variant === 'primary' && 'primary-styles'
+  )}
+/>;
+```
+
+### CSS Variables (Theme)
+
+Key variables defined in shared `globals.css`:
+
+```css
+--background, --foreground
+--primary, --primary-foreground
+--secondary, --muted, --accent, --destructive
+--border, --ring
+--sidebar-*  /* Sidebar-specific colors */
+```
+
+### Dark Mode
+
+- Handled by `next-themes` via class-based switching
+- Use Tailwind's `dark:` prefix for dark mode styles
+
+## Environment Variables
+
+Required variables (in each app's `.env.local`):
+
+```bash
+# AWS Cognito (apps/web)
+COGNITO_DOMAIN=
+COGNITO_CLIENT_ID=
+COGNITO_SCOPES=
+
+# Application
+NEXT_PUBLIC_APP_URL=
+
+# External APIs
+API_BASE_URL=         # Base URL for backend API (e.g. https://api.elevensys.dev)
+```
+
+Access pattern:
+
+```typescript
+import { requireEnv } from '@/lib/utils';
+
+// Throws if missing
+const baseUrl = requireEnv('API_BASE_URL');
+```
+
+## Common Tasks
+
+### Adding a New Tool (apps/web)
+
+1. Create directory: `src/app/tools/[tool-name]/page.tsx`
+2. Create API route if needed: `src/app/api/[tool-name]/route.ts`
+3. Add navigation entry in `src/components/layouts/nav-tools.tsx`
+4. Follow the existing tool page pattern with `MainLayout` and `ToolPageHeader`
+
+### Adding a Shared UI Component
+
+```bash
+# Install to the shared package
+cd packages/ui
+pnpm dlx shadcn@latest add [component-name]
+
+# Import from any app
+import { ComponentName } from '@workspace/ui/components/component-name';
+```
+
+### Creating Types (apps/web)
+
+1. Add type definitions to `src/types/[domain].ts`
+2. Export from the type file directly (no barrel files)
+3. Import with: `import type { MyType } from '@/types/domain';`
+
+### Adding a Custom Hook
+
+1. **Shared hook** (used by multiple apps): Create in `packages/ui/src/hooks/use-[name].ts`
+2. **App-specific hook**: Create in `apps/[app]/src/hooks/use-[name].ts`
+3. Follow React hooks naming convention
+4. Export the hook function directly
+
+### Running a Specific App
+
+```bash
+# Using pnpm filter
+pnpm --filter elevensys-web dev
+pnpm --filter elevensys-admin dev
+
+# Or using turbo filter
+pnpm turbo dev --filter=elevensys-web
+```
+
+## Best Practices
+
+### Do
+
+- Use TypeScript strict mode (already enabled)
+- Prefer interfaces over types for object shapes
+- Use `'use client'` only when necessary (hooks, browser APIs)
+- Destructure props in function signature
+- Use `useCallback` and `useMemo` for expensive operations
+- Handle loading and error states in UI
+- Use `toast` from sonner for user notifications
+- Keep components small and focused (single responsibility)
+- Place shared components in `packages/ui`, app-specific in the app's `components/`
+- Use `@workspace/ui/*` imports for shared code, `@/*` for app-local code
+
+### Don't
+
+- Don't use `any` type - use `unknown` and narrow
+- Don't create barrel files (`index.ts` re-exports)
+- Don't define types inside components
+- Don't use array index as React keys for dynamic lists
+- Don't mutate state directly - use immutable updates
+- Don't use class components (except error boundaries)
+- Don't store sensitive data in client-side state
+- Don't install shared UI dependencies in individual apps (put them in `packages/ui`)
+
+## Testing
+
+| Category          | Technology                                       |
+| ----------------- | ------------------------------------------------ |
+| Test Runner       | Jest 30 (via `next/jest`)                        |
+| Component Testing | React Testing Library (`@testing-library/react`) |
+| User Interactions | `@testing-library/user-event`                    |
+| Assertions        | `@testing-library/jest-dom`                      |
+| Environment       | jsdom (`jest-environment-jsdom`)                  |
+
+### Commands
+
+```bash
+pnpm --filter elevensys-web test                # Run all tests in web app
+pnpm --filter elevensys-web test:coverage       # Run tests with coverage report
+```
+
+### Configuration
+
+- **Jest config**: `jest.config.ts` in each app - uses `next/jest.js` with jsdom environment
+- **Setup file**: `jest.setup.ts` - imports `@testing-library/jest-dom`
+- **Path alias**: `@/` mapped to `<rootDir>/src/` via `moduleNameMapper`
+
+### Test File Conventions
+
+- Place test files next to the source file: `page.tsx` → `page.test.tsx`
+- Test descriptions start with a verb: `renders`, `calls`, `displays`, `hides`, `passes`,
+  `disables`, `checks`
+- Mock hooks to control component state, mock complex UI components (Radix, layouts) as simple HTML
+  elements
+- Use `data-testid` on mocked components for reliable selection
+- Group related tests with comments: `// --- Loading state ---`, `// --- Search card ---`
+
+### Mocking Strategy
+
+- **Hooks** (`useTimesheetSettings`, `useWorklogs`): Mock at module level with `jest.fn()` to
+  control all state
+- **Layout components** (`MainLayout`, `ToolPageHeader`): Mock as simple div wrappers rendering
+  children/props
+- **Child components** (`WorklogRow`, `BulkDeleteAction`): Mock with simplified HTML exposing key
+  props via `data-testid`
+- **UI components** (`Button`, `Card`, `Table`, `Checkbox`): Mock as native HTML equivalents
+- **next/link**: Mock as `<a>` tag
+- **lucide-react icons**: Mock as `<span>` with `data-testid`
+
+## Performance Considerations
+
+- **Turbopack**: Enabled for faster dev/build (Next.js 16 feature)
+- **Server Components**: Root layout fetches auth server-side
+- **Image Optimization**: Use `next/image` for images
+- **Font Optimization**: `next/font` with Ubuntu (web) and Inter (admin)
+- **Code Splitting**: Tool pages are naturally code-split by route
+- **Workspace caching**: Turborepo caches build outputs across apps
+
+## Related Documentation
+
+- `.github/repo-instructions.md` - Detailed development guidelines
+- `.github/copilot-instructions.md` - Copilot-specific guidelines
+- `.github/nextjs-instructions.md` - Extended Next.js patterns
+
+## Code Review Sub-Agent Routing
+
+**Parallel dispatch** (all conditions met):
+
+- Reviewing independent modules/files with no shared state
+- Tasks are read-only (no file modification risk)
+
+**Sequential dispatch** (any condition triggers):
+
+- One review feeds the next (readability → then optimize refactored code)
+- Shared files between agents
+
+**Agent Selection**:
+
+- "review", "readability", "naming" → code-reviewer
+- "optimize", "slow", "performance", "render" → performance-optimizer
+- "security", "best practice", "hardening", "AWS" → best-practices-enforcer
+
+<!-- VERCEL BEST PRACTICES START -->
+
+## Best practices for developing on Vercel
+
+These defaults are optimized for AI coding agents (and humans) working on apps that deploy to
+Vercel.
+
+- Treat Vercel Functions as stateless + ephemeral (no durable RAM/FS, no background daemons), use
+  Blob or marketplace integrations for preserving state
+- Edge Functions (standalone) are deprecated; prefer Vercel Functions
+- Don't start new projects on Vercel KV/Postgres (both discontinued); use Marketplace Redis/Postgres
+  instead
+- Store secrets in Vercel Env Variables; not in git or `NEXT_PUBLIC_*`
+- Provision Marketplace native integrations with `vercel integration add` (CI/agent-friendly)
+- Sync env + project settings with `vercel env pull` / `vercel pull` when you need local/offline
+  parity
+- Use `waitUntil` for post-response work; avoid the deprecated Function `context` parameter
+- Set Function regions near your primary data source; avoid cross-region DB/service roundtrips
+- Tune Fluid Compute knobs (e.g., `maxDuration`, memory/CPU) for long I/O-heavy calls (LLMs, APIs)
+- Use Runtime Cache for fast **regional** caching + tag invalidation (don't treat it as global KV)
+- Use Cron Jobs for schedules; cron runs in UTC and triggers your production URL via HTTP GET
+- Use Vercel Blob for uploads/media; Use Edge Config for small, globally-read config
+- If Enable Deployment Protection is enabled, use a bypass secret to directly access them
+- Add OpenTelemetry via `@vercel/otel` on Node; don't expect OTEL support on the Edge runtime
+- Enable Web Analytics + Speed Insights early
+- Use AI Gateway for model routing, set AI_GATEWAY_API_KEY, using a model string (e.g.
+  'anthropic/claude-sonnet-4.6'), Gateway is already default in AI SDK needed. Always curl
+  https://ai-gateway.vercel.sh/v1/models first; never trust model IDs from memory
+- For durable agent loops or untrusted code: use Workflow (pause/resume/state) + Sandbox; use Vercel
+MCP for secure infra access
+<!-- VERCEL BEST PRACTICES END -->
