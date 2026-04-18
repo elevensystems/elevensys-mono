@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { CheckCircle2, RefreshCw, X, XCircle } from 'lucide-react';
 
-import { ActionButton } from '@/components/action-button';
+import { ActionButton } from '@workspace/ui/components/action-button';
 import {
   Dialog,
   DialogContent,

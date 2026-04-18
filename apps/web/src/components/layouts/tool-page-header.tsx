@@ -18,8 +18,8 @@ export function ToolPageHeader({
   return (
     <>
       <div className="mb-8">
-        <h1 className="text-4xl font-semibold mb-2">{title}</h1>
-        <p className="text-muted-foreground">{description}</p>
+        <h1 className="text-3xl font-semibold mb-2">{title}</h1>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
 
       {infoMessage && (

@@ -4,7 +4,7 @@ import { memo, useCallback, useState } from 'react';
 
 import { Trash2 } from 'lucide-react';
 
-import { ActionButton } from '@/components/action-button';
+import { ActionButton } from '@workspace/ui/components/action-button';
 import {
   Combobox,
   ComboboxContent,
@@ -213,7 +213,7 @@ export const WorkEntryRow = memo(function WorkEntryRow({
           aria-label="Delete"
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-destructive hover:bg-destructive hover:text-white"
+          className="size-8 text-destructive hover:bg-destructive hover:text-white"
           onClick={handleRemove}
           disabled={isLastRow}
           leftIcon={<Trash2 />}

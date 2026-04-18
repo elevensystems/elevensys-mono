@@ -4,7 +4,7 @@ import { memo, useCallback } from 'react';
 
 import { SquarePenIcon, Trash2Icon } from 'lucide-react';
 
-import { ActionButton } from '@/components/action-button';
+import { ActionButton } from '@workspace/ui/components/action-button';
 import {
   AlertDialog,
   AlertDialogAction,

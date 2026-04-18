@@ -9,7 +9,7 @@ import type * as Monaco from 'monaco-editor';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
 
-import { ActionButton } from '@/components/action-button';
+import { ActionButton } from '@workspace/ui/components/action-button';
 import { JsonToolToolbar } from '@/components/layouts/json-tool-toolbar';
 import MainLayout from '@/components/layouts/main-layout';
 import { Badge } from '@workspace/ui/components/badge';

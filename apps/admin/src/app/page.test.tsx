@@ -1,16 +1,60 @@
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 
+import { getUserFromSession } from '@/lib/auth';
+
 import AdminPage from './page';
+
+// Mock dependencies
+jest.mock('@/components/layouts/main-layout', () => ({
+  __esModule: true,
+  default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
+jest.mock('@/lib/auth', () => ({
+  getUserFromSession: jest.fn(),
+}));
 
 describe('AdminPage', () => {
   beforeEach(() => {
-    render(<AdminPage />);
+    jest.clearAllMocks();
   });
 
-  // --- Heading ---
+  it('renders the welcome message for authenticated user', async () => {
+    (getUserFromSession as jest.Mock).mockResolvedValue({
+      name: 'John Doe',
+      email: 'john@example.com',
+    });
 
-  it('renders the main heading', () => {
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Elevensys Admin');
+    // Handle async Server Component
+    const component = await AdminPage();
+    render(component);
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Welcome, John Doe');
+    expect(screen.getByText('john@example.com')).toBeInTheDocument();
+  });
+
+  it('renders the welcome message for unauthenticated user', async () => {
+    (getUserFromSession as jest.Mock).mockResolvedValue(null);
+
+    const component = await AdminPage();
+    render(component);
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Welcome');
+    expect(screen.getByText('Signed-in staff dashboard')).toBeInTheDocument();
+  });
+
+  it('renders the Urlify card', async () => {
+    (getUserFromSession as jest.Mock).mockResolvedValue(null);
+
+    const component = await AdminPage();
+    render(component);
+
+    expect(screen.getByText('Urlify')).toBeInTheDocument();
+    expect(screen.getByText(/Manage shortened URLs/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Open Urlify/i })).toHaveAttribute(
+      'href',
+      '/urlify'
+    );
   });
 });

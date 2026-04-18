@@ -2,7 +2,7 @@
 
 import { ClipboardList, Search } from 'lucide-react';
 
-import { ActionButton } from '@/components/action-button';
+import { ActionButton } from '@workspace/ui/components/action-button';
 import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
 import MainLayout from '@/components/layouts/main-layout';
 import { ToolPageHeader } from '@/components/layouts/tool-page-header';

@@ -16,7 +16,7 @@ import {
   Wrench,
 } from 'lucide-react';
 
-import { ActionButton } from '@/components/action-button';
+import { ActionButton } from '@workspace/ui/components/action-button';
 import MainLayout from '@/components/layouts/main-layout';
 import { Badge } from '@workspace/ui/components/badge';
 import { Button } from '@workspace/ui/components/button';
@@ -128,11 +128,10 @@ export default function Home() {
               {timesheetActions.map(action => (
                 <Link key={action.href} href={action.href} className="group">
                   <Card
-                    className={`relative h-full overflow-hidden transition-all group-hover:shadow-md ${
-                      action.primary
-                        ? 'bg-primary/[0.03] dark:bg-primary/[0.06]'
-                        : ''
-                    }`}
+                    className={`relative h-full overflow-hidden transition-all group-hover:shadow-md ${action.primary
+                      ? 'bg-primary/[0.03] dark:bg-primary/[0.06]'
+                      : ''
+                      }`}
                   >
                     {action.primary && (
                       <ShineBorder
@@ -144,11 +143,10 @@ export default function Home() {
                     <CardHeader className="pb-2">
                       <div className="flex items-center gap-3">
                         <div
-                          className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                            action.primary
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-primary/10 text-primary'
-                          }`}
+                          className={`flex h-10 w-10 items-center justify-center rounded-lg ${action.primary
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-primary/10 text-primary'
+                            }`}
                         >
                           <action.icon className="h-5 w-5" />
                         </div>

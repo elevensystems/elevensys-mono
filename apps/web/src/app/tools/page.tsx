@@ -90,9 +90,9 @@ export default function ToolsPage() {
           <div className="mb-12">
             <div className="flex items-center gap-3 mb-4">
               <Wrench className="h-8 w-8" />
-              <h1 className="text-4xl font-semibold">Tools</h1>
+              <h1 className="text-3xl font-semibold">Tools</h1>
             </div>
-            <p className="text-muted-foreground text-lg">
+            <p className="text-sm text-muted-foreground">
               A collection of useful tools to help you be more productive
             </p>
           </div>

@@ -1,6 +1,6 @@
 import { Settings } from 'lucide-react';
 
-import { ActionButton } from '@/components/action-button';
+import { ActionButton } from '@workspace/ui/components/action-button';
 import {
   Popover,
   PopoverContent,

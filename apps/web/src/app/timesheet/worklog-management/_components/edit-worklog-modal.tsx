@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { z } from 'zod';
 
-import { ActionButton } from '@/components/action-button';
+import { ActionButton } from '@workspace/ui/components/action-button';
 import { DatePicker } from '@workspace/ui/components/date-picker';
 import {
   Dialog,
