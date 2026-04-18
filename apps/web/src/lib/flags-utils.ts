@@ -1,7 +1,7 @@
 import type { TenantKey } from '@/lib/domain-config';
 
 /**
- * Parses the `visible-tools` flag value into an allowlist of tool URL paths
+ * Parses the `sidebar-tools` flag value into an allowlist of tool URL paths
  * for the given tenant.
  *
  * Flag value must be a JSON object keyed by TenantKey:
@@ -22,7 +22,7 @@ export function getVisibleToolPaths(
     parsed = JSON.parse(visibleTools);
   } catch {
     console.error(
-      '[flags] visible-tools: malformed JSON value "%s" — showing all tools',
+      '[flags] sidebar-tools: malformed JSON value "%s" — showing all tools',
       visibleTools
     );
     return null;
@@ -33,7 +33,7 @@ export function getVisibleToolPaths(
 
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
     console.error(
-      '[flags] visible-tools: expected a JSON object keyed by tenant, got %s — showing all tools',
+      '[flags] sidebar-tools: expected a JSON object keyed by tenant, got %s — showing all tools',
       JSON.stringify(parsed)
     );
     return null;
@@ -49,7 +49,7 @@ export function getVisibleToolPaths(
     !tenantValue.every(item => typeof item === 'string')
   ) {
     console.error(
-      '[flags] visible-tools: value for tenant "%s" must be a string array, got %s — showing all tools',
+      '[flags] sidebar-tools: value for tenant "%s" must be a string array, got %s — showing all tools',
       tenant,
       JSON.stringify(tenantValue)
     );

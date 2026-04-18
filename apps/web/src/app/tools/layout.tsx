@@ -3,7 +3,7 @@ import type React from 'react';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 
-import { visibleToolsFlag } from '@/flags';
+import { sidebarToolsFlag } from '@/flags';
 import type { TenantKey } from '@/lib/domain-config';
 import { getVisibleToolPaths } from '@/lib/flags-utils';
 
@@ -13,7 +13,7 @@ export default async function ToolsLayout({
   children: React.ReactNode;
 }) {
   const [visibleTools, headersList] = await Promise.all([
-    visibleToolsFlag(),
+    sidebarToolsFlag(),
     headers(),
   ]);
 

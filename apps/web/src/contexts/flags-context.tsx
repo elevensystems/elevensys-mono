@@ -32,14 +32,14 @@ export function isFlagEnabled(flags: FlagsRecord, flagKey?: string): boolean {
 }
 
 /**
- * Parses the `visible-tools` flag from the flags record into an allowlist of
+ * Parses the `sidebar-tools` flag from the flags record into an allowlist of
  * tool URL paths for the given tenant. Returns `null` when all tools should be shown.
  */
 export function getVisibleToolPaths(
   flags: FlagsRecord,
   tenant: TenantKey
 ): string[] | null {
-  const value = flags['visible-tools'];
+  const value = flags['sidebar-tools'];
   if (typeof value !== 'string') return null;
   return parseVisibleToolPaths(value, tenant);
 }

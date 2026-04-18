@@ -1,13 +1,13 @@
 import { notFound } from 'next/navigation';
 
-import { enableAutologFlag } from '@/flags';
+import { autologFlag } from '@/flags';
 
 export default async function AutologLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const enabled = await enableAutologFlag();
+  const enabled = await autologFlag();
 
   if (!enabled) {
     notFound();

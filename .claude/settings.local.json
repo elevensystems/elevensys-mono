@@ -36,7 +36,9 @@
       "Bash(pnpm --filter elevensys-web build)",
       "Bash(pnpm --filter elevensys-web test)",
       "Bash(pnpm --filter elevensys-web lint)",
-      "Bash(pnpm *)"
+      "Bash(pnpm *)",
+      "Bash(vercel link *)",
+      "Bash(vercel env *)"
     ]
   },
   "enabledMcpjsonServers": [

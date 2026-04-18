@@ -73,7 +73,7 @@ export const appSidebarData = {
       url: '/timesheet/autolog',
       icon: RefreshCw,
       isActive: false,
-      flagKey: 'enable-autolog',
+      flagKey: 'autolog',
     },
     {
       title: 'Configs',
