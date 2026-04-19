@@ -10,13 +10,6 @@ import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
 import { NativeSelect } from '@workspace/ui/components/native-select';
-import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@workspace/ui/components/table';
 import { useProjectIssues } from '@/hooks/use-project-issues';
 import { generateEntryId } from '@/lib/timesheet';
 import type {
@@ -47,7 +40,7 @@ function toWorkEntries(config?: AutologConfig): WorkEntry[] {
         issueKey: '',
         typeOfWork: 'Create',
         description: '',
-        hours: 8,
+        hours: 1,
       },
     ];
   }
@@ -74,10 +67,10 @@ export function ConfigForm({
   const [selectedProject, setSelectedProject] = useState<JiraProject | null>(
     editing
       ? {
-          id: editing.projectId,
-          key: editing.projectKey,
-          name: editing.projectName,
-        }
+        id: editing.projectId,
+        key: editing.projectKey,
+        name: editing.projectName,
+      }
       : null
   );
 
@@ -133,7 +126,7 @@ export function ConfigForm({
         issueKey: '',
         typeOfWork: 'Create',
         description: '',
-        hours: 0,
+        hours: 1,
       },
     ]);
   }, []);
@@ -192,25 +185,23 @@ export function ConfigForm({
       {/* Project */}
       <div className="space-y-2">
         <Label className="text-sm font-medium">Project</Label>
-        {isLoadingProjects ? (
-          <p className="text-sm text-muted-foreground">Loading projects...</p>
-        ) : (
-          <NativeSelect
-            value={selectedProject?.id ?? ''}
-            onChange={e => {
-              const p = projects.find(x => x.id === e.target.value);
-              setSelectedProject(p ?? null);
-            }}
-            disabled={!!editing}
-          >
-            <option value="">-- Choose a project --</option>
-            {projects.map(p => (
-              <option key={p.id} value={p.id}>
-                [{p.key}] {p.name}
-              </option>
-            ))}
-          </NativeSelect>
-        )}
+        <NativeSelect
+          value={selectedProject?.id ?? ''}
+          onChange={e => {
+            const p = projects.find(x => x.id === e.target.value);
+            setSelectedProject(p ?? null);
+          }}
+          disabled={isLoadingProjects || !!editing}
+        >
+          <option value="">
+            {isLoadingProjects ? 'Loading projects...' : '-- Choose a project --'}
+          </option>
+          {projects.map(p => (
+            <option key={p.id} value={p.id}>
+              [{p.key}] {p.name}
+            </option>
+          ))}
+        </NativeSelect>
         {editing && (
           <p className="text-xs text-muted-foreground">
             Project cannot be changed. Delete and recreate to use a different
@@ -233,34 +224,29 @@ export function ConfigForm({
           Add tickets to log work for. Hours are logged per missing date.
         </p>
         <div className="overflow-hidden rounded-lg border">
-          <Table>
-            <TableHeader className="bg-muted/50">
-              <TableRow>
-                <TableHead className="w-[230px] font-semibold">Key</TableHead>
-                <TableHead className="font-semibold">Description</TableHead>
-                <TableHead className="w-[150px] font-semibold">
-                  Type of Work
-                </TableHead>
-                <TableHead className="w-[100px] font-semibold">Hours</TableHead>
-                <TableHead className="w-[50px]" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {entries.map(entry => (
-                <WorkEntryRow
-                  key={entry.id}
-                  entry={entry}
-                  issues={issues}
-                  issuesByKey={issuesByKey}
-                  isLoadingIssues={isLoadingIssues}
-                  onUpdate={updateEntry}
-                  onRemove={removeEntry}
-                  onFetchTypeOfWork={fetchIssueTypeOfWork}
-                  disabled={!selectedProject}
-                />
-              ))}
-            </TableBody>
-          </Table>
+          <div className="grid grid-cols-[230px_1fr_150px_140px_50px] gap-2 bg-muted/50 px-3 py-2 text-sm font-semibold text-muted-foreground">
+            <div>Key</div>
+            <div>Description</div>
+            <div>Type of Work</div>
+            <div>Hours</div>
+            <div />
+          </div>
+          <div>
+            {entries.map(entry => (
+              <WorkEntryRow
+                key={entry.id}
+                entry={entry}
+                issues={issues}
+                issuesByKey={issuesByKey}
+                isLoadingIssues={isLoadingIssues}
+                onUpdate={updateEntry}
+                onRemove={removeEntry}
+                onFetchTypeOfWork={fetchIssueTypeOfWork}
+                disabled={!selectedProject}
+                isLastRow={entries.length === 1}
+              />
+            ))}
+          </div>
         </div>
         <Button
           variant="outline"
