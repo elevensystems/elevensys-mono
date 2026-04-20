@@ -2,328 +2,329 @@
 
 import { useCallback, useState } from 'react';
 
-import { useForm, useStore } from '@tanstack/react-form';
-import {
-  CalendarClock,
-  Check,
-  Copy,
-  Link2,
-  Settings as SettingsIcon,
-} from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { Copy, Link2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { ActionButton } from '@workspace/ui/components/action-button';
+import { Button } from '@workspace/ui/components/button';
+import { Checkbox } from '@workspace/ui/components/checkbox';
+import { Input } from '@workspace/ui/components/input';
+import { ShineBorder } from '@workspace/ui/components/shine-border';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@workspace/ui/components/tooltip';
+
 import MainLayout from '@/components/layouts/main-layout';
 import { ToolPageHeader } from '@/components/layouts/tool-page-header';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@workspace/ui/components/card';
-import { Checkbox } from '@workspace/ui/components/checkbox';
-import { Field, FieldError, FieldLabel } from '@workspace/ui/components/field';
-import { Input } from '@workspace/ui/components/input';
 import { useActionFeedback } from '@/hooks/use-action-feedback';
-import { urlifySchema } from '@/lib/schemas/urlify';
+import { useUrlHistory } from '@/hooks/use-url-history';
+import type { UrlHistoryItem } from '@/hooks/use-url-history';
 
 interface ShortenedUrlResult {
   shortUrl: string;
-  shortCode?: string;
-  originalUrl?: string;
-  createdAt?: string;
-  expiresAt?: string;
+  shortCode: string;
+  originalUrl: string;
+  createdAt: string;
+}
+
+function getDomain(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return url;
+  }
+}
+
+function truncateUrl(url: string, max = 60): string {
+  return url.length > max ? url.slice(0, max) + '...' : url;
+}
+
+function isValidHttpUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value.trim());
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
 }
 
 export default function UrlifyPage() {
+  const [url, setUrl] = useState('');
+  const [autoDelete, setAutoDelete] = useState(false);
   const [result, setResult] = useState<ShortenedUrlResult | null>(null);
-  const { isActive, trigger } = useActionFeedback();
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm({
-    defaultValues: { url: '', autoDelete: false, ttlDays: '' },
-    validators: { onSubmit: urlifySchema },
-    onSubmit: async ({ value }) => {
-      setError('');
-      setResult(null);
+  const { isActive, trigger } = useActionFeedback();
+  const { items: history, add, remove, clearAll } = useUrlHistory();
 
-      try {
-        const response = await fetch('/api/urlify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            originalUrl: value.url.trim(),
-            autoDelete: value.autoDelete,
-            ttlDays:
-              value.autoDelete && value.ttlDays.trim()
-                ? Number(value.ttlDays)
-                : undefined,
-          }),
-        });
+  const handleShorten = useCallback(async () => {
+    const trimmed = url.trim();
 
-        if (!response.ok) {
-          throw new Error('Failed to shorten URL');
-        }
+    if (!trimmed) {
+      setError('Please enter a URL.');
+      return;
+    }
 
-        const data = await response.json();
+    if (!isValidHttpUrl(trimmed)) {
+      setError('Please enter a valid URL (must start with http:// or https://).');
+      return;
+    }
 
-        if (data.shortUrl) {
-          setResult(data);
-          toast.success('URL shortened successfully', {
-            description: 'Your short URL is ready to use.',
-            icon: <Check className="h-4 w-4" />,
-            duration: 5000,
-          });
-        } else {
-          throw new Error('Invalid response from server');
-        }
-      } catch (err) {
-        console.error('Error shortening URL:', err);
-        const errorMessage = 'Failed to shorten URL. Please try again.';
-        setError(errorMessage);
-        toast.error(errorMessage, { duration: 5000 });
-      }
-    },
-  });
-
-  const autoDelete = useStore(form.store, s => s.values.autoDelete);
-
-  const handleCopy = useCallback(async () => {
-    if (!result?.shortUrl) return;
+    setError('');
+    setIsSubmitting(true);
 
     try {
-      await navigator.clipboard.writeText(result.shortUrl);
-      trigger('copy');
-    } catch (err) {
-      console.error('Failed to copy to clipboard:', err);
-      trigger('copy', { error: true });
+      const response = await fetch('/api/urlify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          originalUrl: trimmed,
+          autoDelete,
+          ttlDays: autoDelete ? 30 : undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to shorten URL');
+      }
+
+      const data = await response.json();
+
+      if (!data.shortUrl) {
+        throw new Error('Invalid response from server');
+      }
+
+      const shortened: ShortenedUrlResult = {
+        shortUrl: data.shortUrl,
+        shortCode: data.shortCode || data.shortUrl.split('/').pop(),
+        originalUrl: data.originalUrl || trimmed,
+        createdAt: data.createdAt || new Date().toISOString(),
+      };
+
+      // Move previous result to history
+      if (result) {
+        add(result);
+      }
+
+      setResult(shortened);
+      setUrl('');
+      toast.success('URL shortened successfully');
+    } catch {
+      setError('Failed to shorten URL. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
-  }, [result, trigger]);
+  }, [url, autoDelete, result, add]);
+
+  const handleCopy = useCallback(
+    async (shortUrl: string, feedbackId: string) => {
+      try {
+        await navigator.clipboard.writeText(shortUrl);
+        trigger(feedbackId);
+      } catch {
+        trigger(feedbackId, { error: true });
+      }
+    },
+    [trigger]
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleShorten();
+      }
+    },
+    [handleShorten]
+  );
 
   return (
     <MainLayout>
       <section className="container mx-auto px-4 py-12">
-        <div className="max-w-full mx-auto">
+        <div className="mx-auto max-w-3xl">
           <ToolPageHeader
             title="Urlify"
-            description="Make your URLs shorter and easier to share. Free tool for creating short links."
-            infoMessage="URL shortening is processed securely through our server. Your links are never stored permanently."
-            error={error}
+            description="Shorten any URL into a compact, shareable link."
+            error=""
           />
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Settings Card */}
-            <Card>
-              <CardHeader>
-                <div className="flex flex-col gap-1">
-                  <CardTitle className="flex items-center gap-2">
-                    <SettingsIcon className="h-5 w-5" />
-                    Settings
-                  </CardTitle>
-                  <CardDescription>
-                    Configure your URL shortening options below.
-                  </CardDescription>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* URL Input */}
-                <form.Field
-                  name="url"
-                  children={field => {
-                    const isInvalid =
-                      field.state.meta.isTouched && !field.state.meta.isValid;
-                    return (
-                      <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor={field.name}>
-                          Enter Long URL
-                        </FieldLabel>
-                        <Input
-                          id={field.name}
-                          type="url"
-                          placeholder="https://example.com/very/long/url/path"
-                          value={field.state.value}
-                          onBlur={field.handleBlur}
-                          onChange={e => {
-                            field.handleChange(e.target.value);
-                            setResult(null);
-                            setError('');
-                          }}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              form.handleSubmit();
-                            }
-                          }}
-                          className="h-12"
-                          aria-invalid={isInvalid}
-                        />
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
-                      </Field>
-                    );
-                  }}
-                />
-
-                {/* Auto-delete */}
-                <form.Field
-                  name="autoDelete"
-                  children={field => (
-                    <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-4">
-                      <Checkbox
-                        id="auto-delete"
-                        checked={field.state.value}
-                        onCheckedChange={checked => {
-                          field.handleChange(checked === true);
-                        }}
-                      />
-                      <div className="space-y-1">
-                        <FieldLabel htmlFor="auto-delete">
-                          Auto-delete link
-                        </FieldLabel>
-                        <p className="text-xs text-muted-foreground">
-                          Enable to expire the link after a set number of days.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                />
-
-                <form.Field
-                  name="ttlDays"
-                  children={field => {
-                    const isInvalid =
-                      autoDelete &&
-                      field.state.meta.isTouched &&
-                      !field.state.meta.isValid;
-                    return (
-                      <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor={field.name}>
-                          Expires After (days)
-                        </FieldLabel>
-                        <Input
-                          id={field.name}
-                          type="number"
-                          min={1}
-                          step={1}
-                          placeholder="30"
-                          value={field.state.value}
-                          disabled={!autoDelete}
-                          onBlur={field.handleBlur}
-                          onChange={e => field.handleChange(e.target.value)}
-                          className="h-12"
-                          aria-invalid={isInvalid}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Leave blank to use the default 30-day expiration.
-                        </p>
-                        {isInvalid && (
-                          <FieldError errors={field.state.meta.errors} />
-                        )}
-                      </Field>
-                    );
-                  }}
-                />
-
-                {/* Shorten Button */}
-                <ActionButton
-                  onClick={() => form.handleSubmit()}
-                  disabled={form.state.isSubmitting}
-                  className="w-full"
-                  size="lg"
-                  leftIcon={<Link2 />}
-                  isLoading={form.state.isSubmitting}
-                  loadingText="Shortening..."
-                >
-                  Shorten URL
-                </ActionButton>
-              </CardContent>
-            </Card>
-
-            {/* Result Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Link2 className="h-5 w-5" />
-                  Result
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {!result?.shortUrl ? (
-                  <div className="flex items-center justify-center h-40 text-muted-foreground">
-                    <p>
-                      Enter a URL and click &quot;Shorten URL&quot; to get
-                      started
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <FieldLabel className="text-sm font-medium">
-                        Shortened URL
-                      </FieldLabel>
-                      <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-                        <code className="flex-1 text-sm font-mono break-all select-all">
-                          {result.shortUrl}
-                        </code>
-                        <ActionButton
-                          size="sm"
-                          variant="ghost"
-                          onClick={handleCopy}
-                          aria-label="Copy to clipboard"
-                          leftIcon={<Copy aria-hidden="true" />}
-                          feedbackActive={isActive('copy')}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid gap-3 rounded-lg border bg-muted/30 p-4 text-sm">
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-muted-foreground">
-                          Short code
-                        </span>
-                        <span className="font-medium">
-                          {result.shortCode ?? '—'}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-muted-foreground">
-                          Original URL
-                        </span>
-                        <span className="font-medium break-all text-right">
-                          {result.originalUrl ??
-                            form.getFieldValue('url').trim()}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="flex items-center gap-2 text-muted-foreground">
-                          <CalendarClock className="h-4 w-4" />
-                          Created
-                        </span>
-                        <span className="font-medium">
-                          {result.createdAt
-                            ? new Date(result.createdAt).toLocaleString()
-                            : '—'}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="flex items-center gap-2 text-muted-foreground">
-                          <CalendarClock className="h-4 w-4" />
-                          Expires
-                        </span>
-                        <span className="font-medium">
-                          {result.expiresAt
-                            ? new Date(result.expiresAt).toLocaleString()
-                            : 'Never'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          {/* Input */}
+          <div className="relative">
+            <Input
+              type="url"
+              placeholder="Paste a long URL here..."
+              value={url}
+              onChange={e => {
+                setUrl(e.target.value);
+                setError('');
+              }}
+              onKeyDown={handleKeyDown}
+              className="h-14 pr-32 text-base"
+              aria-invalid={!!error}
+              aria-describedby={error ? 'url-error' : undefined}
+            />
+            <div className="absolute top-1/2 right-2 -translate-y-1/2">
+              <ActionButton
+                onClick={handleShorten}
+                disabled={isSubmitting}
+                isLoading={isSubmitting}
+                loadingText="..."
+                size="default"
+                leftIcon={<Link2 className="h-4 w-4" />}
+              >
+                <span className="hidden sm:inline">Shorten</span>
+              </ActionButton>
+            </div>
           </div>
+
+          {error && (
+            <p id="url-error" className="mt-2 text-sm text-destructive">
+              {error}
+            </p>
+          )}
+
+          {/* Auto-delete checkbox */}
+          <div className="mt-4 flex items-start gap-2">
+            <Checkbox
+              id="auto-delete"
+              checked={autoDelete}
+              onCheckedChange={checked => setAutoDelete(checked === true)}
+            />
+            <div className="grid gap-0.5 leading-none">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <label
+                    htmlFor="auto-delete"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Auto-delete link
+                  </label>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  Link expires after 30 days
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </div>
+
+          {/* Result card */}
+          {result && (
+            <div className="relative mt-8 rounded-lg bg-muted/30 p-5">
+              <ShineBorder
+                shineColor={['#A07CFE', '#FE8FB5', '#FFBE7B']}
+                borderWidth={1.5}
+                duration={10}
+              />
+              <p className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                Shortened URL
+              </p>
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0 space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(result.shortUrl, 'result')}
+                    className="cursor-pointer font-mono text-lg font-semibold hover:underline"
+                  >
+                    {result.shortUrl}
+                  </button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p className="truncate text-sm text-muted-foreground">
+                        &hookleftarrow; {truncateUrl(result.originalUrl)}
+                      </p>
+                    </TooltipTrigger>
+                    {result.originalUrl.length > 60 && (
+                      <TooltipContent
+                        side="bottom"
+                        className="max-w-sm break-all"
+                      >
+                        {result.originalUrl}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </div>
+                <ActionButton
+                  variant="secondary"
+                  onClick={() => handleCopy(result.shortUrl, 'result')}
+                  leftIcon={<Copy className="h-4 w-4" />}
+                  feedbackActive={isActive('result')}
+                  aria-label="Copy shortened URL"
+                >
+                  Copy
+                </ActionButton>
+              </div>
+            </div>
+          )}
+
+          {/* Recent list */}
+          {history.length > 0 && (
+            <div className="mt-8">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Recent</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearAll}
+                  className="text-muted-foreground"
+                >
+                  Clear all
+                </Button>
+              </div>
+              <div className="divide-y rounded-lg border">
+                {history.map((item: UrlHistoryItem) => (
+                  <div
+                    key={item.shortCode + item.createdAt}
+                    className="flex items-center gap-3 px-4 py-3"
+                  >
+                    <Link2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <div className="min-w-0 flex-1">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleCopy(item.shortUrl, `history-${item.shortCode}`)
+                        }
+                        className="cursor-pointer truncate font-mono text-sm font-medium hover:underline"
+                      >
+                        {item.shortUrl}
+                      </button>
+                      <p className="text-xs text-muted-foreground">
+                        {getDomain(item.originalUrl)} &middot;{' '}
+                        {formatDistanceToNow(new Date(item.createdAt), {
+                          addSuffix: true,
+                        })}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <ActionButton
+                        variant="ghost"
+                        size="icon"
+                        onClick={() =>
+                          handleCopy(item.shortUrl, `history-${item.shortCode}`)
+                        }
+                        aria-label="Copy URL"
+                        leftIcon={<Copy className="h-4 w-4" />}
+                        feedbackActive={isActive(
+                          `history-${item.shortCode}`
+                        )}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => remove(item.shortCode)}
+                        aria-label="Delete from history"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </section>
     </MainLayout>
