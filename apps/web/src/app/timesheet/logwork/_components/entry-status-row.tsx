@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 
 import {
   CheckCircle2,
@@ -10,6 +10,7 @@ import {
   XCircle,
 } from 'lucide-react';
 
+import { Badge } from '@workspace/ui/components/badge';
 import {
   Tooltip,
   TooltipContent,
@@ -17,14 +18,6 @@ import {
 } from '@workspace/ui/components/tooltip';
 import { cn } from '@workspace/ui/lib/utils';
 import type { RequestStatus, RequestStatusState } from '@/types/timesheet';
-
-const STATUS_DOT_COLORS: Record<RequestStatusState, string> = {
-  pending: 'bg-muted-foreground/30',
-  'in-progress': 'bg-blue-500 animate-pulse',
-  success: 'bg-green-500',
-  failed: 'bg-red-500',
-  skipped: 'bg-muted-foreground/20',
-};
 
 function StatusIcon({ status }: { status: RequestStatusState }) {
   switch (status) {
@@ -45,6 +38,37 @@ function StatusIcon({ status }: { status: RequestStatusState }) {
   }
 }
 
+interface EntryMiniBarProps {
+  completedPct: number;
+  isInProgress: boolean;
+  ariaLabel: string;
+}
+
+function EntryMiniBar({
+  completedPct,
+  isInProgress,
+  ariaLabel,
+}: EntryMiniBarProps) {
+  return (
+    <div
+      className="h-1.5 w-[180px] shrink-0 overflow-hidden rounded-full bg-muted"
+      role="progressbar"
+      aria-valuenow={completedPct}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={ariaLabel}
+    >
+      <div
+        className={cn(
+          'h-full rounded-full bg-green-500 transition-all duration-500 ease-out',
+          isInProgress && 'animate-pulse'
+        )}
+        style={{ width: `${completedPct}%` }}
+      />
+    </div>
+  );
+}
+
 interface EntryStatusRowProps {
   issueKey: string;
   dateStatuses: RequestStatus[];
@@ -54,36 +78,86 @@ export function EntryStatusRow({
   issueKey,
   dateStatuses,
 }: EntryStatusRowProps) {
-  // Encode phase into override so it auto-invalidates on phase transitions
+  const detailId = useId();
+
+  const {
+    successCount,
+    failedCount,
+    skippedCount,
+    completedCount,
+    hasFailure,
+    hasStarted,
+    allDone,
+  } = useMemo(() => {
+    let success = 0;
+    let failed = 0;
+    let skipped = 0;
+    let started = false;
+    let done = true;
+    for (const s of dateStatuses) {
+      if (s.status === 'success') success++;
+      else if (s.status === 'failed') failed++;
+      else if (s.status === 'skipped') skipped++;
+      if (s.status !== 'pending') started = true;
+      if (
+        s.status !== 'success' &&
+        s.status !== 'failed' &&
+        s.status !== 'skipped'
+      )
+        done = false;
+    }
+    return {
+      successCount: success,
+      failedCount: failed,
+      skippedCount: skipped,
+      completedCount: success + failed + skipped,
+      hasFailure: failed > 0,
+      hasStarted: started,
+      allDone: done,
+    };
+  }, [dateStatuses]);
+
+  const isInProgress = hasStarted && !allDone;
+  const completedPct =
+    dateStatuses.length > 0
+      ? Math.round((completedCount / dateStatuses.length) * 100)
+      : 0;
+
+  const phase = `${hasFailure}`;
   const [expandOverride, setExpandOverride] = useState<{
     phase: string;
     value: boolean;
   } | null>(null);
-
-  const hasStarted = dateStatuses.some(s => s.status !== 'pending');
-  const allDone = dateStatuses.every(
-    s =>
-      s.status === 'success' || s.status === 'failed' || s.status === 'skipped'
-  );
-
-  const completedCount = dateStatuses.filter(
-    s =>
-      s.status === 'success' || s.status === 'failed' || s.status === 'skipped'
-  ).length;
-
-  const phase = `${hasStarted}-${allDone}`;
   const manualExpanded =
     expandOverride?.phase === phase ? expandOverride.value : null;
 
-  // Auto-expand while processing (started but not all done), collapse when complete
-  const autoExpanded = hasStarted && !allDone;
+  const autoExpanded = hasFailure;
   const expanded = manualExpanded ?? autoExpanded;
+
+  const [filterOverride, setFilterOverride] = useState<{
+    phase: string;
+    value: boolean;
+  } | null>(null);
+  const filterDefault = hasFailure;
+  const showFailuresOnly =
+    filterOverride?.phase === phase ? filterOverride.value : filterDefault;
+  const effectiveFailuresOnly = showFailuresOnly && hasFailure;
+
+  const filteredStatuses = effectiveFailuresOnly
+    ? dateStatuses.filter(
+      s => s.status === 'failed' || s.status === 'skipped'
+    )
+    : dateStatuses;
+
+  const hasMiniBar = dateStatuses.length > 0;
 
   return (
     <div className="border-b last:border-b-0">
       <button
         type="button"
         onClick={() => setExpandOverride({ phase, value: !expanded })}
+        aria-expanded={expanded}
+        aria-controls={detailId}
         className="flex w-full items-center gap-3 px-3 py-2 text-sm hover:bg-muted/50 transition-colors"
       >
         <ChevronRight
@@ -93,55 +167,127 @@ export function EntryStatusRow({
           )}
         />
         <span className="font-mono font-medium">{issueKey}</span>
-        <div className="flex items-center gap-0.5 ml-2">
-          {dateStatuses.map((ds, i) => (
-            <span
-              key={`${ds.date}-${i}`}
-              className={cn(
-                'inline-block size-2 rounded-full transition-colors duration-300',
-                STATUS_DOT_COLORS[ds.status]
-              )}
+        {hasMiniBar && (
+          <div className="ml-2">
+            <EntryMiniBar
+              completedPct={completedPct}
+              isInProgress={isInProgress}
+              ariaLabel={`${issueKey}: ${completedCount} of ${dateStatuses.length} submitted`}
             />
-          ))}
-        </div>
-        <span className="ml-auto text-xs text-muted-foreground tabular-nums">
-          ({completedCount}/{dateStatuses.length})
-        </span>
+          </div>
+        )}
+        {hasStarted && (
+          <div className="ml-auto flex items-center gap-1.5">
+            {successCount > 0 && (
+              <Badge className="gap-1 bg-transparent text-green-600 dark:text-green-400 border-green-500/20">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
+                {successCount}
+              </Badge>
+            )}
+            {failedCount > 0 && (
+              <Badge className="gap-1 bg-transparent text-red-600 dark:text-red-400 border-red-500/20">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-500" />
+                {failedCount}
+              </Badge>
+            )}
+            {skippedCount > 0 && (
+              <Badge className="gap-1 bg-transparent text-muted-foreground border-muted-foreground/20">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground/50" />
+                {skippedCount}
+              </Badge>
+            )}
+          </div>
+        )}
       </button>
 
       <div
+        id={detailId}
         className={cn(
           'overflow-hidden transition-all duration-200',
           expanded ? 'max-h-[500px]' : 'max-h-0'
         )}
       >
-        <div className="border-t bg-muted/30 px-3 py-1.5">
-          {dateStatuses.map((ds, i) => (
+        <div className="border-t bg-muted/30">
+          <div className="flex items-center justify-between gap-2 px-3 py-1.5 text-xs">
             <div
-              key={`${ds.date}-${i}`}
-              className="flex items-center gap-2.5 py-1 pl-7 text-xs"
+              role="radiogroup"
+              aria-label="Filter dates"
+              className="inline-flex rounded-md border bg-background p-0.5"
             >
-              <StatusIcon status={ds.status} />
-              <span className="font-mono text-muted-foreground">{ds.date}</span>
-              {ds.status === 'failed' && ds.error && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="ml-1 cursor-help text-red-600 dark:text-red-400 underline decoration-dotted">
-                      error
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-[300px] text-xs">
-                    {ds.error.length > 200
-                      ? `${ds.error.slice(0, 200)}...`
-                      : ds.error}
-                  </TooltipContent>
-                </Tooltip>
-              )}
-              {ds.status === 'skipped' && (
-                <span className="text-muted-foreground/60">skipped</span>
-              )}
+              <button
+                type="button"
+                role="radio"
+                aria-checked={!effectiveFailuresOnly}
+                onClick={() => setFilterOverride({ phase, value: false })}
+                className={cn(
+                  'rounded-sm px-2 py-0.5 text-xs transition-colors',
+                  !effectiveFailuresOnly
+                    ? 'bg-muted font-medium text-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                All dates
+              </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={effectiveFailuresOnly}
+                onClick={() => setFilterOverride({ phase, value: true })}
+                disabled={!hasFailure}
+                className={cn(
+                  'rounded-sm px-2 py-0.5 text-xs transition-colors',
+                  effectiveFailuresOnly
+                    ? 'bg-muted font-medium text-foreground'
+                    : 'text-muted-foreground hover:text-foreground',
+                  !hasFailure && 'opacity-50 cursor-not-allowed hover:text-muted-foreground'
+                )}
+              >
+                Failures
+              </button>
             </div>
-          ))}
+            <span className="text-muted-foreground tabular-nums">
+              {dateStatuses.length} dates · {failedCount} failed ·{' '}
+              {skippedCount} skipped
+            </span>
+          </div>
+          <div className="px-3 pb-1.5">
+            {filteredStatuses.map((ds, i) => (
+              <div
+                key={`${ds.date}-${i}`}
+                className="flex items-center gap-2.5 py-1 pl-7 text-xs"
+              >
+                <StatusIcon status={ds.status} />
+                <span className="font-mono text-muted-foreground">
+                  {ds.date}
+                </span>
+                {ds.status === 'failed' && ds.error && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="ml-1 cursor-help text-red-600 dark:text-red-400 underline decoration-dotted">
+                        error
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="top"
+                      className="max-w-[300px] text-xs"
+                    >
+                      {ds.error.length > 200
+                        ? `${ds.error.slice(0, 200)}...`
+                        : ds.error}
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                {ds.status === 'skipped' && (
+                  <span className="text-muted-foreground/60">skipped</span>
+                )}
+              </div>
+            ))}
+            {filteredStatuses.length === 0 && (
+              <div className="py-2 pl-7 text-xs text-muted-foreground italic">
+                No matching dates.
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
