@@ -18,13 +18,7 @@ import {
 import { cn } from '@workspace/ui/lib/utils';
 import type { RequestStatus, RequestStatusState } from '@/types/timesheet';
 
-const STATUS_DOT_COLORS: Record<RequestStatusState, string> = {
-  pending: 'bg-muted-foreground/30',
-  'in-progress': 'bg-blue-500 animate-pulse',
-  success: 'bg-green-500',
-  failed: 'bg-red-500',
-  skipped: 'bg-muted-foreground/20',
-};
+import { DateHeatmapGrid } from './date-heatmap-grid';
 
 function StatusIcon({ status }: { status: RequestStatusState }) {
   switch (status) {
@@ -93,16 +87,8 @@ export function EntryStatusRow({
           )}
         />
         <span className="font-mono font-medium">{issueKey}</span>
-        <div className="flex items-center gap-0.5 ml-2">
-          {dateStatuses.map((ds, i) => (
-            <span
-              key={`${ds.date}-${i}`}
-              className={cn(
-                'inline-block size-2 rounded-full transition-colors duration-300',
-                STATUS_DOT_COLORS[ds.status]
-              )}
-            />
-          ))}
+        <div className="ml-2">
+          <DateHeatmapGrid dateStatuses={dateStatuses} />
         </div>
         <span className="ml-auto text-xs text-muted-foreground tabular-nums">
           ({completedCount}/{dateStatuses.length})
