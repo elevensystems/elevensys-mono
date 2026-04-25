@@ -47,7 +47,7 @@ export function useProjectIssues({
       },
       body: JSON.stringify({
         jiraInstance,
-        jql: `project = ${projectId} ORDER BY created DESC`,
+        jql: `project = ${projectId} AND resolution = Unresolved ORDER BY priority DESC, updated DESC`,
         columnConfig: 'explicit',
         layoutKey: 'split-view',
         startIndex: '0',

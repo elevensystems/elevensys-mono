@@ -18,13 +18,28 @@ beforeAll(() => {
   global.fetch = mockFetch;
 });
 
-// --- Mock clipboard ---
+// --- Mock hooks ---
 
 const mockTrigger = jest.fn();
 const mockIsActive = jest.fn().mockReturnValue(false);
-const mockUseActionFeedback = jest.fn();
 jest.mock('@/hooks/use-action-feedback', () => ({
-  useActionFeedback: () => mockUseActionFeedback(),
+  useActionFeedback: () => ({
+    isActive: mockIsActive,
+    trigger: mockTrigger,
+  }),
+}));
+
+const mockAdd = jest.fn();
+const mockRemove = jest.fn();
+const mockClearAll = jest.fn();
+const mockHistoryItems: unknown[] = [];
+jest.mock('@/hooks/use-url-history', () => ({
+  useUrlHistory: () => ({
+    items: mockHistoryItems,
+    add: mockAdd,
+    remove: mockRemove,
+    clearAll: mockClearAll,
+  }),
 }));
 
 // --- Mock layouts ---
@@ -40,19 +55,13 @@ jest.mock('@/components/layouts/tool-page-header', () => ({
   ToolPageHeader: ({
     title,
     description,
-    infoMessage,
-    error,
   }: {
     title: string;
     description: string;
-    infoMessage?: string;
-    error?: string;
   }) => (
     <div data-testid="tool-page-header">
       <h1>{title}</h1>
       <p>{description}</p>
-      {infoMessage && <p data-testid="info-message">{infoMessage}</p>}
-      {error && <p data-testid="error-message">{error}</p>}
     </div>
   ),
 }));
@@ -60,22 +69,38 @@ jest.mock('@/components/layouts/tool-page-header', () => ({
 // --- Mock icons ---
 
 jest.mock('lucide-react', () => ({
-  CalendarClock: () => <span data-testid="icon-calendar-clock" />,
-  Check: () => <span data-testid="icon-check" />,
   Copy: () => <span data-testid="icon-copy" />,
   Link2: () => <span data-testid="icon-link2" />,
-  Settings: () => <span data-testid="icon-settings" />,
-}));
-
-// --- Mock spinner ---
-
-jest.mock('@workspace/ui/components/spinner', () => ({
-  Spinner: (props: React.HTMLAttributes<HTMLSpanElement>) => (
-    <span data-testid="spinner" {...props} />
-  ),
+  Trash2: () => <span data-testid="icon-trash" />,
 }));
 
 // --- Mock UI components ---
+
+jest.mock('@workspace/ui/components/action-button', () => ({
+  ActionButton: ({
+    children,
+    onClick,
+    disabled,
+    isLoading,
+    loadingText,
+    'aria-label': ariaLabel,
+  }: {
+    children?: React.ReactNode;
+    onClick?: () => void;
+    disabled?: boolean;
+    isLoading?: boolean;
+    loadingText?: string;
+    'aria-label'?: string;
+    leftIcon?: React.ReactNode;
+    feedbackActive?: boolean;
+    variant?: string;
+    size?: string;
+  }) => (
+    <button onClick={onClick} disabled={disabled} aria-label={ariaLabel}>
+      {isLoading ? loadingText : children}
+    </button>
+  ),
+}));
 
 jest.mock('@workspace/ui/components/button', () => ({
   Button: ({
@@ -86,22 +111,6 @@ jest.mock('@workspace/ui/components/button', () => ({
     variant?: string;
     size?: string;
   }) => <button {...props}>{children}</button>,
-}));
-
-jest.mock('@workspace/ui/components/card', () => ({
-  Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  CardContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardDescription: ({ children }: { children: React.ReactNode }) => (
-    <p>{children}</p>
-  ),
-  CardHeader: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardTitle: ({ children }: { children: React.ReactNode }) => (
-    <h2>{children}</h2>
-  ),
 }));
 
 jest.mock('@workspace/ui/components/checkbox', () => ({
@@ -129,40 +138,17 @@ jest.mock('@workspace/ui/components/input', () => ({
   ),
 }));
 
-jest.mock('@workspace/ui/components/label', () => ({
-  Label: ({
-    children,
-    ...props
-  }: React.LabelHTMLAttributes<HTMLLabelElement> & {
-    children: React.ReactNode;
-  }) => <label {...props}>{children}</label>,
+jest.mock('@workspace/ui/components/shine-border', () => ({
+  ShineBorder: () => <span data-testid="shine-border" />,
 }));
 
-jest.mock('@workspace/ui/components/field', () => ({
-  Field: ({
-    children,
-    ...props
-  }: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }) => (
-    <div data-testid="field" {...props}>
-      {children}
-    </div>
+jest.mock('@workspace/ui/components/tooltip', () => ({
+  Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  TooltipTrigger: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
   ),
-  FieldLabel: ({
-    children,
-    ...props
-  }: React.LabelHTMLAttributes<HTMLLabelElement> & {
-    children: React.ReactNode;
-  }) => <label {...props}>{children}</label>,
-  FieldError: ({
-    errors,
-  }: {
-    errors?: Array<{ message?: string } | undefined>;
-  }) => (
-    <div data-testid="field-error" role="alert">
-      {errors?.map((e, i) => (
-        <span key={i}>{e?.message}</span>
-      ))}
-    </div>
+  TooltipContent: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
   ),
 }));
 
@@ -172,10 +158,6 @@ describe('UrlifyPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockIsActive.mockReturnValue(false);
-    mockUseActionFeedback.mockReturnValue({
-      isActive: mockIsActive,
-      trigger: mockTrigger,
-    });
     mockFetch.mockResolvedValue({
       ok: true,
       json: () =>
@@ -184,10 +166,14 @@ describe('UrlifyPage', () => {
           shortCode: 'abc123',
           originalUrl: 'https://example.com/very/long/url',
           createdAt: '2026-01-01T00:00:00Z',
-          expiresAt: '2026-02-01T00:00:00Z',
         }),
     });
   });
+
+  const getUrlInput = () =>
+    screen.getByPlaceholderText('Paste a long URL here...');
+  const getShortenButton = () =>
+    screen.getByRole('button', { name: /^Shorten$/i });
 
   // --- Page header ---
 
@@ -195,34 +181,17 @@ describe('UrlifyPage', () => {
     render(<UrlifyPage />);
     expect(screen.getByText('Urlify')).toBeInTheDocument();
     expect(
-      screen.getByText(
-        'Make your URLs shorter and easier to share. Free tool for creating short links.'
-      )
+      screen.getByText('Shorten any URL into a compact, shareable link.')
     ).toBeInTheDocument();
   });
 
-  it('renders info message', () => {
-    render(<UrlifyPage />);
-    expect(screen.getByTestId('info-message')).toHaveTextContent(
-      /never stored permanently/
-    );
-  });
-
-  // --- Settings card ---
-
-  it('renders Settings card title', () => {
-    render(<UrlifyPage />);
-    expect(screen.getByText('Settings')).toBeInTheDocument();
-  });
+  // --- Input + controls ---
 
   it('renders URL input with placeholder', () => {
     render(<UrlifyPage />);
-    const input = screen.getByLabelText('Enter Long URL');
+    const input = getUrlInput();
     expect(input).toBeInTheDocument();
-    expect(input).toHaveAttribute(
-      'placeholder',
-      'https://example.com/very/long/url/path'
-    );
+    expect(input).toHaveAttribute('type', 'url');
   });
 
   it('renders auto-delete checkbox unchecked by default', () => {
@@ -231,69 +200,28 @@ describe('UrlifyPage', () => {
     expect(checkbox).not.toBeChecked();
   });
 
-  it('renders Shorten URL button', () => {
+  it('renders Shorten button', () => {
     render(<UrlifyPage />);
-    expect(
-      screen.getByRole('button', { name: /Shorten URL/i })
-    ).toBeInTheDocument();
-  });
-
-  // --- Result card ---
-
-  it('renders Result card with empty state message', () => {
-    render(<UrlifyPage />);
-    expect(screen.getByText('Result')).toBeInTheDocument();
-    expect(
-      screen.getByText(/Enter a URL and click "Shorten URL" to get started/)
-    ).toBeInTheDocument();
-  });
-
-  // --- Auto-delete toggle ---
-
-  it('shows TTL input when auto-delete is checked', async () => {
-    render(<UrlifyPage />);
-    await userEvent.click(screen.getByLabelText('Auto-delete link'));
-    expect(screen.getByLabelText('Expires After (days)')).toBeInTheDocument();
-  });
-
-  it('disables TTL input when auto-delete is unchecked', () => {
-    render(<UrlifyPage />);
-    expect(screen.getByLabelText('Expires After (days)')).toBeDisabled();
+    expect(getShortenButton()).toBeInTheDocument();
   });
 
   // --- Validation ---
 
   it('displays error when submitting empty URL', async () => {
     render(<UrlifyPage />);
-    await userEvent.click(screen.getByRole('button', { name: /Shorten URL/i }));
+    await userEvent.click(getShortenButton());
     await waitFor(() => {
-      expect(screen.getByText('Please enter a URL')).toBeInTheDocument();
+      expect(screen.getByText('Please enter a URL.')).toBeInTheDocument();
     });
   });
 
   it('displays error for invalid URL', async () => {
     render(<UrlifyPage />);
-    await userEvent.type(screen.getByLabelText('Enter Long URL'), 'not-a-url');
-    await userEvent.click(screen.getByRole('button', { name: /Shorten URL/i }));
+    await userEvent.type(getUrlInput(), 'not-a-url');
+    await userEvent.click(getShortenButton());
     await waitFor(() => {
       expect(
         screen.getByText(/must start with http:\/\/ or https:\/\//)
-      ).toBeInTheDocument();
-    });
-  });
-
-  it('displays error for invalid TTL value', async () => {
-    render(<UrlifyPage />);
-    await userEvent.click(screen.getByLabelText('Auto-delete link'));
-    await userEvent.type(screen.getByLabelText('Expires After (days)'), '-5');
-    await userEvent.type(
-      screen.getByLabelText('Enter Long URL'),
-      'https://example.com'
-    );
-    await userEvent.click(screen.getByRole('button', { name: /Shorten URL/i }));
-    await waitFor(() => {
-      expect(
-        screen.getByText('TTL must be a positive number of days')
       ).toBeInTheDocument();
     });
   });
@@ -302,11 +230,8 @@ describe('UrlifyPage', () => {
 
   it('calls fetch with correct parameters on shorten', async () => {
     render(<UrlifyPage />);
-    await userEvent.type(
-      screen.getByLabelText('Enter Long URL'),
-      'https://example.com/long'
-    );
-    await userEvent.click(screen.getByRole('button', { name: /Shorten URL/i }));
+    await userEvent.type(getUrlInput(), 'https://example.com/long');
+    await userEvent.click(getShortenButton());
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith('/api/urlify', {
@@ -321,15 +246,11 @@ describe('UrlifyPage', () => {
     });
   });
 
-  it('sends ttlDays when auto-delete is enabled', async () => {
+  it('sends ttlDays=30 when auto-delete is enabled', async () => {
     render(<UrlifyPage />);
-    await userEvent.type(
-      screen.getByLabelText('Enter Long URL'),
-      'https://example.com/long'
-    );
+    await userEvent.type(getUrlInput(), 'https://example.com/long');
     await userEvent.click(screen.getByLabelText('Auto-delete link'));
-    await userEvent.type(screen.getByLabelText('Expires After (days)'), '7');
-    await userEvent.click(screen.getByRole('button', { name: /Shorten URL/i }));
+    await userEvent.click(getShortenButton());
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith('/api/urlify', {
@@ -338,7 +259,7 @@ describe('UrlifyPage', () => {
         body: JSON.stringify({
           originalUrl: 'https://example.com/long',
           autoDelete: true,
-          ttlDays: 7,
+          ttlDays: 30,
         }),
       });
     });
@@ -346,48 +267,31 @@ describe('UrlifyPage', () => {
 
   it('displays shortened URL result on success', async () => {
     render(<UrlifyPage />);
-    await userEvent.type(
-      screen.getByLabelText('Enter Long URL'),
-      'https://example.com/long'
-    );
-    await userEvent.click(screen.getByRole('button', { name: /Shorten URL/i }));
+    await userEvent.type(getUrlInput(), 'https://example.com/long');
+    await userEvent.click(getShortenButton());
 
     await waitFor(() => {
       expect(screen.getByText('https://short.url/abc123')).toBeInTheDocument();
     });
   });
 
-  it('displays result metadata on success', async () => {
+  it('shows success toast on successful shorten', async () => {
     render(<UrlifyPage />);
-    await userEvent.type(
-      screen.getByLabelText('Enter Long URL'),
-      'https://example.com/long'
-    );
-    await userEvent.click(screen.getByRole('button', { name: /Shorten URL/i }));
+    await userEvent.type(getUrlInput(), 'https://example.com/long');
+    await userEvent.click(getShortenButton());
 
     await waitFor(() => {
-      expect(screen.getByText('abc123')).toBeInTheDocument();
-      expect(
-        screen.getByText('https://example.com/very/long/url')
-      ).toBeInTheDocument();
+      expect(toast.success).toHaveBeenCalledWith('URL shortened successfully');
     });
   });
 
-  it('shows success toast on successful shorten', async () => {
+  it('clears input after successful shorten', async () => {
     render(<UrlifyPage />);
-    await userEvent.type(
-      screen.getByLabelText('Enter Long URL'),
-      'https://example.com/long'
-    );
-    await userEvent.click(screen.getByRole('button', { name: /Shorten URL/i }));
+    await userEvent.type(getUrlInput(), 'https://example.com/long');
+    await userEvent.click(getShortenButton());
 
     await waitFor(() => {
-      expect(toast.success).toHaveBeenCalledWith(
-        'URL shortened successfully',
-        expect.objectContaining({
-          description: 'Your short URL is ready to use.',
-        })
-      );
+      expect(getUrlInput()).toHaveValue('');
     });
   });
 
@@ -396,33 +300,26 @@ describe('UrlifyPage', () => {
   it('displays error when API returns non-ok response', async () => {
     mockFetch.mockResolvedValue({ ok: false });
     render(<UrlifyPage />);
-    await userEvent.type(
-      screen.getByLabelText('Enter Long URL'),
-      'https://example.com/long'
-    );
-    await userEvent.click(screen.getByRole('button', { name: /Shorten URL/i }));
+    await userEvent.type(getUrlInput(), 'https://example.com/long');
+    await userEvent.click(getShortenButton());
 
     await waitFor(() => {
-      expect(screen.getByTestId('error-message')).toHaveTextContent(
-        'Failed to shorten URL. Please try again.'
-      );
+      expect(
+        screen.getByText('Failed to shorten URL. Please try again.')
+      ).toBeInTheDocument();
     });
   });
 
-  it('shows error toast when API fails', async () => {
+  it('displays error when fetch rejects', async () => {
     mockFetch.mockRejectedValue(new Error('Network error'));
     render(<UrlifyPage />);
-    await userEvent.type(
-      screen.getByLabelText('Enter Long URL'),
-      'https://example.com/long'
-    );
-    await userEvent.click(screen.getByRole('button', { name: /Shorten URL/i }));
+    await userEvent.type(getUrlInput(), 'https://example.com/long');
+    await userEvent.click(getShortenButton());
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(
-        'Failed to shorten URL. Please try again.',
-        expect.objectContaining({ duration: 5000 })
-      );
+      expect(
+        screen.getByText('Failed to shorten URL. Please try again.')
+      ).toBeInTheDocument();
     });
   });
 
@@ -432,71 +329,21 @@ describe('UrlifyPage', () => {
       json: () => Promise.resolve({ error: 'something went wrong' }),
     });
     render(<UrlifyPage />);
-    await userEvent.type(
-      screen.getByLabelText('Enter Long URL'),
-      'https://example.com/long'
-    );
-    await userEvent.click(screen.getByRole('button', { name: /Shorten URL/i }));
+    await userEvent.type(getUrlInput(), 'https://example.com/long');
+    await userEvent.click(getShortenButton());
 
     await waitFor(() => {
-      expect(screen.getByTestId('error-message')).toHaveTextContent(
-        'Failed to shorten URL. Please try again.'
-      );
+      expect(
+        screen.getByText('Failed to shorten URL. Please try again.')
+      ).toBeInTheDocument();
     });
-  });
-
-  // --- Loading state ---
-
-  it('calls fetch when submitting valid URL (loading state)', async () => {
-    mockFetch.mockReturnValue(new Promise(() => {})); // never resolves
-    render(<UrlifyPage />);
-    await userEvent.type(
-      screen.getByLabelText('Enter Long URL'),
-      'https://example.com/long'
-    );
-    await userEvent.click(screen.getByRole('button', { name: /Shorten URL/i }));
-
-    await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith(
-        '/api/urlify',
-        expect.objectContaining({ method: 'POST' })
-      );
-    });
-  });
-
-  // --- Copy functionality ---
-
-  it('calls trigger when copy button is clicked', async () => {
-    Object.assign(navigator, {
-      clipboard: { writeText: jest.fn().mockResolvedValue(undefined) },
-    });
-
-    render(<UrlifyPage />);
-    await userEvent.type(
-      screen.getByLabelText('Enter Long URL'),
-      'https://example.com/long'
-    );
-    await userEvent.click(screen.getByRole('button', { name: /Shorten URL/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText('https://short.url/abc123')).toBeInTheDocument();
-    });
-
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Copy to clipboard' })
-    );
-    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-      'https://short.url/abc123'
-    );
-    expect(mockTrigger).toHaveBeenCalledWith('copy');
   });
 
   // --- Keyboard interaction ---
 
   it('triggers shorten on Enter key press', async () => {
     render(<UrlifyPage />);
-    const input = screen.getByLabelText('Enter Long URL');
-    await userEvent.type(input, 'https://example.com/long{Enter}');
+    await userEvent.type(getUrlInput(), 'https://example.com/long{Enter}');
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalled();
@@ -505,45 +352,37 @@ describe('UrlifyPage', () => {
 
   // --- URL change clears state ---
 
-  it('clears API error when URL input changes', async () => {
-    mockFetch.mockResolvedValue({ ok: false });
+  it('clears error when URL input changes', async () => {
     render(<UrlifyPage />);
-    await userEvent.type(
-      screen.getByLabelText('Enter Long URL'),
-      'https://example.com'
-    );
-    await userEvent.click(screen.getByRole('button', { name: /Shorten URL/i }));
+    await userEvent.click(getShortenButton());
 
     await waitFor(() => {
-      expect(screen.getByTestId('error-message')).toBeInTheDocument();
+      expect(screen.getByText('Please enter a URL.')).toBeInTheDocument();
     });
 
-    // Type in URL input to clear the API error
-    await userEvent.type(screen.getByLabelText('Enter Long URL'), '/path');
-    expect(screen.queryByTestId('error-message')).not.toBeInTheDocument();
+    await userEvent.type(getUrlInput(), 'h');
+    expect(screen.queryByText('Please enter a URL.')).not.toBeInTheDocument();
   });
 
-  // --- Result displays "Never" for no expiresAt ---
+  // --- Copy functionality ---
 
-  it('displays "Never" when expiresAt is not set', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          shortUrl: 'https://short.url/xyz',
-          shortCode: 'xyz',
-        }),
-    });
+  it('copies shortened URL and triggers feedback', async () => {
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
 
     render(<UrlifyPage />);
-    await userEvent.type(
-      screen.getByLabelText('Enter Long URL'),
-      'https://example.com'
-    );
-    await userEvent.click(screen.getByRole('button', { name: /Shorten URL/i }));
+    await userEvent.type(getUrlInput(), 'https://example.com/long');
+    await userEvent.click(getShortenButton());
 
     await waitFor(() => {
-      expect(screen.getByText('Never')).toBeInTheDocument();
+      expect(screen.getByText('https://short.url/abc123')).toBeInTheDocument();
     });
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Copy shortened URL' })
+    );
+
+    expect(writeText).toHaveBeenCalledWith('https://short.url/abc123');
+    expect(mockTrigger).toHaveBeenCalledWith('result');
   });
 });

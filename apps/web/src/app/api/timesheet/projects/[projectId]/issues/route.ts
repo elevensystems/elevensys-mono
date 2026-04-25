@@ -54,15 +54,13 @@ export async function GET(
 
     if (result.success && result.data?.issueTable) {
       const { table, total } = result.data.issueTable;
-      const issues = (table as JiraIssueRaw[])
-        .filter(issue => issue.type?.name === 'Sub-task')
-        .map(issue => ({
-          id: issue.id,
-          key: issue.key,
-          status: issue.status,
-          summary: issue.summary,
-          type: issue.type,
-        }));
+      const issues = (table as JiraIssueRaw[]).map(issue => ({
+        id: issue.id,
+        key: issue.key,
+        status: issue.status,
+        summary: issue.summary,
+        type: issue.type,
+      }));
 
       return NextResponse.json({
         success: true,
