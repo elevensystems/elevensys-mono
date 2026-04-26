@@ -8,13 +8,32 @@ A monorepo containing applications and packages built with Next.js, React, Tailw
 - `apps/admin`: The administrative Next.js application (Port 3002).
 - `packages/ui`: Shared UI components using shadcn/ui and Tailwind CSS.
 
+## Timesheet
+
+A Jira timesheet management feature for logging and reviewing work entries.
+
+| Page                  | Route                         | Description                                              |
+| --------------------- | ----------------------------- | -------------------------------------------------------- |
+| **Log Work**          | `/timesheet/logwork`          | Find missing dates and bulk-log work entries to Jira     |
+| **My Worklogs**       | `/timesheet/worklogs`         | View and manage your own worklogs grouped by date        |
+| **Project Worklogs**  | `/timesheet/project-worklogs` | View all worklogs for a project with filtering           |
+| **Configuration**     | `/timesheet/config`           | Set Jira instance, username, and API token               |
+
+### Log Work — Bulk Date Range Submission
+
+The Log Work page groups consecutive selected dates into ranges and submits one API request per range per entry (instead of one per date). For example, selecting Mon–Fri produces a single request with `startDate: "4/May/26"` and `endDate: "8/May/26"`.
+
+**Important constraint**: the backend logs for every calendar day in the range and rejects the entire range if any date is a holiday or weekend. The grouping logic therefore only merges dates that are exactly 1 calendar day apart, ensuring weekends and holidays never fall within a range boundary.
+
 ## Tools
 
 | Tool                 | Description                                                  |
 | -------------------- | ------------------------------------------------------------ |
 | **Urlify**           | Shorten long URLs to make them easier to share and manage    |
 | **JSON Diffinity**   | Compare two JSON payloads with editor-style highlighting     |
+| **JSON Lens**        | Explore and navigate deeply nested JSON structures           |
 | **JSON Objectify**   | Transform JSON into clean JavaScript object notation         |
+| **Caseify**          | Convert text between camelCase, snake_case, PascalCase, etc. |
 | **Translately**      | Translate between Vietnamese and English with tone control   |
 | **Passly**           | Generate secure, random passwords with customizable options  |
 | **NPM Converter**    | Convert Lerna publish output to npm install commands         |
