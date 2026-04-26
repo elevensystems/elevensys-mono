@@ -73,9 +73,14 @@ jest.mock('lucide-react', () => ({
   Check: () => <span data-testid="icon-check" />,
   Eye: () => <span data-testid="icon-eye" />,
   EyeOff: () => <span data-testid="icon-eye-off" />,
+  KeyRound: () => <span data-testid="icon-key-round" />,
   Save: () => <span data-testid="icon-save" />,
+  Server: () => <span data-testid="icon-server" />,
   Settings: () => <span data-testid="icon-settings" />,
+  ShieldCheck: () => <span data-testid="icon-shield-check" />,
   Trash2: () => <span data-testid="icon-trash" />,
+  User: () => <span data-testid="icon-user" />,
+  X: () => <span data-testid="icon-x" />,
 }));
 
 jest.mock('@workspace/ui/components/spinner', () => ({
@@ -222,16 +227,11 @@ describe('TimesheetConfigPage', () => {
   it('renders page header with title and description', () => {
     render(<TimesheetConfigPage />);
     expect(screen.getByText('Configurations')).toBeInTheDocument();
-    expect(
-      screen.getByText(/Configure your credentials to connect with Jira/)
-    ).toBeInTheDocument();
   });
 
-  it('renders info message about local storage', () => {
+  it('renders privacy note about local storage', () => {
     render(<TimesheetConfigPage />);
-    expect(screen.getByTestId('info-message')).toHaveTextContent(
-      /stored only in your browser/
-    );
+    expect(screen.getByText(/Credentials stored locally/)).toBeInTheDocument();
   });
 
   // --- Connection status ---
@@ -241,17 +241,17 @@ describe('TimesheetConfigPage', () => {
     expect(screen.getByText('Connected')).toBeInTheDocument();
   });
 
-  it('renders "Not Configured" badge when not configured', () => {
+  it('renders "Not configured" badge when not configured', () => {
     mockUseTimesheetSettings.mockReturnValue(emptySettings);
     render(<TimesheetConfigPage />);
-    expect(screen.getByText('Not Configured')).toBeInTheDocument();
+    expect(screen.getByText('Not configured')).toBeInTheDocument();
   });
 
   // --- Form fields ---
 
   it('renders Jira Instance select with three options', () => {
     render(<TimesheetConfigPage />);
-    const select = screen.getByLabelText('Jira Instance');
+    const select = screen.getByLabelText('Instance');
     expect(select).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'jiradc' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'jira3' })).toBeInTheDocument();
@@ -270,7 +270,7 @@ describe('TimesheetConfigPage', () => {
 
   it('renders help link with correct jiraInstance URL', () => {
     render(<TimesheetConfigPage />);
-    const link = screen.getByText('here');
+    const link = screen.getByText('Create a token');
     expect(link).toHaveAttribute(
       'href',
       'https://insight.fsoft.com.vn/jiradc/secure/ViewProfile.jspa'
@@ -298,11 +298,11 @@ describe('TimesheetConfigPage', () => {
 
   it('renders navigation links when configured', () => {
     render(<TimesheetConfigPage />);
-    expect(screen.getByText('Go to Log Work').closest('a')).toHaveAttribute(
+    expect(screen.getByText('Log Work').closest('a')).toHaveAttribute(
       'href',
       '/timesheet/logwork'
     );
-    expect(screen.getByText('Go to My Worklogs').closest('a')).toHaveAttribute(
+    expect(screen.getByText('My Worklogs').closest('a')).toHaveAttribute(
       'href',
       '/timesheet/my-worklogs'
     );
@@ -311,8 +311,8 @@ describe('TimesheetConfigPage', () => {
   it('hides navigation links when not configured', () => {
     mockUseTimesheetSettings.mockReturnValue(emptySettings);
     render(<TimesheetConfigPage />);
-    expect(screen.queryByText('Go to Log Work')).not.toBeInTheDocument();
-    expect(screen.queryByText('Go to My Worklogs')).not.toBeInTheDocument();
+    expect(screen.queryByText('Log Work')).not.toBeInTheDocument();
+    expect(screen.queryByText('My Worklogs')).not.toBeInTheDocument();
   });
 
   // --- Clear button ---
@@ -466,10 +466,10 @@ describe('TimesheetConfigPage', () => {
   it('updates help link URL when jira instance changes', async () => {
     render(<TimesheetConfigPage />);
     await userEvent.selectOptions(
-      screen.getByLabelText('Jira Instance'),
+      screen.getByLabelText('Instance'),
       'jira3'
     );
-    expect(screen.getByText('here')).toHaveAttribute(
+    expect(screen.getByText('Create a token')).toHaveAttribute(
       'href',
       'https://insight.fsoft.com.vn/jira3/secure/ViewProfile.jspa'
     );
