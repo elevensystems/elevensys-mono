@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 
 import { ActionButton } from '@workspace/ui/components/action-button';
-import { Badge } from '@workspace/ui/components/badge';
 import { ScrollArea } from '@workspace/ui/components/scroll-area';
 import {
   Sheet,
@@ -22,10 +21,9 @@ import {
 } from '@workspace/ui/components/sheet';
 import {
   formatHours,
-  getWorkTypeBadgeClass,
+  getWorkTypeDotClass,
   parseApiDate,
 } from '@/lib/timesheet';
-import { cn } from '@workspace/ui/lib/utils';
 import type { JiraProject, WorkEntry } from '@/types/timesheet';
 
 function formatLongDate(date: Date): string {
@@ -189,15 +187,10 @@ export function ConfirmDialog({
                               {entry.issueKey}
                             </span>
                             <div className="flex items-center gap-2 shrink-0">
-                              <Badge
-                                variant="outline"
-                                className={cn(
-                                  'text-xs px-1.5 py-0',
-                                  getWorkTypeBadgeClass(entry.typeOfWork)
-                                )}
-                              >
+                              <span className="inline-flex items-center gap-1.5 text-xs">
+                                <span className={`size-2 rounded-full shrink-0 ${getWorkTypeDotClass(entry.typeOfWork)}`} />
                                 {entry.typeOfWork}
-                              </Badge>
+                              </span>
                               <span className="text-xs tabular-nums text-muted-foreground">
                                 {entry.hours}h
                               </span>

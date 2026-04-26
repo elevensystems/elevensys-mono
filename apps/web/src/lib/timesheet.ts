@@ -172,33 +172,6 @@ export function getStatusVariant(
   }
 }
 
-/**
- * Get gradient badge class for work type
- */
-export function getWorkTypeBadgeClass(type: string): string {
-  switch (type.toLowerCase()) {
-    case 'create':
-      return 'border-transparent bg-gradient-to-r from-violet-500/15 to-fuchsia-500/15 text-violet-700 dark:from-violet-500/25 dark:to-fuchsia-500/25 dark:text-violet-300';
-    case 'test':
-      return 'border-transparent bg-gradient-to-r from-emerald-500/15 to-teal-500/15 text-emerald-700 dark:from-emerald-500/25 dark:to-teal-500/25 dark:text-emerald-300';
-    case 'analysis':
-      return 'border-transparent bg-gradient-to-r from-sky-500/15 to-cyan-500/15 text-sky-700 dark:from-sky-500/25 dark:to-cyan-500/25 dark:text-sky-300';
-    case 'management':
-      return 'border-transparent bg-gradient-to-r from-amber-500/15 to-orange-500/15 text-amber-700 dark:from-amber-500/25 dark:to-orange-500/25 dark:text-amber-300';
-    case 'review':
-      return 'border-transparent bg-gradient-to-r from-pink-500/15 to-rose-500/15 text-pink-700 dark:from-pink-500/25 dark:to-rose-500/25 dark:text-pink-300';
-    case 'study':
-      return 'border-transparent bg-gradient-to-r from-indigo-500/15 to-blue-500/15 text-indigo-700 dark:from-indigo-500/25 dark:to-blue-500/25 dark:text-indigo-300';
-    case 'correct':
-      return 'border-transparent bg-gradient-to-r from-red-500/15 to-orange-500/15 text-red-700 dark:from-red-500/25 dark:to-orange-500/25 dark:text-red-300';
-    case 'translate':
-      return 'border-transparent bg-gradient-to-r from-blue-500/15 to-indigo-500/15 text-blue-700 dark:from-blue-500/25 dark:to-indigo-500/25 dark:text-blue-300';
-    case 'research':
-      return 'border-transparent bg-gradient-to-r from-slate-500/15 to-zinc-500/15 text-slate-700 dark:from-slate-500/25 dark:to-zinc-500/25 dark:text-slate-300';
-    default:
-      return 'border-transparent bg-gradient-to-r from-slate-500/15 to-gray-500/15 text-slate-700 dark:from-slate-500/25 dark:to-gray-500/25 dark:text-slate-300';
-  }
-}
 
 /**
  * Format a numeric hours value for display.
@@ -210,27 +183,44 @@ export function formatHours(value: number): string {
   return value.toFixed(2).replace(/\.?0+$/, '');
 }
 
-export function getWorkTypeDotColor(type: string): string {
+/**
+ * Deterministically map a username to an HSL color for visual differentiation.
+ * Same username always produces the same hue; saturation/lightness are fixed
+ * for readability on both light and dark backgrounds.
+ */
+export function getUsernameColor(username: string): string {
+  let hash = 0;
+  for (let i = 0; i < username.length; i++) {
+    hash = username.charCodeAt(i) + ((hash << 5) - hash);
+    hash |= 0;
+  }
+  // Multiply by the golden angle to maximally spread hues apart
+  const hue = (Math.abs(hash) * 137.508) % 360;
+  return `hsl(${hue}, 65%, 48%)`;
+}
+
+export function getWorkTypeDotClass(type: string): string {
   switch (type.toLowerCase()) {
-    case 'create':
-      return '#8b5cf6';
-    case 'test':
-      return '#10b981';
-    case 'analysis':
-      return '#0ea5e9';
-    case 'management':
-      return '#f59e0b';
-    case 'review':
-      return '#ec4899';
-    case 'study':
-      return '#6366f1';
     case 'correct':
-      return '#ef4444';
+      return 'bg-red-500';       // 0°
+    case 'management':
+      return 'bg-orange-500';    // 30°
+    case 'study':
+      return 'bg-yellow-400';    // 60°
+    case 'test':
+      return 'bg-green-500';     // 120°
     case 'translate':
-      return '#3b82f6';
+      return 'bg-teal-500';      // 170°
+    case 'analysis':
+      return 'bg-sky-500';       // 200°
     case 'research':
-      return '#64748b';
+      return 'bg-blue-600';      // 240°
+    case 'create':
+      return 'bg-violet-500';    // 270°
+    case 'review':
+      return 'bg-fuchsia-500';   // 300°
     default:
-      return '#94a3b8';
+      return 'bg-slate-400';
   }
 }
+

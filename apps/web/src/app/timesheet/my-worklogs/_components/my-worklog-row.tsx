@@ -30,7 +30,7 @@ import {
   formatDisplayDate,
   formatHours,
   getStatusVariant,
-  getWorkTypeDotColor,
+  getWorkTypeDotClass,
 } from '@/lib/timesheet';
 import type { MyWorklogsRow } from '@/types/timesheet';
 
@@ -105,8 +105,7 @@ export const MyWorklogRow = memo(function MyWorklogRow({
 
       <span className="flex items-center gap-1.5 text-sm shrink-0 w-24">
         <span
-          className="size-2 rounded-full shrink-0"
-          style={{ backgroundColor: getWorkTypeDotColor(worklog.typeOfWork) }}
+          className={`size-2 rounded-full shrink-0 ${getWorkTypeDotClass(worklog.typeOfWork)}`}
         />
         {worklog.typeOfWork}
       </span>

@@ -12,7 +12,8 @@ import {
 import {
   formatDisplayDate,
   getStatusVariant,
-  getWorkTypeBadgeClass,
+  getUsernameColor,
+  getWorkTypeDotClass,
 } from '@/lib/timesheet';
 import type { ProjectWorklogRow as ProjectWorklogRowData } from '@/types/timesheet';
 
@@ -27,12 +28,18 @@ export const ProjectWorklogRow = memo(function ProjectWorklogRow({
   const hours = parseFloat(row.worked);
 
   return (
-    <TableRow>
+    <TableRow className="transition-colors hover:bg-muted/50">
       <TableCell className="text-muted-foreground text-sm">
         {row.no + 1}
       </TableCell>
-      <TableCell className="font-mono font-semibold">{row.key}</TableCell>
-      <TableCell className="max-w-[220px]">
+      <TableCell
+        className="font-medium"
+        style={{ color: getUsernameColor(row.user) }}
+      >
+        {row.user}
+      </TableCell>
+      <TableCell className="font-mono font-semibold text-nowrap">{row.key}</TableCell>
+      <TableCell className="max-w-0">
         {row.description ? (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -50,18 +57,17 @@ export const ProjectWorklogRow = memo(function ProjectWorklogRow({
         {isNaN(hours) ? row.worked?.trim() : `${hours}h`}
       </TableCell>
       <TableCell>
-        <Badge
-          variant="outline"
-          className={getWorkTypeBadgeClass(row.attribute)}
-        >
+        <span className="inline-flex items-center gap-1.5 text-sm">
+          <span
+            className={`size-2 rounded-full shrink-0 ${getWorkTypeDotClass(row.attribute)}`}
+          />
           {row.attribute}
-        </Badge>
+        </span>
       </TableCell>
-      <TableCell className="text-nowrap">{displayDate}</TableCell>
+      <TableCell className="text-nowrap text-sm">{displayDate}</TableCell>
       <TableCell>
         <Badge variant={getStatusVariant(row.status)}>{row.status}</Badge>
       </TableCell>
-      <TableCell className="text-muted-foreground">{row.user}</TableCell>
     </TableRow>
   );
 });

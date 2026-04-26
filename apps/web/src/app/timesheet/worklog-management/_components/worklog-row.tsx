@@ -30,7 +30,7 @@ import { getWorklogKey } from '@/hooks/use-worklogs';
 import {
   formatDisplayDate,
   getStatusVariant,
-  getWorkTypeBadgeClass,
+  getWorkTypeDotClass,
 } from '@/lib/timesheet';
 import type { MyWorklogsRow } from '@/types/timesheet';
 
@@ -105,12 +105,10 @@ export const WorklogRow = memo(function WorklogRow({
         {parseFloat(String(worklog.worked))}h
       </TableCell>
       <TableCell>
-        <Badge
-          variant="outline"
-          className={getWorkTypeBadgeClass(worklog.typeOfWork)}
-        >
+        <span className="inline-flex items-center gap-1.5 text-sm">
+          <span className={`size-2 rounded-full shrink-0 ${getWorkTypeDotClass(worklog.typeOfWork)}`} />
           {worklog.typeOfWork}
-        </Badge>
+        </span>
       </TableCell>
       <TableCell className="text-nowrap">{displayDate}</TableCell>
       <TableCell>
