@@ -28,9 +28,11 @@ import {
   formatDateForApi,
   formatHours,
   generateEntryId,
+  groupDatesIntoRanges,
   isValidIssueKey,
 } from '@/lib/timesheet';
 import type {
+  DateRange,
   LogWorkResult,
   RowErrors,
   ValidationErrors,
@@ -152,6 +154,12 @@ export default function LogWorkPage() {
         .sort((a, b) => a.getTime() - b.getTime())
         .map(dateToApiFormat),
     [selectedDates]
+  );
+
+  // Group consecutive dates into ranges for bulk submission
+  const dateRanges = useMemo<DateRange[]>(
+    () => groupDatesIntoRanges(parsedDates),
+    [parsedDates]
   );
 
   const clearAllDates = useCallback(() => setSelectedDates([]), []);
@@ -311,12 +319,12 @@ export default function LogWorkPage() {
 
     const logResults = await submitEntries({
       entries,
-      dates: parsedDates,
+      ranges: dateRanges,
     });
 
     // Results are processed when modal closes
     pendingResultsRef.current = logResults;
-  }, [entries, parsedDates, selectedProjectId, submitEntries]);
+  }, [entries, dateRanges, selectedProjectId, submitEntries]);
 
   const handleRetryFailed = useCallback(async () => {
     const failedResults = results.filter(
@@ -484,7 +492,7 @@ export default function LogWorkPage() {
                   loadingText="Submitting..."
                   title={
                     parsedDates.length > 0 && validEntryCount > 0
-                      ? `Will submit ${validEntryCount * parsedDates.length} worklogs (${validEntryCount} entr${validEntryCount !== 1 ? 'ies' : 'y'} × ${parsedDates.length} date${parsedDates.length !== 1 ? 's' : ''})`
+                      ? `Will send ${validEntryCount * dateRanges.length} request${validEntryCount * dateRanges.length !== 1 ? 's' : ''} (${validEntryCount} entr${validEntryCount !== 1 ? 'ies' : 'y'} × ${dateRanges.length} range${dateRanges.length !== 1 ? 's' : ''}) covering ${parsedDates.length} date${parsedDates.length !== 1 ? 's' : ''}`
                       : undefined
                   }
                 >
@@ -512,6 +520,7 @@ export default function LogWorkPage() {
           onConfirm={handleLogWork}
           entries={entries}
           parsedDates={parsedDates}
+          dateRanges={dateRanges}
           selectedProject={selectedProject ?? undefined}
           totalHours={totalHours}
         />

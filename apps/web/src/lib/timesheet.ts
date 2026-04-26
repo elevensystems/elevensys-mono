@@ -1,3 +1,5 @@
+import type { DateRange } from '@/types/timesheet';
+
 const MONTH_ABBRS = [
   'Jan',
   'Feb',
@@ -145,6 +147,53 @@ export function getMonthEnd(): string {
   const now = new Date();
   const d = new Date(now.getFullYear(), now.getMonth() + 1, 0);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/**
+ * Group a sorted array of Jira-format date strings into contiguous date ranges.
+ * Two dates are contiguous only if they are exactly 1 calendar day apart.
+ * This ensures ranges never span weekends or holidays.
+ */
+export function groupDatesIntoRanges(dates: string[]): DateRange[] {
+  if (dates.length === 0) return [];
+
+  const ranges: DateRange[] = [];
+  let rangeStart = dates[0];
+  let rangeEnd = dates[0];
+  let rangeDates: string[] = [dates[0]];
+
+  for (let i = 1; i < dates.length; i++) {
+    const prev = parseApiDate(dates[i - 1]);
+    const curr = parseApiDate(dates[i]);
+
+    const isConsecutive =
+      prev !== null &&
+      curr !== null &&
+      curr.getTime() - prev.getTime() === 24 * 60 * 60 * 1000;
+
+    if (isConsecutive) {
+      rangeEnd = dates[i];
+      rangeDates.push(dates[i]);
+    } else {
+      ranges.push({ startDate: rangeStart, endDate: rangeEnd, dates: rangeDates });
+      rangeStart = dates[i];
+      rangeEnd = dates[i];
+      rangeDates = [dates[i]];
+    }
+  }
+
+  ranges.push({ startDate: rangeStart, endDate: rangeEnd, dates: rangeDates });
+  return ranges;
+}
+
+/**
+ * Format a DateRange as a human-readable label.
+ * Single-date range: "4/May/26"
+ * Multi-date range: "4/May/26 → 8/May/26"
+ */
+export function formatRangeLabel(range: DateRange): string {
+  if (range.startDate === range.endDate) return range.startDate;
+  return `${range.startDate} → ${range.endDate}`;
 }
 
 /**

@@ -24,7 +24,7 @@ import {
   getWorkTypeDotClass,
   parseApiDate,
 } from '@/lib/timesheet';
-import type { JiraProject, WorkEntry } from '@/types/timesheet';
+import type { DateRange, JiraProject, WorkEntry } from '@/types/timesheet';
 
 function formatLongDate(date: Date): string {
   return date.toLocaleDateString('en-GB', {
@@ -35,6 +35,26 @@ function formatLongDate(date: Date): string {
   });
 }
 
+function formatShortDate(date: Date): string {
+  return date.toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  });
+}
+
+function formatRangeHeader(range: DateRange): string {
+  if (range.startDate === range.endDate) {
+    const d = parseApiDate(range.startDate);
+    return d ? formatLongDate(d) : range.startDate;
+  }
+  const start = parseApiDate(range.startDate);
+  const end = parseApiDate(range.endDate);
+  const startLabel = start ? formatShortDate(start) : range.startDate;
+  const endLabel = end ? formatShortDate(end) : range.endDate;
+  return `${startLabel} → ${endLabel} (${range.dates.length} days)`;
+}
+
 const COLLAPSE_THRESHOLD = 3;
 
 interface ConfirmDialogProps {
@@ -43,6 +63,7 @@ interface ConfirmDialogProps {
   onConfirm: () => void;
   entries: WorkEntry[];
   parsedDates: string[];
+  dateRanges: DateRange[];
   selectedProject?: JiraProject;
   totalHours: number;
 }
@@ -53,26 +74,29 @@ export function ConfirmDialog({
   onConfirm,
   entries,
   parsedDates,
+  dateRanges,
   selectedProject,
   totalHours,
 }: ConfirmDialogProps) {
   const validEntries = entries.filter(e => e.issueKey.trim());
   const totalWorklogs = validEntries.length * parsedDates.length;
   const totalHoursAll = totalHours * parsedDates.length;
+  const totalRequests = validEntries.length * dateRanges.length;
 
-  const shouldCollapse = parsedDates.length > COLLAPSE_THRESHOLD;
-  const [expandedDates, setExpandedDates] = useState<Set<string>>(
-    () => new Set(shouldCollapse ? [] : parsedDates)
+  const shouldCollapse = dateRanges.length > COLLAPSE_THRESHOLD;
+  const rangeKeys = dateRanges.map(r => r.startDate);
+  const [expandedRanges, setExpandedRanges] = useState<Set<string>>(
+    () => new Set(shouldCollapse ? [] : rangeKeys)
   );
   const [allExpanded, setAllExpanded] = useState(!shouldCollapse);
 
-  const toggleDate = (date: string) => {
-    setExpandedDates(prev => {
+  const toggleRange = (key: string) => {
+    setExpandedRanges(prev => {
       const next = new Set(prev);
-      if (next.has(date)) {
-        next.delete(date);
+      if (next.has(key)) {
+        next.delete(key);
       } else {
-        next.add(date);
+        next.add(key);
       }
       return next;
     });
@@ -80,10 +104,10 @@ export function ConfirmDialog({
 
   const toggleAll = () => {
     if (allExpanded) {
-      setExpandedDates(new Set());
+      setExpandedRanges(new Set());
       setAllExpanded(false);
     } else {
-      setExpandedDates(new Set(parsedDates));
+      setExpandedRanges(new Set(rangeKeys));
       setAllExpanded(true);
     }
   };
@@ -104,7 +128,7 @@ export function ConfirmDialog({
 
           {/* Summary Banner */}
           <div className="mt-2 rounded-lg border bg-muted/30 overflow-hidden">
-            <div className="grid grid-cols-3 divide-x">
+            <div className="grid grid-cols-4 divide-x">
               <div className="flex flex-col items-center py-3 gap-0.5">
                 <span className="text-lg font-bold tabular-nums leading-none">
                   {totalWorklogs}
@@ -117,6 +141,14 @@ export function ConfirmDialog({
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {parsedDates.length !== 1 ? 'dates' : 'date'}
+                </span>
+              </div>
+              <div className="flex flex-col items-center py-3 gap-0.5">
+                <span className="text-lg font-bold tabular-nums leading-none">
+                  {totalRequests}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {totalRequests !== 1 ? 'requests' : 'request'}
                 </span>
               </div>
               <div className="flex flex-col items-center py-3 gap-0.5">
@@ -135,10 +167,10 @@ export function ConfirmDialog({
           </div>
         </SheetHeader>
 
-        {/* Scrollable date list */}
+        {/* Scrollable range list */}
         <div className="flex items-center justify-between px-6 py-3 shrink-0">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            Grouped by date
+            Grouped by date range
           </p>
           {shouldCollapse && (
             <button
@@ -153,22 +185,23 @@ export function ConfirmDialog({
 
         <ScrollArea className="flex-1 min-h-0">
           <div className="space-y-2 px-6 pb-4">
-            {parsedDates.map(date => {
-              const dateObj = parseApiDate(date);
-              const label = dateObj ? formatLongDate(dateObj) : date;
-              const isExpanded = expandedDates.has(date);
+            {dateRanges.map(range => {
+              const key = range.startDate;
+              const label = formatRangeHeader(range);
+              const isExpanded = expandedRanges.has(key);
+              const hoursForRange = totalHours * range.dates.length;
 
               return (
-                <div key={date} className="rounded-md border overflow-hidden">
+                <div key={key} className="rounded-md border overflow-hidden">
                   <button
                     type="button"
-                    onClick={() => toggleDate(date)}
+                    onClick={() => toggleRange(key)}
                     className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm font-medium hover:bg-muted/50 transition-colors"
                   >
                     <span>{label}</span>
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <span className="text-xs tabular-nums">
-                        {formatHours(totalHours)}h
+                        {formatHours(hoursForRange)}h
                       </span>
                       {isExpanded ? (
                         <ChevronDown className="h-3.5 w-3.5" />
@@ -192,7 +225,7 @@ export function ConfirmDialog({
                                 {entry.typeOfWork}
                               </span>
                               <span className="text-xs tabular-nums text-muted-foreground">
-                                {entry.hours}h
+                                {entry.hours}h x {range.dates.length}
                               </span>
                             </div>
                           </div>

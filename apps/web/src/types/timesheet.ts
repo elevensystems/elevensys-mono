@@ -83,11 +83,17 @@ export interface TimesheetSettings {
   authData?: TimesheetAuthData;
 }
 
+export interface DateRange {
+  startDate: string;
+  endDate: string;
+  dates: string[];
+}
+
 export interface LogWorkResult {
   entry: WorkEntry;
   success: boolean;
   error?: string;
-  failedDates?: string[];
+  failedRanges?: DateRange[];
 }
 
 export type RequestStatusState =
@@ -100,7 +106,8 @@ export type RequestStatusState =
 export interface RequestStatus {
   entryId: string;
   issueKey: string;
-  date: string;
+  rangeLabel: string;
+  dates: string[];
   status: RequestStatusState;
   error?: string;
 }
