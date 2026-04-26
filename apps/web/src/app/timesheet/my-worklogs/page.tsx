@@ -163,13 +163,15 @@ export default function MyWorklogsPage() {
 
           {/* Select-all + bulk delete bar */}
           {worklogs.length > 0 && (
-            <div className="flex items-center gap-2">
-              <Checkbox
-                checked={allSelected ? true : someSelected ? 'indeterminate' : false}
-                onCheckedChange={toggleSelectAll}
-                aria-label="Select all"
-              />
-              <span className="text-sm text-muted-foreground">Select all</span>
+            <div className="flex items-center justify-between h-8">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+                  onCheckedChange={toggleSelectAll}
+                  aria-label="Select all"
+                />
+                <span className="text-sm text-muted-foreground">Select all</span>
+              </div>
               <BulkDeleteAction
                 selectedCount={selectedIds.size}
                 isBulkDeleting={isBulkDeleting}

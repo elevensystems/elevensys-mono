@@ -80,7 +80,7 @@ export const MyWorklogRow = memo(function MyWorklogRow({
         className="shrink-0"
       />
 
-      <span className="font-mono font-semibold text-sm shrink-0 w-24 truncate">
+      <span className="font-mono font-semibold text-sm shrink-0 w-30 truncate">
         {worklog.issueKey}
       </span>
 
