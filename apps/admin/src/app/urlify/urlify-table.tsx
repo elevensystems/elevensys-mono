@@ -75,6 +75,7 @@ export function UrlifyTable({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [bulkDeleteProgress, setBulkDeleteProgress] = useState(0);
   const [cursorStack, setCursorStack] = useState<string[]>([]);
   const [viewedPage, setViewedPage] = useState(1);
   const [hasMoreBeyondKnown, setHasMoreBeyondKnown] = useState(false);
@@ -175,13 +176,17 @@ export function UrlifyTable({
 
   const confirmBulkDelete = async () => {
     if (selected.size === 0) return;
+    setBulkDeleteOpen(false);
     setIsBulkDeleting(true);
+    setBulkDeleteProgress(0);
+    const codes = Array.from(selected);
+    const total = codes.length;
     let success = 0;
     let fail = 0;
-    for (const code of selected) {
+    for (let i = 0; i < codes.length; i++) {
       try {
         const res = await fetch(
-          `/api/urlify/url/${encodeURIComponent(code)}`,
+          `/api/urlify/url/${encodeURIComponent(codes[i])}`,
           { method: 'DELETE' }
         );
         if (!res.ok) throw new Error('failed');
@@ -189,9 +194,10 @@ export function UrlifyTable({
       } catch {
         fail++;
       }
+      setBulkDeleteProgress(Math.round(((i + 1) / total) * 100));
     }
     setIsBulkDeleting(false);
-    setBulkDeleteOpen(false);
+    setBulkDeleteProgress(0);
     setSelected(new Set());
     if (fail === 0) toast.success(`Deleted ${success} URL(s)`);
     else if (success > 0) toast.warning(`${success} deleted, ${fail} failed`);
@@ -351,18 +357,40 @@ export function UrlifyTable({
             <Button
               variant="outline"
               onClick={() => setBulkDeleteOpen(false)}
-              disabled={isBulkDeleting}
             >
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={confirmBulkDelete}
-              disabled={isBulkDeleting}
-            >
-              {isBulkDeleting ? 'Deleting…' : 'Delete'}
+            <Button variant="destructive" onClick={confirmBulkDelete}>
+              Delete
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isBulkDeleting}>
+        <DialogContent
+          showCloseButton={false}
+          onInteractOutside={e => e.preventDefault()}
+          onEscapeKeyDown={e => e.preventDefault()}
+          className="sm:max-w-md"
+        >
+          <DialogHeader>
+            <DialogTitle>Deleting URLs...</DialogTitle>
+            <DialogDescription>
+              Please wait while the selected URLs are being deleted.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+              <div
+                className="h-full bg-primary transition-all duration-300 ease-in-out"
+                style={{ width: `${bulkDeleteProgress}%` }}
+              />
+            </div>
+            <p className="text-muted-foreground text-sm text-right">
+              {bulkDeleteProgress}% complete
+            </p>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
