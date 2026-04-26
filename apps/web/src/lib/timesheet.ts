@@ -209,3 +209,28 @@ export function formatHours(value: number): string {
   if (Number.isInteger(value)) return value.toString();
   return value.toFixed(2).replace(/\.?0+$/, '');
 }
+
+export function getWorkTypeDotColor(type: string): string {
+  switch (type.toLowerCase()) {
+    case 'create':
+      return '#8b5cf6';
+    case 'test':
+      return '#10b981';
+    case 'analysis':
+      return '#0ea5e9';
+    case 'management':
+      return '#f59e0b';
+    case 'review':
+      return '#ec4899';
+    case 'study':
+      return '#6366f1';
+    case 'correct':
+      return '#ef4444';
+    case 'translate':
+      return '#3b82f6';
+    case 'research':
+      return '#64748b';
+    default:
+      return '#94a3b8';
+  }
+}
