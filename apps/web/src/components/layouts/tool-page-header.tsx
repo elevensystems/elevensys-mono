@@ -6,6 +6,7 @@ interface ToolPageHeaderProps {
   title: string;
   description?: string;
   subtitle?: React.ReactNode;
+  action?: React.ReactNode;
   className?: string;
   infoMessage?: string;
   error?: string;
@@ -15,6 +16,7 @@ export function ToolPageHeader({
   title,
   description,
   subtitle,
+  action,
   className,
   infoMessage,
   error,
@@ -22,8 +24,13 @@ export function ToolPageHeader({
   return (
     <>
       <div className={className ?? 'mb-8'}>
-        <h1 className="text-2xl font-bold mb-2">{title}</h1>
-        {subtitle ?? (description && <p className="text-sm text-muted-foreground">{description}</p>)}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold mb-2">{title}</h1>
+            {subtitle ?? (description && <p className="text-sm text-muted-foreground">{description}</p>)}
+          </div>
+          {action}
+        </div>
       </div>
 
       {infoMessage && (

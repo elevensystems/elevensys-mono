@@ -17,6 +17,7 @@ export default function NewAutologConfigPage() {
   const { createConfig } = useAutolog({
     username: settings.username,
     token: settings.token,
+    jiraInstance: settings.jiraInstance,
     isConfigured,
   });
   const { projects, isLoading: isLoadingProjects } = useProjects({
@@ -41,8 +42,7 @@ export default function NewAutologConfigPage() {
       <section className="container mx-auto px-4 py-12">
         <div className="max-w-full mx-auto space-y-6">
           <ToolPageHeader
-            title="New Configuration"
-            description="Create a new autolog configuration to automatically log work to Jira."
+            title="New Autolog Rule"
           />
 
           <NotConfiguredAlert isConfigured={isConfigured} />

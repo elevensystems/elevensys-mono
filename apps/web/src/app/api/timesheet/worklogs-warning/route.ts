@@ -7,7 +7,8 @@ export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('Authorization') || '';
     const body = await request.json();
-    const { pid, startDate, endDate, jiraInstance } = body;
+    const { pid, startDate, endDate } = body;
+    const jiraInstance = request.nextUrl.searchParams.get('jiraInstance') || 'jiradc';
 
     if (!authHeader || !pid || !startDate || !endDate) {
       return NextResponse.json(
@@ -19,9 +20,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const params = new URLSearchParams({
-      jiraInstance: jiraInstance || 'jiradc',
-    });
+    const params = new URLSearchParams({ jiraInstance });
 
     const response = await fetch(
       `${TIMESHEET_URLS.WORKLOGS_WARNING}?${params.toString()}`,

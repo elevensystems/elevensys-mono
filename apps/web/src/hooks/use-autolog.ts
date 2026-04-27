@@ -14,12 +14,14 @@ import type {
 interface UseAutologParams {
   username: string;
   token: string;
+  jiraInstance: string;
   isConfigured: boolean;
 }
 
 export function useAutolog({
   username,
   token,
+  jiraInstance,
   isConfigured,
 }: UseAutologParams) {
   const [configs, setConfigs] = useState<AutologConfig[]>([]);
@@ -141,7 +143,8 @@ export function useAutolog({
   const runConfig = useCallback(
     async (configId: string): Promise<boolean> => {
       try {
-        const res = await fetch(`/api/timesheet/autolog/${configId}/run`, {
+        const query = new URLSearchParams({ jiraInstance });
+        const res = await fetch(`/api/timesheet/autolog/${configId}/run?${query.toString()}`, {
           method: 'POST',
           headers: authHeaders,
           body: JSON.stringify({ username }),

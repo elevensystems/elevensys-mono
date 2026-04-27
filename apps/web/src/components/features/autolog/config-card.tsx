@@ -3,14 +3,7 @@
 import { Calendar, Clock } from 'lucide-react';
 
 import { Badge } from '@workspace/ui/components/badge';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@workspace/ui/components/card';
-import { Separator } from '@workspace/ui/components/separator';
+import { Card } from '@workspace/ui/components/card';
 import { cn } from '@workspace/ui/lib/utils';
 import type { AutologConfig } from '@/types/autolog';
 import { DAY_NAMES } from '@/types/autolog';
@@ -49,71 +42,74 @@ export function formatSchedule(config: AutologConfig): string {
   return `Monthly on the ${day}${suffix} at ${hourStr}`;
 }
 
+function formatDuration(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}m ${seconds}s`;
+}
+
+function formatLastRunDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
 export function ConfigCard({ config, onClick }: ConfigCardProps) {
   const totalHours = config.tickets.reduce((sum, t) => sum + t.hours, 0);
-  const isPaused = config.status === 'paused_auth';
+  const isActive = config.status === 'active';
 
   return (
     <Card
       className={cn(
-        'cursor-pointer transition-colors hover:bg-muted/50 py-0 gap-2',
-        isPaused && 'border-destructive/30'
+        'cursor-pointer transition-colors hover:bg-muted/50 overflow-hidden py-0 gap-0',
+        isActive && 'border-l-[3px] border-l-green-500'
       )}
       onClick={() => onClick(config)}
     >
-      <CardHeader className="p-5">
+      <div className="p-4 space-y-2">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <CardTitle className="text-base">{config.projectName}</CardTitle>
-            <CardDescription className="text-xs">
-              {config.projectKey}
-            </CardDescription>
+            <p className="font-semibold text-sm leading-tight">{config.projectName}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{config.projectKey}</p>
           </div>
-          <Badge variant={isPaused ? 'destructive' : 'default'}>
-            {STATUS_LABELS[config.status]}
+          <Badge
+            variant={isActive ? 'default' : 'secondary'}
+            className="text-[10px] uppercase tracking-wide shrink-0"
+          >
+            {isActive ? 'Active' : 'Paused'}
           </Badge>
         </div>
-      </CardHeader>
 
-      <CardContent className="space-y-3 px-5 pb-5 pt-0">
-        <Separator />
-
-        {/* Schedule */}
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+          <span className="flex items-center gap-1.5">
             <Calendar className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{formatSchedule(config)}</span>
-          </div>
-          <p className="pl-[1.375rem] text-xs text-muted-foreground">
+            {formatSchedule(config)}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5 shrink-0" />
             {totalHours}h total
-          </p>
+          </span>
         </div>
+      </div>
 
-        <Separator />
-
-        {/* Last run */}
+      <div className="bg-muted/50 border-t px-4 py-2 flex items-center gap-2 text-[11px] text-muted-foreground">
+        <span className="uppercase tracking-widest font-medium text-[10px]">Last Run</span>
         {config.lastRunAt ? (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Clock className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">
-              {new Date(config.lastRunAt).toLocaleString()}
+          <>
+            <span className="h-1.5 w-1.5 rounded-full bg-green-500 shrink-0" />
+            <span>
+              {formatLastRunDate(config.lastRunAt)}
+              {config.lastRunDurationMs !== undefined && (
+                <> &middot; {formatDuration(config.lastRunDurationMs)}</>
+              )}
             </span>
-            {config.lastRunStatus && (
-              <Badge
-                variant={RUN_STATUS_CONFIG[config.lastRunStatus].variant}
-                className="ml-auto shrink-0 py-0"
-              >
-                {RUN_STATUS_CONFIG[config.lastRunStatus].label}
-              </Badge>
-            )}
-          </div>
+          </>
         ) : (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Clock className="h-3.5 w-3.5 shrink-0" />
-            <span>No runs yet</span>
-          </div>
+          <span>No runs yet</span>
         )}
-      </CardContent>
+      </div>
     </Card>
   );
 }

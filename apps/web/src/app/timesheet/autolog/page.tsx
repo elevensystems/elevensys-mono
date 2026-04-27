@@ -25,6 +25,7 @@ export default function AutologPage() {
     useAutolog({
       username: settings.username,
       token: settings.token,
+      jiraInstance: settings.jiraInstance,
       isConfigured,
     });
 
@@ -44,20 +45,15 @@ export default function AutologPage() {
         <div className="max-w-full mx-auto space-y-6">
           <ToolPageHeader
             title="Autolog"
-            description="Automatically log work to Jira on a weekly or monthly schedule."
-          />
-
-          {isLoaded && !isConfigured && (
-            <NotConfiguredAlert isConfigured={false} />
-          )}
-
-          {isLoaded && isConfigured && (
-            <div className="space-y-6 mt-6">
-              {/* Header row */}
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
+            subtitle={
+              isLoaded && isConfigured ? (
+                <p className="text-xs text-muted-foreground">
                   {configs.length} / 3 configurations
                 </p>
+              ) : undefined
+            }
+            action={
+              isLoaded && isConfigured ? (
                 <Button
                   onClick={() => router.push('/timesheet/autolog/new')}
                   disabled={!canAddMore}
@@ -66,7 +62,16 @@ export default function AutologPage() {
                   <PlusCircle className="mr-1.5 h-4 w-4" />
                   Add Config
                 </Button>
-              </div>
+              ) : undefined
+            }
+          />
+
+          {isLoaded && !isConfigured && (
+            <NotConfiguredAlert isConfigured={false} />
+          )}
+
+          {isLoaded && isConfigured && (
+            <div className="space-y-6">
 
               {/* Loading state */}
               {isLoading && (

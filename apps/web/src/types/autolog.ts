@@ -34,6 +34,7 @@ export interface AutologConfig {
   createdAt: string;
   updatedAt: string;
   lastRunAt?: string;
+  lastRunDurationMs?: number;
   lastRunStatus?: 'success' | 'partial' | 'nothing_to_log' | 'failed';
   coveragePeriod: { start: string; end: string };
   lastRunResults?: AutologRunResult[];

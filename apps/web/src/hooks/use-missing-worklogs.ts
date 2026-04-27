@@ -66,7 +66,8 @@ export function useMissingWorklogs({
 
     setIsSearchingWarnings(true);
     try {
-      const response = await fetch('/api/timesheet/worklogs-warning', {
+      const query = new URLSearchParams({ jiraInstance: settings.jiraInstance });
+      const response = await fetch(`/api/timesheet/worklogs-warning?${query.toString()}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -76,7 +77,6 @@ export function useMissingWorklogs({
           pid: selectedProjectId,
           startDate: formatDateForApi(warningFromDate),
           endDate: formatDateForApi(warningToDate),
-          jiraInstance: settings.jiraInstance,
         }),
       });
 

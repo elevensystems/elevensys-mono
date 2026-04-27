@@ -26,6 +26,7 @@ export default function EditAutologConfigPage({
   const { configs, isLoading, updateConfig } = useAutolog({
     username: settings.username,
     token: settings.token,
+    jiraInstance: settings.jiraInstance,
     isConfigured,
   });
   const { projects, isLoading: isLoadingProjects } = useProjects({

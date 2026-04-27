@@ -11,21 +11,25 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { configId } = await params;
     const authHeader = request.headers.get('Authorization') || '';
     const body = await request.json();
+    const { username } = body;
+    const jiraInstance = request.nextUrl.searchParams.get('jiraInstance') || 'jiradc';
 
-    if (!authHeader || !body.username) {
+    if (!authHeader || !username) {
       return NextResponse.json(
         { error: 'Missing Authorization header or username' },
         { status: 400 }
       );
     }
 
-    const response = await fetch(AUTOLOG_URLS.RUN(configId), {
+    const query = new URLSearchParams({ jiraInstance });
+
+    const response = await fetch(`${AUTOLOG_URLS.RUN(configId)}?${query.toString()}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: authHeader,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ username }),
     });
 
     const data = await response.json();
