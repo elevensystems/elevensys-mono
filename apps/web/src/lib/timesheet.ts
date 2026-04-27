@@ -250,24 +250,18 @@ export function getUsernameColor(username: string): string {
 
 export function getWorkTypeDotClass(type: string): string {
   switch (type.toLowerCase()) {
-    case 'correct':
-      return 'bg-red-500';       // 0°
-    case 'management':
-      return 'bg-orange-500';    // 30°
-    case 'study':
-      return 'bg-yellow-400';    // 60°
-    case 'test':
-      return 'bg-green-500';     // 120°
-    case 'translate':
-      return 'bg-teal-500';      // 170°
-    case 'analysis':
-      return 'bg-sky-500';       // 200°
-    case 'research':
-      return 'bg-blue-600';      // 240°
     case 'create':
-      return 'bg-violet-500';    // 270°
+      return 'bg-blue-500';
     case 'review':
-      return 'bg-fuchsia-500';   // 300°
+      return 'bg-purple-500';
+    case 'study':
+      return 'bg-amber-500';
+    case 'correct':
+      return 'bg-red-500';
+    case 'translate':
+      return 'bg-cyan-500';
+    case 'test':
+      return 'bg-green-500';
     default:
       return 'bg-slate-400';
   }
