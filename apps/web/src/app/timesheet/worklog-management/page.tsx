@@ -78,6 +78,7 @@ export default function WorklogManagementPage() {
     goToPage,
     handleDelete,
     handleBulkDelete,
+    cancelBulkDelete,
   } = useWorklogs({ settings, isConfigured });
 
   if (!isLoaded) {
@@ -212,6 +213,7 @@ export default function WorklogManagementPage() {
                     bulkDeleteProgress={bulkDeleteProgress}
                     onBulkDelete={handleBulkDelete}
                     onClearSelection={clearSelection}
+                    onCancelBulkDelete={cancelBulkDelete}
                   />
                 </>
               )}

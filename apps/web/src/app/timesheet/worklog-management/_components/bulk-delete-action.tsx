@@ -23,6 +23,7 @@ interface BulkDeleteActionProps {
   bulkDeleteProgress: number;
   onBulkDelete: () => void;
   onClearSelection: () => void;
+  onCancelBulkDelete: () => void;
 }
 
 export function BulkDeleteAction({
@@ -31,6 +32,7 @@ export function BulkDeleteAction({
   bulkDeleteProgress,
   onBulkDelete,
   onClearSelection,
+  onCancelBulkDelete,
 }: BulkDeleteActionProps) {
   if (selectedCount === 0) return null;
 
@@ -91,6 +93,7 @@ export function BulkDeleteAction({
         title="Deleting Worklogs..."
         description="Please wait while your worklogs are being deleted."
         progress={bulkDeleteProgress}
+        onCancel={onCancelBulkDelete}
       />
     </>
   );

@@ -1,9 +1,11 @@
 'use client';
 
+import { Button } from '@workspace/ui/components/button';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@workspace/ui/components/dialog';
@@ -13,6 +15,7 @@ interface ProgressDialogProps {
   title: string;
   description?: string;
   progress: number;
+  onCancel?: () => void;
 }
 
 export function ProgressDialog({
@@ -20,6 +23,7 @@ export function ProgressDialog({
   title,
   description,
   progress,
+  onCancel,
 }: ProgressDialogProps) {
   return (
     <Dialog open={open}>
@@ -46,6 +50,13 @@ export function ProgressDialog({
             {progress}% complete
           </p>
         </div>
+        {onCancel && (
+          <DialogFooter>
+            <Button variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

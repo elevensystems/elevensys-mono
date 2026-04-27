@@ -59,6 +59,7 @@ export default function MyWorklogsPage() {
     handleSearch,
     handleDelete,
     handleBulkDelete,
+    cancelBulkDelete,
   } = useMyWorklogs({ settings, isConfigured });
 
   useEffect(() => {
@@ -178,6 +179,7 @@ export default function MyWorklogsPage() {
                 bulkDeleteProgress={bulkDeleteProgress}
                 onBulkDelete={handleBulkDelete}
                 onClearSelection={clearSelection}
+                onCancelBulkDelete={cancelBulkDelete}
               />
             </div>
           )}
