@@ -93,7 +93,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                       <span className="truncate font-medium">
                         {domainConfig.appName}
                       </span>
-                      <span className="truncate text-xs">Version 5.3.2</span>
+                      <span className="truncate text-xs">Version 6.9.8</span>
                     </div>
                     <ChevronsUpDown className="ml-auto size-4" />
                   </SidebarMenuButton>

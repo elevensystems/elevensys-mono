@@ -1,38 +1,31 @@
 'use client';
 
-import { ClipboardList, Search } from 'lucide-react';
+import { useEffect, useMemo } from 'react';
+
+import { Search } from 'lucide-react';
 
 import { ActionButton } from '@workspace/ui/components/action-button';
 import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
 import MainLayout from '@/components/layouts/main-layout';
-import { ToolPageHeader } from '@/components/layouts/tool-page-header';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@workspace/ui/components/card';
 import { Checkbox } from '@workspace/ui/components/checkbox';
 import { DateRangePicker } from '@workspace/ui/components/date-range-picker';
 import { Label } from '@workspace/ui/components/label';
 import { NativeSelect } from '@workspace/ui/components/native-select';
 import { Skeleton } from '@workspace/ui/components/skeleton';
 import { Spinner } from '@workspace/ui/components/spinner';
-import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@workspace/ui/components/table';
+import { ToolPageHeader } from '@/components/layouts/tool-page-header';
 import { useMyWorklogs } from '@/hooks/use-my-worklogs';
 import { useTimesheetSettings } from '@/hooks/use-timesheet-settings';
-import { getWorklogKey } from '@/hooks/use-worklogs';
+import {
+  formatDisplayDate,
+  formatHours,
+  parseApiDate,
+} from '@/lib/timesheet';
+import type { MyWorklogsRow } from '@/types/timesheet';
 
 import { BulkDeleteAction } from '../worklog-management/_components/bulk-delete-action';
 import { EditWorklogModal } from '../worklog-management/_components/edit-worklog-modal';
-import { WorklogRow } from '../worklog-management/_components/worklog-row';
+import { WorklogDateGroup } from './_components/worklog-date-group';
 
 const STATUS_OPTIONS = ['All', 'Pending', 'Reopened', 'Approved', 'Rejected'];
 
@@ -48,10 +41,9 @@ export default function MyWorklogsPage() {
     setToDate,
     worklogs,
     isLoading,
-    deletingId,
-    error: _error,
     hasSearched,
     totalHours,
+    deletingId,
     selectedIds,
     allSelected,
     someSelected,
@@ -68,7 +60,36 @@ export default function MyWorklogsPage() {
     handleSearch,
     handleDelete,
     handleBulkDelete,
+    cancelBulkDelete,
   } = useMyWorklogs({ settings, isConfigured });
+
+  useEffect(() => {
+    if (isLoaded && isConfigured && !hasSearched && !isLoading) {
+      handleSearch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, isConfigured]);
+
+  const dateGroups = useMemo(() => {
+    const map = new Map<string, MyWorklogsRow[]>();
+    for (const w of worklogs) {
+      const key = w.startDateEdit || w.startDate;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(w);
+    }
+    return Array.from(map.entries())
+      .sort(([a], [b]) => {
+        const da = parseApiDate(a) ?? new Date(0);
+        const db = parseApiDate(b) ?? new Date(0);
+        return db.getTime() - da.getTime();
+      })
+      .map(([dateKey, rows]) => ({
+        dateKey,
+        displayDate: formatDisplayDate(dateKey),
+        totalHours: rows.reduce((sum, r) => sum + (Number(r.worked) || 0), 0),
+        rows,
+      }));
+  }, [worklogs]);
 
   if (!isLoaded) {
     return (
@@ -82,214 +103,137 @@ export default function MyWorklogsPage() {
     );
   }
 
-  const totalRecords = worklogs.length;
-
   return (
     <MainLayout>
       <section className="container mx-auto px-4 py-12">
-        <div className="max-w-full mx-auto space-y-8">
+        <div className="max-w-full mx-auto space-y-6">
+          {/* Header */}
           <ToolPageHeader
             title="My Worklogs"
-            description="View all your logged timesheets from Jira."
+            subtitle={
+              hasSearched && worklogs.length > 0 ? (
+                <p className="text-sm text-muted-foreground mt-1">
+                  {worklogs.length} record{worklogs.length !== 1 ? 's' : ''}{' '}
+                  &middot; {formatHours(totalHours)} total hours
+                </p>
+              ) : undefined
+            }
           />
 
           <NotConfiguredAlert isConfigured={isConfigured} />
 
-          {/* Filters */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Search className="h-5 w-5" />
-                Search My Worklogs
-              </CardTitle>
-              <CardDescription>
-                Select a date range and status, then click &quot;Search&quot; to
-                view your worklogs.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr] gap-4 items-end">
-                <div className="space-y-1.5">
-                  <Label htmlFor="date-range">Date Range</Label>
-                  <DateRangePicker
-                    id="date-range"
-                    from={fromDate}
-                    to={toDate}
-                    onRangeChange={(from, to) => {
-                      setFromDate(from);
-                      setToDate(to);
-                    }}
-                    className="w-full"
-                  />
-                </div>
+          {/* Inline filter bar */}
+          <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_auto] gap-3 items-end">
+            <div className="space-y-1.5">
+              <Label htmlFor="date-range">Date Range</Label>
+              <DateRangePicker
+                id="date-range"
+                from={fromDate}
+                to={toDate}
+                onRangeChange={(from, to) => {
+                  setFromDate(from);
+                  setToDate(to);
+                }}
+                className="w-full"
+              />
+            </div>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="status-select">Status</Label>
-                  <NativeSelect
-                    id="status-select"
-                    value={statusWorklog}
-                    onChange={e => setStatusWorklog(e.target.value)}
-                    disabled={!isConfigured}
-                  >
-                    {STATUS_OPTIONS.map(status => (
-                      <option key={status} value={status}>
-                        {status}
-                      </option>
-                    ))}
-                  </NativeSelect>
-                </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="status-select">Status</Label>
+              <NativeSelect
+                id="status-select"
+                value={statusWorklog}
+                onChange={e => setStatusWorklog(e.target.value)}
+                disabled={!isConfigured}
+              >
+                {STATUS_OPTIONS.map(status => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
 
-                <div className="flex items-end">
-                  <ActionButton
-                    onClick={handleSearch}
-                    disabled={!isConfigured}
-                    className="w-full"
-                    leftIcon={<Search />}
-                    isLoading={isLoading}
-                    loadingText="Searching…"
-                  >
-                    Search
-                  </ActionButton>
-                </div>
+            <ActionButton
+              onClick={handleSearch}
+              disabled={!isConfigured}
+              leftIcon={<Search />}
+              isLoading={isLoading}
+              loadingText="Searching…"
+            >
+              Search
+            </ActionButton>
+          </div>
+
+          {/* Select-all + bulk delete bar */}
+          {worklogs.length > 0 && (
+            <div className="flex items-center justify-between h-8">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+                  onCheckedChange={toggleSelectAll}
+                  aria-label="Select all"
+                />
+                <span className="text-sm text-muted-foreground">Select all</span>
               </div>
-            </CardContent>
-          </Card>
+              <BulkDeleteAction
+                selectedCount={selectedIds.size}
+                isBulkDeleting={isBulkDeleting}
+                bulkDeleteProgress={bulkDeleteProgress}
+                onBulkDelete={handleBulkDelete}
+                onClearSelection={clearSelection}
+                onCancelBulkDelete={cancelBulkDelete}
+              />
+            </div>
+          )}
 
-          {/* Results */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ClipboardList className="h-5 w-5" />
-                Worklogs
-              </CardTitle>
-              {hasSearched && totalRecords > 0 && (
-                <>
-                  <CardDescription>
-                    {totalRecords} record{totalRecords !== 1 ? 's' : ''}{' '}
-                    &middot; {totalHours.toFixed(1)} total hours
-                  </CardDescription>
-                  <BulkDeleteAction
-                    selectedCount={selectedIds.size}
-                    isBulkDeleting={isBulkDeleting}
-                    bulkDeleteProgress={bulkDeleteProgress}
-                    onBulkDelete={handleBulkDelete}
-                    onClearSelection={clearSelection}
-                  />
-                </>
-              )}
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="overflow-hidden rounded-lg border">
-                  <Table>
-                    <TableHeader className="bg-muted/50 top-0 z-10">
-                      <TableRow>
-                        <TableHead className="w-[40px]" />
-                        <TableHead>Key</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead className="text-right">Hours</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>User</TableHead>
-                        <TableHead className="w-[60px]">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {Array.from({ length: 8 }).map((_, i) => (
-                        <TableRow key={i}>
-                          <td className="p-2 pl-4">
-                            <Skeleton className="h-4 w-4" />
-                          </td>
-                          <td className="p-2">
-                            <Skeleton className="h-4 w-28" />
-                          </td>
-                          <td className="p-2">
-                            <Skeleton className="h-4 w-40" />
-                          </td>
-                          <td className="p-2 text-right">
-                            <Skeleton className="h-4 w-10 ml-auto" />
-                          </td>
-                          <td className="p-2">
-                            <Skeleton className="h-5 w-16 rounded-full" />
-                          </td>
-                          <td className="p-2">
-                            <Skeleton className="h-4 w-24" />
-                          </td>
-                          <td className="p-2">
-                            <Skeleton className="h-5 w-16 rounded-full" />
-                          </td>
-                          <td className="p-2">
-                            <Skeleton className="h-4 w-20" />
-                          </td>
-                          <td className="p-2">
-                            <Skeleton className="h-4 w-8" />
-                          </td>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+          {/* Loading skeleton */}
+          {isLoading && (
+            <div className="rounded-lg border overflow-hidden">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 px-3 py-2.5 border-b last:border-b-0"
+                >
+                  <Skeleton className="size-4 shrink-0" />
+                  <Skeleton className="h-4 w-24 shrink-0" />
+                  <Skeleton className="h-4 flex-1" />
+                  <Skeleton className="h-4 w-10 shrink-0" />
+                  <Skeleton className="h-4 w-16 shrink-0" />
+                  <Skeleton className="h-5 w-16 rounded-full shrink-0" />
+                  <Skeleton className="size-8 shrink-0" />
+                  <Skeleton className="size-8 shrink-0" />
                 </div>
-              ) : worklogs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
-                  {hasSearched ? (
-                    <p>No worklogs found for the selected filters.</p>
-                  ) : (
-                    <p>
-                      Select a date range and click &quot;Search&quot; to view
-                      your worklogs.
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <div className="max-h-[600px] overflow-y-auto rounded-lg border">
-                  <Table>
-                    <TableHeader className="bg-muted/50 sticky top-0 z-10">
-                      <TableRow>
-                        <TableHead className="w-[40px]">
-                          <Checkbox
-                            checked={
-                              allSelected
-                                ? true
-                                : someSelected
-                                  ? 'indeterminate'
-                                  : false
-                            }
-                            onCheckedChange={toggleSelectAll}
-                            aria-label="Select all"
-                          />
-                        </TableHead>
-                        <TableHead>Key</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead className="text-right">Hours</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>User</TableHead>
-                        <TableHead className="w-[60px]">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {worklogs.map(worklog => {
-                        const key = getWorklogKey(worklog);
-                        return (
-                          <WorklogRow
-                            key={key}
-                            worklog={worklog}
-                            isSelected={selectedIds.has(key)}
-                            isDeleting={deletingId === key}
-                            onToggleSelect={toggleSelect}
-                            onDelete={handleDelete}
-                            onEdit={openEditModal}
-                          />
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!isLoading && worklogs.length === 0 && hasSearched && (
+            <p className="text-center text-muted-foreground py-10">
+              No worklogs found for the selected filters.
+            </p>
+          )}
+
+          {/* Grouped results */}
+          {!isLoading && dateGroups.length > 0 && (
+            <div className="rounded-lg border overflow-hidden">
+              {dateGroups.map(group => (
+                <WorklogDateGroup
+                  key={group.dateKey}
+                  displayDate={group.displayDate}
+                  totalHours={group.totalHours}
+                  worklogs={group.rows}
+                  selectedIds={selectedIds}
+                  deletingId={deletingId}
+                  onToggleSelect={toggleSelect}
+                  onDelete={handleDelete}
+                  onEdit={openEditModal}
+                />
+              ))}
+            </div>
+          )}
+
           <EditWorklogModal
             worklog={editingWorklog}
             isEditing={isEditing}

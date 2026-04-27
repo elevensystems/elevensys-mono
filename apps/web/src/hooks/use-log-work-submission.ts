@@ -2,8 +2,9 @@
 
 import { useCallback, useRef, useState } from 'react';
 
-import { REQUEST_DELAY_MS, delay, getCurrentTime } from '@/lib/timesheet';
+import { REQUEST_DELAY_MS, delay, formatRangeLabel, getCurrentTime } from '@/lib/timesheet';
 import type {
+  DateRange,
   LogWorkResult,
   RequestStatus,
   TimesheetSettings,
@@ -12,7 +13,7 @@ import type {
 
 interface SubmitParams {
   entries: WorkEntry[];
-  dates: string[];
+  ranges: DateRange[];
 }
 
 interface RetryParams {
@@ -29,13 +30,13 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
   const updateRequestStatus = useCallback(
     (
       entryId: string,
-      date: string,
+      rangeLabel: string,
       status: RequestStatus['status'],
       error?: string
     ) => {
       setRequestStatuses(prev =>
         prev.map(rs =>
-          rs.entryId === entryId && rs.date === date
+          rs.entryId === entryId && rs.rangeLabel === rangeLabel
             ? { ...rs, status, error }
             : rs
         )
@@ -49,10 +50,10 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
     setIsCancelled(true);
   }, []);
 
-  const submitSingleDate = useCallback(
+  const submitRange = useCallback(
     async (
       entry: WorkEntry,
-      date: string,
+      range: DateRange,
       headers: Record<string, string>,
       time: string
     ): Promise<{ success: boolean; error?: string }> => {
@@ -66,8 +67,8 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
               username: settings.username,
               issueKey: entry.issueKey.trim(),
               timeSpend: entry.hours * 3600,
-              startDate: date,
-              endDate: date,
+              startDate: range.startDate,
+              endDate: range.endDate,
               typeOfWork: entry.typeOfWork,
               description: entry.description,
               time,
@@ -94,7 +95,7 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
   );
 
   const submitEntries = useCallback(
-    async ({ entries, dates }: SubmitParams): Promise<LogWorkResult[]> => {
+    async ({ entries, ranges }: SubmitParams): Promise<LogWorkResult[]> => {
       const validEntries = entries.filter(e => e.issueKey.trim());
       const time = getCurrentTime();
       const headers = {
@@ -102,12 +103,13 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
         Authorization: `Bearer ${settings.token}`,
       };
 
-      // Pre-build all request statuses
+      // Pre-build all request statuses (one per entry × range)
       const initialStatuses: RequestStatus[] = validEntries.flatMap(entry =>
-        dates.map(date => ({
+        ranges.map(range => ({
           entryId: entry.id,
           issueKey: entry.issueKey.trim(),
-          date,
+          rangeLabel: formatRangeLabel(range),
+          dates: range.dates,
           status: 'pending' as const,
         }))
       );
@@ -121,37 +123,36 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
       const logResults: LogWorkResult[] = [];
 
       for (const entry of validEntries) {
-        const failedDates: string[] = [];
+        const failedRanges: DateRange[] = [];
         const entryErrors: string[] = [];
         let successCount = 0;
 
-        for (let i = 0; i < dates.length; i++) {
-          const date = dates[i];
+        for (let i = 0; i < ranges.length; i++) {
+          const range = ranges[i];
+          const label = formatRangeLabel(range);
 
           if (abortRef.current) {
             // Mark remaining as skipped
-            updateRequestStatus(entry.id, date, 'skipped');
-            for (let j = i + 1; j < dates.length; j++) {
-              updateRequestStatus(entry.id, dates[j], 'skipped');
+            updateRequestStatus(entry.id, label, 'skipped');
+            for (let j = i + 1; j < ranges.length; j++) {
+              updateRequestStatus(entry.id, formatRangeLabel(ranges[j]), 'skipped');
             }
-            // Also mark remaining entries
+            // Also mark remaining entries as skipped
             const entryIdx = validEntries.indexOf(entry);
             for (let k = entryIdx + 1; k < validEntries.length; k++) {
-              for (const d of dates) {
-                updateRequestStatus(validEntries[k].id, d, 'skipped');
+              for (const r of ranges) {
+                updateRequestStatus(validEntries[k].id, formatRangeLabel(r), 'skipped');
               }
             }
-            // Build result for current entry
-            if (successCount > 0 || failedDates.length > 0) {
+            if (successCount > 0 || failedRanges.length > 0) {
               logResults.push({
                 entry,
-                success: failedDates.length === 0 && successCount > 0,
+                success: failedRanges.length === 0 && successCount > 0,
                 error:
-                  failedDates.length > 0 ? entryErrors.join('; ') : undefined,
-                failedDates: failedDates.length > 0 ? failedDates : undefined,
+                  failedRanges.length > 0 ? entryErrors.join('; ') : undefined,
+                failedRanges: failedRanges.length > 0 ? failedRanges : undefined,
               });
             }
-            // Build skipped results for remaining entries
             for (let k = entryIdx + 1; k < validEntries.length; k++) {
               logResults.push({
                 entry: validEntries[k],
@@ -162,42 +163,41 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
             break;
           }
 
-          updateRequestStatus(entry.id, date, 'in-progress');
+          updateRequestStatus(entry.id, label, 'in-progress');
 
-          const result = await submitSingleDate(entry, date, headers, time);
+          const result = await submitRange(entry, range, headers, time);
 
           if (result.success) {
-            updateRequestStatus(entry.id, date, 'success');
+            updateRequestStatus(entry.id, label, 'success');
             successCount++;
           } else {
-            updateRequestStatus(entry.id, date, 'failed', result.error);
-            failedDates.push(date);
-            entryErrors.push(`${date}: ${result.error || 'Unknown error'}`);
+            updateRequestStatus(entry.id, label, 'failed', result.error);
+            failedRanges.push(range);
+            entryErrors.push(`${label}: ${result.error || 'Unknown error'}`);
           }
 
-          if (i < dates.length - 1) {
+          if (i < ranges.length - 1) {
             await delay(REQUEST_DELAY_MS);
           }
         }
 
         if (abortRef.current) break;
 
-        // Build entry-level result
         if (entryErrors.length === 0) {
           logResults.push({ entry, success: true });
         } else if (successCount > 0) {
           logResults.push({
             entry,
             success: false,
-            error: `${successCount}/${dates.length} dates succeeded. Failures: ${entryErrors.join('; ')}`,
-            failedDates,
+            error: `${successCount}/${ranges.length} ranges succeeded. Failures: ${entryErrors.join('; ')}`,
+            failedRanges,
           });
         } else {
           logResults.push({
             entry,
             success: false,
             error: entryErrors.join('; '),
-            failedDates,
+            failedRanges,
           });
         }
 
@@ -214,7 +214,7 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
 
       return logResults;
     },
-    [settings.token, submitSingleDate, updateRequestStatus]
+    [settings.token, submitRange, updateRequestStatus]
   );
 
   const retryFailed = useCallback(
@@ -241,48 +241,49 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
       const logResults: LogWorkResult[] = [];
 
       for (let i = 0; i < failedResults.length; i++) {
-        const { entry, failedDates } = failedResults[i];
+        const { entry, failedRanges } = failedResults[i];
 
-        const dates = failedDates && failedDates.length > 0 ? failedDates : [];
+        const ranges = failedRanges && failedRanges.length > 0 ? failedRanges : [];
 
-        if (dates.length === 0) {
+        if (ranges.length === 0) {
           logResults.push({
             entry,
             success: false,
-            error: 'No dates to retry',
+            error: 'No ranges to retry',
           });
           continue;
         }
 
-        const entryFailedDates: string[] = [];
+        const entryFailedRanges: DateRange[] = [];
         const entryErrors: string[] = [];
         let successCount = 0;
 
-        for (let j = 0; j < dates.length; j++) {
-          const date = dates[j];
+        for (let j = 0; j < ranges.length; j++) {
+          const range = ranges[j];
+          const label = formatRangeLabel(range);
 
           if (abortRef.current) {
-            updateRequestStatus(entry.id, date, 'skipped');
-            for (let k = j + 1; k < dates.length; k++) {
-              updateRequestStatus(entry.id, dates[k], 'skipped');
+            updateRequestStatus(entry.id, label, 'skipped');
+            for (let k = j + 1; k < ranges.length; k++) {
+              updateRequestStatus(entry.id, formatRangeLabel(ranges[k]), 'skipped');
             }
             break;
           }
 
-          updateRequestStatus(entry.id, date, 'in-progress');
+          updateRequestStatus(entry.id, label, 'in-progress');
 
-          const result = await submitSingleDate(entry, date, headers, time);
+          const result = await submitRange(entry, range, headers, time);
 
           if (result.success) {
-            updateRequestStatus(entry.id, date, 'success');
+            updateRequestStatus(entry.id, label, 'success');
             successCount++;
           } else {
-            updateRequestStatus(entry.id, date, 'failed', result.error);
-            entryFailedDates.push(date);
-            entryErrors.push(`${date}: ${result.error || 'Unknown error'}`);
+            updateRequestStatus(entry.id, label, 'failed', result.error);
+            entryFailedRanges.push(range);
+            entryErrors.push(`${label}: ${result.error || 'Unknown error'}`);
           }
 
-          if (j < dates.length - 1) {
+          if (j < ranges.length - 1) {
             await delay(REQUEST_DELAY_MS);
           }
         }
@@ -293,15 +294,15 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
           logResults.push({
             entry,
             success: false,
-            error: `${successCount}/${dates.length} succeeded. Failures: ${entryErrors.join('; ')}`,
-            failedDates: entryFailedDates,
+            error: `${successCount}/${ranges.length} succeeded. Failures: ${entryErrors.join('; ')}`,
+            failedRanges: entryFailedRanges,
           });
         } else {
           logResults.push({
             entry,
             success: false,
             error: entryErrors.join('; '),
-            failedDates: entryFailedDates,
+            failedRanges: entryFailedRanges,
           });
         }
 
@@ -317,7 +318,7 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
 
       return logResults;
     },
-    [settings.token, submitSingleDate, updateRequestStatus]
+    [settings.token, submitRange, updateRequestStatus]
   );
 
   const resetResults = useCallback(() => {

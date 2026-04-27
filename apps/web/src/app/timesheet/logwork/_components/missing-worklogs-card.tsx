@@ -2,19 +2,12 @@
 
 import { useState } from 'react';
 
-import { CalendarDays, CalendarPlus, Search, Trash2 } from 'lucide-react';
+import { CalendarPlus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { ActionButton } from '@workspace/ui/components/action-button';
 import { Badge } from '@workspace/ui/components/badge';
 import { Calendar } from '@workspace/ui/components/calendar';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@workspace/ui/components/card';
 import { Checkbox } from '@workspace/ui/components/checkbox';
 import { DateRangePicker } from '@workspace/ui/components/date-range-picker';
 import { Label } from '@workspace/ui/components/label';
@@ -133,20 +126,7 @@ export function MissingWorklogsCard({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-col gap-1">
-          <CardTitle className="flex items-center gap-2">
-            <CalendarDays className="h-5 w-5 text-primary" />
-            Find Missing Worklogs
-          </CardTitle>
-          <CardDescription>
-            Search for dates with missing worklogs in a project, then select
-            dates on the calendar below
-          </CardDescription>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <div className="space-y-6">
         {/* Step 1 — Search Controls */}
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
@@ -299,7 +279,6 @@ export function MissingWorklogsCard({
             </p>
           )}
         </div>
-      </CardContent>
-    </Card>
+    </div>
   );
 }

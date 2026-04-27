@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { toast } from 'sonner';
 
@@ -39,6 +39,7 @@ export function useWorklogMutations({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [bulkDeleteProgress, setBulkDeleteProgress] = useState(0);
+  const cancelBulkDeleteRef = useRef(false);
 
   const selectableWorklogs = useMemo(
     () =>
@@ -222,9 +223,14 @@ export function useWorklogMutations({
     [isConfigured, settings, setWorklogs]
   );
 
+  const cancelBulkDelete = useCallback(() => {
+    cancelBulkDeleteRef.current = true;
+  }, []);
+
   const handleBulkDelete = useCallback(async () => {
     if (!isConfigured || selectedIds.size === 0) return;
 
+    cancelBulkDeleteRef.current = false;
     setIsBulkDeleting(true);
     setBulkDeleteProgress(0);
 
@@ -254,6 +260,8 @@ export function useWorklogMutations({
     let failCount = 0;
 
     for (let i = 0; i < selected.length; i++) {
+      if (cancelBulkDeleteRef.current) break;
+
       const worklog = selected[i];
       const key = getWorklogKey(worklog);
       setDeletingId(key);
@@ -294,12 +302,21 @@ export function useWorklogMutations({
       }
     }
 
+    const wasCancelled = cancelBulkDeleteRef.current;
+    cancelBulkDeleteRef.current = false;
+
     setDeletingId(null);
     setSelectedIds(new Set());
     setIsBulkDeleting(false);
     setBulkDeleteProgress(0);
 
-    if (failCount === 0) {
+    if (wasCancelled) {
+      toast.info(
+        successCount > 0
+          ? `Cancelled — ${successCount} worklog(s) deleted before cancellation`
+          : 'Bulk delete cancelled'
+      );
+    } else if (failCount === 0) {
       toast.success(`Deleted ${successCount} worklog(s) successfully`);
     } else if (successCount > 0) {
       toast.warning(`${successCount} deleted, ${failCount} failed`);
@@ -326,5 +343,6 @@ export function useWorklogMutations({
     closeEditModal,
     handleEdit,
     handleBulkDelete,
+    cancelBulkDelete,
   };
 }

@@ -211,7 +211,7 @@ export function EntryStatusRow({
           <div className="flex items-center justify-between gap-2 px-3 py-1.5 text-xs">
             <div
               role="radiogroup"
-              aria-label="Filter dates"
+              aria-label="Filter ranges"
               className="inline-flex rounded-md border bg-background p-0.5"
             >
               <button
@@ -226,7 +226,7 @@ export function EntryStatusRow({
                     : 'text-muted-foreground hover:text-foreground'
                 )}
               >
-                All dates
+                All
               </button>
               <button
                 type="button"
@@ -246,19 +246,24 @@ export function EntryStatusRow({
               </button>
             </div>
             <span className="text-muted-foreground tabular-nums">
-              {dateStatuses.length} dates · {failedCount} failed ·{' '}
+              {dateStatuses.length} {dateStatuses.length !== 1 ? 'ranges' : 'range'} · {failedCount} failed ·{' '}
               {skippedCount} skipped
             </span>
           </div>
           <div className="px-3 pb-1.5">
             {filteredStatuses.map((ds, i) => (
               <div
-                key={`${ds.date}-${i}`}
+                key={`${ds.rangeLabel}-${i}`}
                 className="flex items-center gap-2.5 py-1 pl-7 text-xs"
               >
                 <StatusIcon status={ds.status} />
                 <span className="font-mono text-muted-foreground">
-                  {ds.date}
+                  {ds.rangeLabel}
+                  {ds.dates.length > 1 && (
+                    <span className="ml-1 text-muted-foreground/60">
+                      ({ds.dates.length} days)
+                    </span>
+                  )}
                 </span>
                 {ds.status === 'failed' && ds.error && (
                   <Tooltip>
@@ -284,7 +289,7 @@ export function EntryStatusRow({
             ))}
             {filteredStatuses.length === 0 && (
               <div className="py-2 pl-7 text-xs text-muted-foreground italic">
-                No matching dates.
+                No matching ranges.
               </div>
             )}
           </div>

@@ -73,15 +73,18 @@ jest.mock('./_components/bulk-delete-action', () => ({
     selectedCount,
     onBulkDelete,
     onClearSelection,
+    onCancelBulkDelete,
   }: {
     selectedCount: number;
     onBulkDelete: () => void;
     onClearSelection: () => void;
+    onCancelBulkDelete: () => void;
   }) => (
     <div data-testid="bulk-delete-action">
       <span>{selectedCount} selected</span>
       <button onClick={onBulkDelete}>Bulk Delete</button>
       <button onClick={onClearSelection}>Clear Selection</button>
+      <button onClick={onCancelBulkDelete}>Cancel Bulk Delete</button>
     </div>
   ),
 }));

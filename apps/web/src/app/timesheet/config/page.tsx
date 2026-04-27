@@ -9,28 +9,19 @@ import {
   Check,
   Eye,
   EyeOff,
+  KeyRound,
   Save,
-  Settings as SettingsIcon,
+  Server,
+  ShieldCheck,
   Trash2,
+  User,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { ActionButton } from '@workspace/ui/components/action-button';
 import MainLayout from '@/components/layouts/main-layout';
-import { ToolPageHeader } from '@/components/layouts/tool-page-header';
-import { Badge } from '@workspace/ui/components/badge';
 import { Button } from '@workspace/ui/components/button';
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@workspace/ui/components/card';
 import { Input } from '@workspace/ui/components/input';
-import { Label } from '@workspace/ui/components/label';
 import { NativeSelect } from '@workspace/ui/components/native-select';
 import { Spinner } from '@workspace/ui/components/spinner';
 import { DEFAULT_JIRA_INSTANCE } from '@/lib/constants';
@@ -45,7 +36,6 @@ export default function TimesheetConfigPage() {
   const [jiraInstance, setJiraInstance] = useState<string>(DEFAULT_JIRA_INSTANCE);
   const [showToken, setShowToken] = useState(false);
 
-  // Sync local form state with loaded settings
   const [initialized, setInitialized] = useState(false);
   useEffect(() => {
     function syncFormFromSettings() {
@@ -129,38 +119,36 @@ export default function TimesheetConfigPage() {
   return (
     <MainLayout>
       <section className="container mx-auto px-4 py-12">
-        <div className="max-w-5xl mx-auto space-y-12">
-          <ToolPageHeader
-            title="Configurations"
-            description="Configure your credentials to connect with Jira. These configs are stored locally in your browser."
-            infoMessage="Your credentials are stored only in your browser's local storage and are never sent to our servers — they are passed directly to the Jira API."
-          />
+        <div className="max-w-5xl mx-auto space-y-6">
 
-          {/* Connection Status */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <SettingsIcon className="h-5 w-5" />
-                Jira Connection
-              </CardTitle>
-              <CardAction>
-                {isConfigured ? (
-                  <Badge variant="secondary" className="gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-green-500" />
-                    Connected
-                  </Badge>
-                ) : (
-                  <Badge variant="destructive">Not Configured</Badge>
-                )}
-              </CardAction>
-              <CardDescription>
-                Enter your Jira username, token, and select your Jira instance.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Jira Instance */}
-              <div className="space-y-2">
-                <Label htmlFor="jira-instance">Jira Instance</Label>
+          {/* Page header */}
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-2xl font-bold tracking-tight">Configurations</h1>
+            {isConfigured ? (
+              <span className="flex items-center gap-1.5 text-sm font-medium text-green-600 dark:text-green-500">
+                <span className="h-2 w-2 rounded-full bg-green-500" />
+                Connected
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+                <span className="h-2 w-2 rounded-full bg-muted-foreground/50" />
+                Not configured
+              </span>
+            )}
+          </div>
+
+          {/* Form rows */}
+          <div className="border rounded-lg overflow-hidden divide-y">
+
+            {/* Instance row */}
+            <div className="flex items-start gap-4 px-5 py-4">
+              <div className="flex items-center gap-2.5 w-36 shrink-0 pt-2 text-muted-foreground">
+                <Server className="h-4 w-4 shrink-0" />
+                <label htmlFor="jira-instance" className="text-sm font-medium cursor-pointer">
+                  Instance
+                </label>
+              </div>
+              <div className="flex-1 space-y-1.5">
                 <NativeSelect
                   id="jira-instance"
                   value={jiraInstance}
@@ -176,7 +164,7 @@ export default function TimesheetConfigPage() {
                     href={`https://insight.fsoft.com.vn/${jiraInstance}/secure/ViewProfile.jspa`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-medium text-blue-600 underline underline-offset-4 hover:text-blue-800"
+                    className="font-medium text-blue-600 underline underline-offset-4 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                   >
                     here
                   </a>
@@ -185,29 +173,41 @@ export default function TimesheetConfigPage() {
                   <span className="font-medium">Create Token</span>
                 </p>
               </div>
+            </div>
 
-              {/* Username */}
-              <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+            {/* Username row */}
+            <div className="flex items-start gap-4 px-5 py-4">
+              <div className="flex items-center gap-2.5 w-36 shrink-0 pt-2 text-muted-foreground">
+                <User className="h-4 w-4 shrink-0" />
+                <label htmlFor="username" className="text-sm font-medium cursor-pointer">
+                  Username
+                </label>
+              </div>
+              <div className="flex-1 space-y-1.5">
                 <Input
                   id="username"
                   placeholder="e.g. ThaoLNP5"
                   value={username}
                   onChange={e => setUsername(e.target.value)}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Your Jira account username used for logging timesheets.
-                </p>
+                <p className="text-xs text-muted-foreground">Your Jira account username</p>
               </div>
+            </div>
 
-              {/* Token */}
-              <div className="space-y-2">
-                <Label htmlFor="token">Token</Label>
+            {/* Token row */}
+            <div className="flex items-start gap-4 px-5 py-4">
+              <div className="flex items-center gap-2.5 w-36 shrink-0 pt-2 text-muted-foreground">
+                <KeyRound className="h-4 w-4 shrink-0" />
+                <label htmlFor="token" className="text-sm font-medium cursor-pointer">
+                  Token
+                </label>
+              </div>
+              <div className="flex-1 space-y-1.5">
                 <div className="relative">
                   <Input
                     id="token"
                     type={showToken ? 'text' : 'password'}
-                    placeholder="Your token"
+                    placeholder="Your personal access token"
                     value={token}
                     onChange={e => setToken(e.target.value)}
                     className="pr-10"
@@ -228,52 +228,62 @@ export default function TimesheetConfigPage() {
                     }
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Token from for API authentication.
-                </p>
+                <p className="text-xs text-muted-foreground">Personal access token for API authentication</p>
               </div>
-            </CardContent>
-            <CardFooter className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                {isConfigured && (
-                  <>
-                    <Button variant="outline" asChild>
-                      <Link href="/timesheet/logwork">
-                        <ArrowLeft className="h-4 w-4" />
-                        Go to Log Work
-                      </Link>
-                    </Button>
-                    <Button variant="outline" asChild>
-                      <Link href="/timesheet/my-worklogs">
-                        <ArrowLeft className="h-4 w-4" />
-                        Go to My Worklogs
-                      </Link>
-                    </Button>
-                  </>
-                )}
-              </div>
-              <div className="flex items-center gap-3">
-                <ActionButton
-                  variant="outline"
-                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                  onClick={handleClear}
-                  disabled={!isConfigured}
-                  leftIcon={<Trash2 />}
-                >
-                  Clear
-                </ActionButton>
-                <ActionButton
-                  onClick={handleSave}
-                  disabled={isSaving || (!hasChanges && isConfigured)}
-                  leftIcon={isConfigured && !hasChanges ? <Check /> : <Save />}
-                  isLoading={isSaving}
-                  loadingText="Verifying..."
-                >
-                  {isConfigured && !hasChanges ? 'Saved' : 'Save'}
-                </ActionButton>
-              </div>
-            </CardFooter>
-          </Card>
+            </div>
+
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between gap-3 mt-4">
+            <div className="flex items-center gap-2">
+              {isConfigured && (
+                <>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/timesheet/logwork">
+                      <ArrowLeft className="h-3.5 w-3.5" />
+                      Log Work
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/timesheet/my-worklogs">
+                      <ArrowLeft className="h-3.5 w-3.5" />
+                      My Worklogs
+                    </Link>
+                  </Button>
+                </>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <ActionButton
+                variant="outline"
+                size="sm"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={handleClear}
+                disabled={!isConfigured}
+                leftIcon={<Trash2 />}
+              >
+                Clear
+              </ActionButton>
+              <ActionButton
+                size="sm"
+                onClick={handleSave}
+                disabled={isSaving || (!hasChanges && isConfigured)}
+                leftIcon={isConfigured && !hasChanges ? <Check /> : <Save />}
+                isLoading={isSaving}
+                loadingText="Verifying..."
+              >
+                {isConfigured && !hasChanges ? 'Saved' : 'Save'}
+              </ActionButton>
+            </div>
+          </div>
+
+          {/* Privacy note */}
+          <p className="flex items-center justify-center gap-1.5 mt-5 text-xs text-muted-foreground">
+            <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+            Credentials stored locally — passed directly to the Jira API.
+          </p>
+
         </div>
       </section>
     </MainLayout>

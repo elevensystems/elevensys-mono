@@ -1,3 +1,5 @@
+import type { DateRange } from '@/types/timesheet';
+
 const MONTH_ABBRS = [
   'Jan',
   'Feb',
@@ -148,6 +150,53 @@ export function getMonthEnd(): string {
 }
 
 /**
+ * Group a sorted array of Jira-format date strings into contiguous date ranges.
+ * Two dates are contiguous only if they are exactly 1 calendar day apart.
+ * This ensures ranges never span weekends or holidays.
+ */
+export function groupDatesIntoRanges(dates: string[]): DateRange[] {
+  if (dates.length === 0) return [];
+
+  const ranges: DateRange[] = [];
+  let rangeStart = dates[0];
+  let rangeEnd = dates[0];
+  let rangeDates: string[] = [dates[0]];
+
+  for (let i = 1; i < dates.length; i++) {
+    const prev = parseApiDate(dates[i - 1]);
+    const curr = parseApiDate(dates[i]);
+
+    const isConsecutive =
+      prev !== null &&
+      curr !== null &&
+      curr.getTime() - prev.getTime() === 24 * 60 * 60 * 1000;
+
+    if (isConsecutive) {
+      rangeEnd = dates[i];
+      rangeDates.push(dates[i]);
+    } else {
+      ranges.push({ startDate: rangeStart, endDate: rangeEnd, dates: rangeDates });
+      rangeStart = dates[i];
+      rangeEnd = dates[i];
+      rangeDates = [dates[i]];
+    }
+  }
+
+  ranges.push({ startDate: rangeStart, endDate: rangeEnd, dates: rangeDates });
+  return ranges;
+}
+
+/**
+ * Format a DateRange as a human-readable label.
+ * Single-date range: "4/May/26"
+ * Multi-date range: "4/May/26 → 8/May/26"
+ */
+export function formatRangeLabel(range: DateRange): string {
+  if (range.startDate === range.endDate) return range.startDate;
+  return `${range.startDate} → ${range.endDate}`;
+}
+
+/**
  * Delay execution for a given number of milliseconds
  */
 export function delay(ms: number): Promise<void> {
@@ -172,33 +221,6 @@ export function getStatusVariant(
   }
 }
 
-/**
- * Get gradient badge class for work type
- */
-export function getWorkTypeBadgeClass(type: string): string {
-  switch (type.toLowerCase()) {
-    case 'create':
-      return 'border-transparent bg-gradient-to-r from-violet-500/15 to-fuchsia-500/15 text-violet-700 dark:from-violet-500/25 dark:to-fuchsia-500/25 dark:text-violet-300';
-    case 'test':
-      return 'border-transparent bg-gradient-to-r from-emerald-500/15 to-teal-500/15 text-emerald-700 dark:from-emerald-500/25 dark:to-teal-500/25 dark:text-emerald-300';
-    case 'analysis':
-      return 'border-transparent bg-gradient-to-r from-sky-500/15 to-cyan-500/15 text-sky-700 dark:from-sky-500/25 dark:to-cyan-500/25 dark:text-sky-300';
-    case 'management':
-      return 'border-transparent bg-gradient-to-r from-amber-500/15 to-orange-500/15 text-amber-700 dark:from-amber-500/25 dark:to-orange-500/25 dark:text-amber-300';
-    case 'review':
-      return 'border-transparent bg-gradient-to-r from-pink-500/15 to-rose-500/15 text-pink-700 dark:from-pink-500/25 dark:to-rose-500/25 dark:text-pink-300';
-    case 'study':
-      return 'border-transparent bg-gradient-to-r from-indigo-500/15 to-blue-500/15 text-indigo-700 dark:from-indigo-500/25 dark:to-blue-500/25 dark:text-indigo-300';
-    case 'correct':
-      return 'border-transparent bg-gradient-to-r from-red-500/15 to-orange-500/15 text-red-700 dark:from-red-500/25 dark:to-orange-500/25 dark:text-red-300';
-    case 'translate':
-      return 'border-transparent bg-gradient-to-r from-blue-500/15 to-indigo-500/15 text-blue-700 dark:from-blue-500/25 dark:to-indigo-500/25 dark:text-blue-300';
-    case 'research':
-      return 'border-transparent bg-gradient-to-r from-slate-500/15 to-zinc-500/15 text-slate-700 dark:from-slate-500/25 dark:to-zinc-500/25 dark:text-slate-300';
-    default:
-      return 'border-transparent bg-gradient-to-r from-slate-500/15 to-gray-500/15 text-slate-700 dark:from-slate-500/25 dark:to-gray-500/25 dark:text-slate-300';
-  }
-}
 
 /**
  * Format a numeric hours value for display.
@@ -209,3 +231,39 @@ export function formatHours(value: number): string {
   if (Number.isInteger(value)) return value.toString();
   return value.toFixed(2).replace(/\.?0+$/, '');
 }
+
+/**
+ * Deterministically map a username to an HSL color for visual differentiation.
+ * Same username always produces the same hue; saturation/lightness are fixed
+ * for readability on both light and dark backgrounds.
+ */
+export function getUsernameColor(username: string): string {
+  let hash = 0;
+  for (let i = 0; i < username.length; i++) {
+    hash = username.charCodeAt(i) + ((hash << 5) - hash);
+    hash |= 0;
+  }
+  // Multiply by the golden angle to maximally spread hues apart
+  const hue = (Math.abs(hash) * 137.508) % 360;
+  return `hsl(${hue}, 65%, 48%)`;
+}
+
+export function getWorkTypeDotClass(type: string): string {
+  switch (type.toLowerCase()) {
+    case 'create':
+      return 'bg-blue-500';
+    case 'review':
+      return 'bg-purple-500';
+    case 'study':
+      return 'bg-amber-500';
+    case 'correct':
+      return 'bg-red-500';
+    case 'translate':
+      return 'bg-cyan-500';
+    case 'test':
+      return 'bg-green-500';
+    default:
+      return 'bg-slate-400';
+  }
+}
+

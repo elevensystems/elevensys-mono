@@ -604,6 +604,100 @@ pnpm --filter elevensys-web test:coverage       # Run tests with coverage report
 - **next/link**: Mock as `<a>` tag
 - **lucide-react icons**: Mock as `<span>` with `data-testid`
 
+## Timesheet Feature (apps/web)
+
+The timesheet feature (`src/app/timesheet/`) allows users to log, review, and manage Jira worklogs.
+
+### Pages
+
+| Route                         | Page              | Description                                          |
+| ----------------------------- | ----------------- | ---------------------------------------------------- |
+| `/timesheet/logwork`          | Log Work          | Find missing dates and bulk-log entries to Jira      |
+| `/timesheet/worklogs`         | My Worklogs       | View personal worklogs grouped by date               |
+| `/timesheet/project-worklogs` | Project Worklogs  | View all worklogs for a project with filters         |
+| `/timesheet/config`           | Configuration     | Save Jira instance, username, and API token locally  |
+
+### Log Work — Bulk Date Range Submission
+
+Selected dates are grouped into contiguous ranges before submission. One API request covers the entire range (`startDate ≠ endDate`), reducing calls from N per entry to 1 per contiguous block.
+
+**Grouping rule**: two dates are contiguous only if they are exactly 1 calendar day apart. This prevents ranges from spanning weekends or holidays — the backend rejects an entire range if any date within it is a holiday.
+
+Key utilities in `src/lib/timesheet.ts`:
+
+```typescript
+// Group sorted Jira-format dates into contiguous ranges
+groupDatesIntoRanges(dates: string[]): DateRange[]
+
+// Format range for display: "4/May/26 → 8/May/26" or "4/May/26"
+formatRangeLabel(range: DateRange): string
+```
+
+### Key Types (`src/types/timesheet.ts`)
+
+```typescript
+interface DateRange {
+  startDate: string;  // Jira D/Mon/YY format
+  endDate: string;
+  dates: string[];    // individual dates in the range
+}
+
+interface RequestStatus {
+  entryId: string;
+  issueKey: string;
+  rangeLabel: string; // "4/May/26 → 8/May/26"
+  dates: string[];    // individual dates for display
+  status: 'pending' | 'in-progress' | 'success' | 'failed' | 'skipped';
+  error?: string;
+}
+
+interface LogWorkResult {
+  entry: WorkEntry;
+  success: boolean;
+  error?: string;
+  failedRanges?: DateRange[];
+}
+```
+
+### Key Hooks
+
+| Hook                     | File                              | Purpose                                            |
+| ------------------------ | --------------------------------- | -------------------------------------------------- |
+| `useLogWorkSubmission`   | `hooks/use-log-work-submission.ts`| Submit entries by range, track status, retry failed |
+| `useMissingWorklogs`     | `hooks/use-missing-worklogs.ts`   | Find dates with missing worklogs for a project     |
+| `useTimesheetSettings`   | `hooks/use-timesheet-settings.ts` | Load/save Jira credentials from localStorage       |
+
+### API Routes (`src/app/api/timesheet/`)
+
+| Route                           | Purpose                                               |
+| ------------------------------- | ----------------------------------------------------- |
+| `POST /api/timesheet/logwork`   | Proxy to backend; forwards worklog with date range    |
+| `POST /api/timesheet/worklogs-warning` | Find dates with missing worklogs for a project |
+| `GET  /api/timesheet/projects`  | List Jira projects                                    |
+| `GET  /api/timesheet/issues`    | List issues for a project                             |
+
+### Logwork API Payload
+
+```json
+{
+  "jiraInstance": "jiradc",
+  "worklog": {
+    "username": "BaoHQ11",
+    "issueKey": "PROJECT-48",
+    "timeSpend": 28800,
+    "startDate": "4/May/26",
+    "endDate": "8/May/26",
+    "typeOfWork": "Review",
+    "description": "Code Review",
+    "time": " 09:00:00",
+    "remainingTime": 0,
+    "period": false
+  }
+}
+```
+
+When `startDate === endDate`, logs for a single day. When they differ, the backend logs for every calendar day in the range.
+
 ## Performance Considerations
 
 - **Turbopack**: Enabled for faster dev/build (Next.js 16 feature)

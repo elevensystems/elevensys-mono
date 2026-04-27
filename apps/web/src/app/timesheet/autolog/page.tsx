@@ -41,7 +41,7 @@ export default function AutologPage() {
   return (
     <MainLayout>
       <section className="container mx-auto px-4 py-12">
-        <div className="max-w-5xl mx-auto space-y-12">
+        <div className="max-w-full mx-auto space-y-6">
           <ToolPageHeader
             title="Autolog"
             description="Automatically log work to Jira on a weekly or monthly schedule."

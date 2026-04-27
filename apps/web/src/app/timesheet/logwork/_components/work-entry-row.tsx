@@ -14,8 +14,15 @@ import {
   ComboboxList,
 } from '@workspace/ui/components/combobox';
 import { Input } from '@workspace/ui/components/input';
-import { NativeSelect } from '@workspace/ui/components/native-select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@workspace/ui/components/select';
 import { cn } from '@workspace/ui/lib/utils';
+import { getWorkTypeDotClass } from '@/lib/timesheet';
 import {
   type JiraIssue,
   type RowErrors,
@@ -107,8 +114,7 @@ export const WorkEntryRow = memo(function WorkEntryRow({
   );
 
   const handleTypeChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) =>
-      onUpdate(entry.id, 'typeOfWork', e.target.value as WorkType),
+    (value: string) => onUpdate(entry.id, 'typeOfWork', value as WorkType),
     [entry.id, onUpdate]
   );
 
@@ -188,17 +194,36 @@ export const WorkEntryRow = memo(function WorkEntryRow({
             isFetchingTypeOfWork && 'ring-2 ring-primary/30 animate-pulse'
           )}
         >
-          <NativeSelect
-            className="h-8"
-            value={entry.typeOfWork}
-            onChange={handleTypeChange}
-          >
-            {WORK_TYPES.map(type => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </NativeSelect>
+          <Select value={entry.typeOfWork} onValueChange={handleTypeChange}>
+            <SelectTrigger size="sm" className="w-full">
+              <SelectValue>
+                <span className="flex items-center gap-2">
+                  <span
+                    className={cn(
+                      'size-2 shrink-0 rounded-full',
+                      getWorkTypeDotClass(entry.typeOfWork)
+                    )}
+                  />
+                  {entry.typeOfWork}
+                </span>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {WORK_TYPES.map(type => (
+                <SelectItem key={type} value={type}>
+                  <span className="flex items-center gap-2">
+                    <span
+                      className={cn(
+                        'size-2 shrink-0 rounded-full',
+                        getWorkTypeDotClass(type)
+                      )}
+                    />
+                    {type}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
       <div>
