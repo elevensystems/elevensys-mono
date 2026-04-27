@@ -4,21 +4,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { Clock, Plus, Send } from 'lucide-react';
+import { Plus, Send } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { ActionButton } from '@workspace/ui/components/action-button';
 import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
 import MainLayout from '@/components/layouts/main-layout';
-import { ToolPageHeader } from '@/components/layouts/tool-page-header';
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@workspace/ui/components/card';
 import { Spinner } from '@workspace/ui/components/spinner';
 import { useLogWorkSubmission } from '@/hooks/use-log-work-submission';
 import { useMissingWorklogs } from '@/hooks/use-missing-worklogs';
@@ -40,6 +31,7 @@ import type {
 } from '@/types/timesheet';
 
 import { ConfirmDialog } from './_components/confirm-dialog';
+import { LogworkStepper } from './_components/logwork-stepper';
 import { MissingWorklogsCard } from './_components/missing-worklogs-card';
 import { SubmissionModal } from './_components/submission-modal';
 import { WorkEntryRow } from './_components/work-entry-row';
@@ -365,17 +357,29 @@ export default function LogWorkPage() {
     totalHours === STANDARD_HOURS
       ? 'text-green-600 dark:text-green-400'
       : totalHours > STANDARD_HOURS
-        ? 'text-orange-600 dark:text-orange-400'
+        ? 'text-orange-500 dark:text-orange-400'
         : 'text-foreground';
+
+  const progressBarColor =
+    totalHours > STANDARD_HOURS ? 'bg-orange-500' : 'bg-green-500';
+
+  const progressPercent = Math.min((totalHours / STANDARD_HOURS) * 100, 100);
+
+  const currentStep = ((): 1 | 2 | 3 | 4 => {
+    if (isSubmitting) return 4;
+    if (selectedDates.length > 0 && entries.some(e => e.issueKey.trim())) return 3;
+    if (selectedDates.length > 0) return 2;
+    return 1;
+  })();
 
   return (
     <MainLayout>
       <section className="container mx-auto px-4 py-12">
         <div className="max-w-full mx-auto space-y-8">
-          <ToolPageHeader
-            title="Log Work"
-            description="Log your work entries to Jira timesheet. Select dates, add work entries, and submit them in bulk."
-          />
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold">Log Work</h1>
+            <LogworkStepper currentStep={currentStep} />
+          </div>
 
           <NotConfiguredAlert isConfigured={isConfigured} />
 
@@ -406,31 +410,24 @@ export default function LogWorkPage() {
             dateError={errors.global.dates}
           />
 
-          {/* Work Entries Card */}
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col gap-1">
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  Work Entries
-                </CardTitle>
-                <CardDescription>
-                  Add work entries for each Jira issue. Every entry will be
-                  logged for all selected dates.
-                </CardDescription>
-              </div>
-              <CardAction>
-                <div className="flex flex-col items-end gap-0.5 text-sm">
-                  <span className="text-muted-foreground text-xs">
-                    Daily target
-                  </span>
+          {/* Work Entries */}
+          <div className="space-y-6">
+            <div className="flex items-end justify-end">
+              <div className="flex w-48 flex-col gap-1.5 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-xs">Daily target</span>
                   <span className={`font-semibold ${hoursColor}`}>
                     {formatHours(totalHours)}h / {formatHours(STANDARD_HOURS)}h
                   </span>
                 </div>
-              </CardAction>
-            </CardHeader>
-            <CardContent className="space-y-6">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className={`h-full rounded-full transition-all duration-300 ${progressBarColor}`}
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+              </div>
+            </div>
               {/* Entries Table */}
               <div className="flex mb-3 items-center gap-2 text-sm font-medium text-muted-foreground">
                 <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
@@ -499,8 +496,7 @@ export default function LogWorkPage() {
                   Submit Work Logs
                 </ActionButton>
               </div>
-            </CardContent>
-          </Card>
+          </div>
         </div>
 
         <SubmissionModal

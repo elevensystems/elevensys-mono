@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 
 import { X } from 'lucide-react';
 
+import { cn } from '@workspace/ui/lib/utils';
+
 interface DateChipListProps {
   dates: Date[];
   manualDateKeys: Set<string>;
@@ -71,12 +73,21 @@ export function DateChipList({
         {sorted.map(date => {
           const key = date.toISOString().split('T')[0];
           const isManual = manualDateKeys.has(key);
+          const isWeekend = date.getDay() === 0 || date.getDay() === 6;
           return (
             <button
               key={date.toISOString()}
               type="button"
               onClick={() => onRemove(date)}
-              className={`inline-flex items-center gap-1 rounded-full border bg-secondary px-2.5 py-0.5 text-xs font-medium hover:bg-destructive hover:text-white hover:border-destructive transition-colors ${isManual ? 'border-blue-400' : 'border-border'}`}
+              className={cn(
+                'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors',
+                isManual
+                  ? 'border-blue-300 bg-blue-50/80 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-400'
+                  : isWeekend
+                    ? 'border-amber-200 bg-amber-50/80 text-amber-700 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-400'
+                    : 'border-border bg-muted/50 text-foreground',
+                'hover:border-destructive/60 hover:bg-destructive/10 hover:text-destructive cursor-pointer'
+              )}
               title={`Remove ${formatChip(date)}`}
             >
               {formatChip(date)}

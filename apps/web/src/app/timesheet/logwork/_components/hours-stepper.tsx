@@ -68,7 +68,7 @@ export function HoursStepper({
   const enterEditMode = useCallback(() => {
     if (disabled) return;
     valueBeforeEditRef.current = value;
-    setEditValue(String(parseFloat(value.toFixed(1))));
+    setEditValue(String(parseFloat(value.toFixed(2))));
     setIsEditing(true);
   }, [value, disabled]);
 
@@ -173,7 +173,7 @@ export function HoursStepper({
           onClick={enterEditMode}
           className="flex h-7 w-14 cursor-pointer select-none items-center justify-center rounded-sm text-sm font-medium hover:bg-accent"
         >
-          {value.toFixed(1)}h
+          {String(parseFloat(value.toFixed(2)))}h
         </span>
       )}
 

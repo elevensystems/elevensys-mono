@@ -130,7 +130,7 @@ export function SubmissionModal({
         }}
       >
         <DialogContent
-          className="sm:max-w-4xl"
+          className="sm:max-w-3xl"
           showCloseButton={false}
           onPointerDownOutside={e => {
             if (isSubmitting) e.preventDefault();
