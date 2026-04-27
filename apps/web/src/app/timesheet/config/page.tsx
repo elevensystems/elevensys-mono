@@ -159,15 +159,18 @@ export default function TimesheetConfigPage() {
                   <option value="jira9">jira9</option>
                 </NativeSelect>
                 <p className="text-xs text-muted-foreground">
+                  Click{' '}
                   <a
                     href={`https://insight.fsoft.com.vn/${jiraInstance}/secure/ViewProfile.jspa`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="font-medium text-blue-600 underline underline-offset-4 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                   >
-                    Create a token
-                  </a>{' '}
-                  in Jira settings
+                    here
+                  </a>
+                  , → Then Click on{' '}
+                  <span className="font-medium">Personal Access Tokens</span> →{' '}
+                  <span className="font-medium">Create Token</span>
                 </p>
               </div>
             </div>
@@ -225,7 +228,7 @@ export default function TimesheetConfigPage() {
                     }
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">Personal access token for API auth</p>
+                <p className="text-xs text-muted-foreground">Personal access token for API authentication</p>
               </div>
             </div>
 

@@ -270,7 +270,7 @@ describe('TimesheetConfigPage', () => {
 
   it('renders help link with correct jiraInstance URL', () => {
     render(<TimesheetConfigPage />);
-    const link = screen.getByText('Create a token');
+    const link = screen.getByText('here');
     expect(link).toHaveAttribute(
       'href',
       'https://insight.fsoft.com.vn/jiradc/secure/ViewProfile.jspa'
@@ -469,7 +469,7 @@ describe('TimesheetConfigPage', () => {
       screen.getByLabelText('Instance'),
       'jira3'
     );
-    expect(screen.getByText('Create a token')).toHaveAttribute(
+    expect(screen.getByText('here')).toHaveAttribute(
       'href',
       'https://insight.fsoft.com.vn/jira3/secure/ViewProfile.jspa'
     );

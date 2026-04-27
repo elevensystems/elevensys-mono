@@ -13,6 +13,7 @@ import { Label } from '@workspace/ui/components/label';
 import { NativeSelect } from '@workspace/ui/components/native-select';
 import { Skeleton } from '@workspace/ui/components/skeleton';
 import { Spinner } from '@workspace/ui/components/spinner';
+import { ToolPageHeader } from '@/components/layouts/tool-page-header';
 import { useMyWorklogs } from '@/hooks/use-my-worklogs';
 import { useTimesheetSettings } from '@/hooks/use-timesheet-settings';
 import {
@@ -107,15 +108,17 @@ export default function MyWorklogsPage() {
       <section className="container mx-auto px-4 py-12">
         <div className="max-w-full mx-auto space-y-6">
           {/* Header */}
-          <div>
-            <h1 className="text-2xl font-bold">My Worklogs</h1>
-            {hasSearched && worklogs.length > 0 && (
-              <p className="text-sm text-muted-foreground mt-1">
-                {worklogs.length} record{worklogs.length !== 1 ? 's' : ''}{' '}
-                &middot; {formatHours(totalHours)} total hours
-              </p>
-            )}
-          </div>
+          <ToolPageHeader
+            title="My Worklogs"
+            subtitle={
+              hasSearched && worklogs.length > 0 ? (
+                <p className="text-sm text-muted-foreground mt-1">
+                  {worklogs.length} record{worklogs.length !== 1 ? 's' : ''}{' '}
+                  &middot; {formatHours(totalHours)} total hours
+                </p>
+              ) : undefined
+            }
+          />
 
           <NotConfiguredAlert isConfigured={isConfigured} />
 

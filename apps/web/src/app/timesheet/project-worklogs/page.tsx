@@ -32,6 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table';
+import { ToolPageHeader } from '@/components/layouts/tool-page-header';
 import { useProjectWorklogs } from '@/hooks/use-project-worklogs';
 import { useTimesheetSettings } from '@/hooks/use-timesheet-settings';
 
@@ -104,20 +105,24 @@ export default function ProjectWorklogsPage() {
       <section className="container mx-auto px-4 py-12">
         <div className="max-w-full mx-auto space-y-6">
           {/* Header */}
-          <div>
-            <h1 className="text-2xl font-bold">Project Worklogs</h1>
-            {hasSearched && totalRecords > 0 && selectedProject && (
-              <p className="text-sm text-muted-foreground mt-1">
-                {selectedProject.name} &middot;{' '}
-                {totalRecords} record{totalRecords !== 1 ? 's' : ''}
-                {uniqueContributors > 0 &&
-                  ` · ${uniqueContributors} contributor${uniqueContributors !== 1 ? 's' : ''} on this page`}
-              </p>
-            )}
-            {error && (
-              <p className="text-sm text-destructive mt-1">{error}</p>
-            )}
-          </div>
+          <ToolPageHeader
+            title="Project Worklogs"
+            subtitle={
+              <>
+                {hasSearched && totalRecords > 0 && selectedProject && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {selectedProject.name} &middot;{' '}
+                    {totalRecords} record{totalRecords !== 1 ? 's' : ''}
+                    {uniqueContributors > 0 &&
+                      ` · ${uniqueContributors} contributor${uniqueContributors !== 1 ? 's' : ''} on this page`}
+                  </p>
+                )}
+                {error && (
+                  <p className="text-sm text-destructive mt-1">{error}</p>
+                )}
+              </>
+            }
+          />
 
           <NotConfiguredAlert isConfigured={isConfigured} />
 
