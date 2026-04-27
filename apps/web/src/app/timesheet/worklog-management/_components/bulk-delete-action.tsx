@@ -50,7 +50,7 @@ export function BulkDeleteAction({
                 size="sm"
                 leftIcon={<Trash2 />}
                 isLoading={isBulkDeleting}
-                loadingText={`Deleting... ${bulkDeleteProgress}%`}
+                loadingText="Deleting..."
               >
                 Delete
               </ActionButton>

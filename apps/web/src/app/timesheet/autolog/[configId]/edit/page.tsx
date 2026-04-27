@@ -51,7 +51,7 @@ export default function EditAutologConfigPage({
     return (
       <MainLayout>
         <section className="container mx-auto px-4 py-12">
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-full mx-auto space-y-6">
             <div className="rounded-lg border border-dashed p-10 text-center text-muted-foreground">
               <p className="text-sm">Configuration not found.</p>
             </div>
@@ -64,7 +64,7 @@ export default function EditAutologConfigPage({
   return (
     <MainLayout>
       <section className="container mx-auto px-4 py-12">
-        <div className="max-w-5xl mx-auto space-y-8">
+        <div className="max-w-full mx-auto space-y-6">
           <ToolPageHeader
             title="Edit Configuration"
             description={`Editing autolog configuration for ${config.projectName}.`}

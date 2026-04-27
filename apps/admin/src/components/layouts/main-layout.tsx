@@ -14,6 +14,7 @@ import {
   BreadcrumbSeparator,
 } from '@workspace/ui/components/breadcrumb';
 import { Separator } from '@workspace/ui/components/separator';
+import { SidebarAutoCollapse } from '@workspace/ui/components/sidebar-auto-collapse';
 import {
   SidebarInset,
   SidebarProvider,
@@ -45,6 +46,7 @@ export default function MainLayout({
 
   return (
     <SidebarProvider defaultOpen={true}>
+      <SidebarAutoCollapse />
       <AppSidebar user={user} />
       <SidebarInset>
         <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b bg-background/50 backdrop-blur">
