@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { TIMESHEET_URLS } from '@/lib/api-urls';
+import { JIRA_URLS } from '@/lib/api-urls';
 import { sanitizeErrorText } from '@/lib/fetch-utils';
+import { missingJiraInstanceResponse } from '@/lib/jira-proxy';
 
 interface ProjectWorklogsRequestBody {
   pid: number;
@@ -35,10 +36,14 @@ export async function POST(request: NextRequest) {
       filConflict = '',
       components = '',
       products = '',
-      jiraInstance = 'jiradc',
+      jiraInstance,
       page = 1,
       desc = false,
     } = body;
+
+    if (!jiraInstance) {
+      return missingJiraInstanceResponse();
+    }
 
     if (!authHeader || !pid || !startDate || !endDate) {
       return NextResponse.json(
@@ -58,7 +63,7 @@ export async function POST(request: NextRequest) {
     });
 
     const response = await fetch(
-      `${TIMESHEET_URLS.PROJECT_WORKLOGS_REPORT}?${params.toString()}`,
+      `${JIRA_URLS.PROJECT_WORKLOGS_REPORT}?${params.toString()}`,
       {
         method: 'POST',
         headers: {

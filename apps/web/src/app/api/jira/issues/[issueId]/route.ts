@@ -1,31 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { TIMESHEET_URLS } from '@/lib/api-urls';
+import { JIRA_URLS } from '@/lib/api-urls';
 import { sanitizeErrorText } from '@/lib/fetch-utils';
+import {
+  getJiraInstanceFromQuery,
+  missingJiraInstanceResponse,
+} from '@/lib/jira-proxy';
 
-export async function POST(
+export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ issueId: string }> }
 ) {
   try {
     const { issueId } = await params;
     const authHeader = request.headers.get('Authorization') || '';
-    const body = await request.json();
-    const { jiraInstance } = body;
+    const jiraInstance = getJiraInstanceFromQuery(request);
 
-    if (!authHeader || !jiraInstance) {
+    if (!authHeader) {
       return NextResponse.json(
-        {
-          error: 'Missing required fields: Authorization header, jiraInstance',
-        },
+        { error: 'Missing required Authorization header' },
         { status: 400 }
       );
+    }
+
+    if (!jiraInstance) {
+      return missingJiraInstanceResponse();
     }
 
     const queryParams = new URLSearchParams({ jiraInstance });
 
     const response = await fetch(
-      `${TIMESHEET_URLS.ISSUE}/${issueId}?${queryParams.toString()}`,
+      `${JIRA_URLS.ISSUE}/${issueId}?${queryParams.toString()}`,
       {
         method: 'GET',
         headers: {

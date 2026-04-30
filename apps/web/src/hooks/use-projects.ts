@@ -27,7 +27,7 @@ export function useProjects({ settings, isConfigured }: UseProjectsParams) {
       setIsLoading(true);
       try {
         const response = await fetch(
-          `/api/timesheet/projects?jiraInstance=${settings.jiraInstance}`,
+          `/api/jira/projects?jiraInstance=${settings.jiraInstance}`,
           {
             headers: { Authorization: `Bearer ${settings.token}` },
             signal: controller.signal,

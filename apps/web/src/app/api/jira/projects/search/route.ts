@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { TIMESHEET_URLS } from '@/lib/api-urls';
+import { JIRA_URLS } from '@/lib/api-urls';
 import { sanitizeErrorText } from '@/lib/fetch-utils';
+import { missingJiraInstanceResponse } from '@/lib/jira-proxy';
+
+interface ProjectIssuesRequest {
+  jiraInstance: string;
+  jql: string;
+  columnConfig: string;
+  layoutKey: string;
+  startIndex: string;
+}
 
 interface JiraIssueRaw {
   id: number;
@@ -15,30 +24,39 @@ interface JiraIssueRaw {
   };
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
-) {
+export async function POST(request: NextRequest) {
   try {
-    const { projectId } = await params;
-    const jiraInstance =
-      request.nextUrl.searchParams.get('jiraInstance') || 'jiradc';
-    const startIndex = request.nextUrl.searchParams.get('startIndex') || '0';
+    const payload = (await request.json()) as Partial<ProjectIssuesRequest>;
 
+    if (!payload.jiraInstance) {
+      return missingJiraInstanceResponse();
+    }
+
+    if (!payload.jql) {
+      return NextResponse.json(
+        { error: 'Missing required field: jql' },
+        { status: 400 }
+      );
+    }
+
+    const jiraInstance = payload.jiraInstance;
     const authHeader = request.headers.get('Authorization') || '';
-    const queryParams = new URLSearchParams({
-      jiraInstance,
-      startIndex,
-    });
+    const params = new URLSearchParams({ jiraInstance });
 
     const response = await fetch(
-      `${TIMESHEET_URLS.PROJECTS}/${projectId}/issues?${queryParams.toString()}`,
+      `${JIRA_URLS.PROJECTS_SEARCH}?${params.toString()}`,
       {
-        method: 'GET',
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: authHeader,
         },
+        body: JSON.stringify({
+          jql: payload.jql,
+          columnConfig: payload.columnConfig || 'explicit',
+          layoutKey: payload.layoutKey || 'split-view',
+          startIndex: payload.startIndex || '0',
+        }),
       }
     );
 

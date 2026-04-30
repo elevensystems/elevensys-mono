@@ -33,7 +33,6 @@
 | `POST` | `/api/translately` | Translates text between Vietnamese and English using OpenAI. Requires `pro` role. Accepts `input`, `direction` (`vi-en` or `en-vi`), optional `tone`, and `model`.         |
 | `POST` | `/api/beatly`      | Recommends 5 songs based on user mood using OpenAI. Accepts `mood`, `language`, `genres[]`, and excluded songs. Returns song objects with `title`, `artist`, and `reason`. |
 | `POST` | `/api/passly`      | Generates random passwords. Accepts `length` (8-128) and character options (`uppercase`, `lowercase`, `numbers`, `symbols`). Returns array of 4 passwords.                 |
-| `GET`  | `/api/templates`   | Returns a list of AI prompt templates. Requires `pro` role. Loads template content from markdown files in `public/templates/`.                                             |
 
 ## General
 
@@ -43,7 +42,7 @@
 
 ## Summary
 
-- **Total routes:** 18
+- **Total routes:** 17
 - **Auth:** OAuth 2.0 with PKCE via AWS Cognito
-- **Role-based access:** `templates` and `translately` require `pro` role
+- **Role-based access:** `translately` requires `pro` role
 - **Timesheet proxy:** Routes forward requests to CDK backend at `api.elevensys.dev`

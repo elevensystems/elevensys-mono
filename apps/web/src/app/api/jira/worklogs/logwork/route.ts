@@ -1,17 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { TIMESHEET_URLS } from '@/lib/api-urls';
+import { JIRA_URLS } from '@/lib/api-urls';
 import { sanitizeErrorText } from '@/lib/fetch-utils';
+import { missingJiraInstanceResponse } from '@/lib/jira-proxy';
+import type { LogWorkRequest } from '@/types/timesheet';
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('Authorization') || '';
-    const jiraInstance =
-      request.nextUrl.searchParams.get('jiraInstance') || 'jiradc';
+    const body: LogWorkRequest = await request.json();
+    const { worklog, jiraInstance } = body;
 
-    if (!authHeader) {
+    if (!jiraInstance) {
+      return missingJiraInstanceResponse();
+    }
+
+    if (!authHeader || !worklog) {
       return NextResponse.json(
-        { error: 'Missing required Authorization header' },
+        {
+          error: 'Missing required fields: Authorization header, worklog',
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!worklog.issueKey || !worklog.username || !worklog.startDate) {
+      return NextResponse.json(
+        { error: 'Missing required worklog fields' },
         { status: 400 }
       );
     }
@@ -19,12 +34,14 @@ export async function GET(request: NextRequest) {
     const params = new URLSearchParams({ jiraInstance });
 
     const response = await fetch(
-      `${TIMESHEET_URLS.AUTH}?${params.toString()}`,
+      `${JIRA_URLS.LOGWORK}?${params.toString()}`,
       {
-        method: 'GET',
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           Authorization: authHeader,
         },
+        body: JSON.stringify(worklog),
       }
     );
 

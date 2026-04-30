@@ -4,7 +4,6 @@ import Link from 'next/link';
 
 import {
   Braces,
-  FileText,
   Key,
   Languages,
   Link2,
@@ -60,18 +59,6 @@ const tools = [
     description: 'Convert Lerna publish output to npm install commands',
     href: '/tools/npm-converter',
     icon: Package,
-  },
-  {
-    title: 'PR Link Shrinker',
-    description: 'Shorten GitHub PR URLs to a compact, readable format',
-    href: '/tools/pr-link-shrinker',
-    icon: Link2,
-  },
-  {
-    title: 'Prompt Templates',
-    description: 'Browse and copy prompt templates for AI agents and workflows',
-    href: '/tools/prompt-templates',
-    icon: FileText,
   },
   {
     title: 'Beatly',

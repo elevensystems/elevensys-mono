@@ -66,7 +66,7 @@ export function useMissingWorklogs({
 
     setIsSearchingWarnings(true);
     try {
-      const response = await fetch('/api/timesheet/worklogs-warning', {
+      const response = await fetch('/api/jira/project-worklogs/warning', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

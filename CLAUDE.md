@@ -77,9 +77,8 @@ elevensys-mono/
 │   │   │   │   │   ├── translately/# Translation API (Pro-only)
 │   │   │   │   │   ├── urlify/     # URL shortener create endpoint
 │   │   │   │   │   ├── timesheet/  # Timesheet feature (projects, issues, worklogs, logwork, auth)
-│   │   │   │   │   ├── templates/
 │   │   │   │   │   └── feedback/
-│   │   │   │   ├── tools/          # Tool pages (11 tools)
+│   │   │   │   ├── tools/          # Tool pages (9 tools)
 │   │   │   │   │   ├── beatly/         # Song recommender
 │   │   │   │   │   ├── caseify/        # Case converter
 │   │   │   │   │   ├── json-diffinity/ # JSON diff tool
@@ -87,8 +86,6 @@ elevensys-mono/
 │   │   │   │   │   ├── json-objectify/ # JSON object converter
 │   │   │   │   │   ├── npm-converter/
 │   │   │   │   │   ├── passly/         # Password generator
-│   │   │   │   │   ├── pr-link-shrinker/
-│   │   │   │   │   ├── prompt-templates/
 │   │   │   │   │   ├── translately/    # Translation tool
 │   │   │   │   │   └── urlify/         # URL shortener
 │   │   │   │   ├── timesheet/      # Timesheet feature pages
@@ -119,7 +116,6 @@ elevensys-mono/
 │   │   │   └── styles/
 │   │   │       └── globals.css
 │   │   ├── public/
-│   │   │   ├── templates/          # Markdown prompt templates
 │   │   │   └── assets/             # SVG icons, favicon
 │   │   ├── jest.config.ts
 │   │   ├── next.config.ts

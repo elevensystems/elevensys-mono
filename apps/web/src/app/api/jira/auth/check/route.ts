@@ -1,37 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { TIMESHEET_URLS } from '@/lib/api-urls';
+import { JIRA_URLS } from '@/lib/api-urls';
 import { sanitizeErrorText } from '@/lib/fetch-utils';
+import {
+  getJiraInstanceFromQuery,
+  missingJiraInstanceResponse,
+} from '@/lib/jira-proxy';
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('Authorization') || '';
-    const body = await request.json();
-    const { pid, startDate, endDate, jiraInstance } = body;
+    const jiraInstance = getJiraInstanceFromQuery(request);
 
-    if (!authHeader || !pid || !startDate || !endDate) {
+    if (!authHeader) {
       return NextResponse.json(
-        {
-          error:
-            'Missing required fields: Authorization header, pid, startDate, endDate',
-        },
+        { error: 'Missing required Authorization header' },
         { status: 400 }
       );
     }
 
-    const params = new URLSearchParams({
-      jiraInstance: jiraInstance || 'jiradc',
-    });
+    if (!jiraInstance) {
+      return missingJiraInstanceResponse();
+    }
+
+    const params = new URLSearchParams({ jiraInstance });
 
     const response = await fetch(
-      `${TIMESHEET_URLS.WORKLOGS_WARNING}?${params.toString()}`,
+      `${JIRA_URLS.AUTH_CHECK}?${params.toString()}`,
       {
-        method: 'POST',
+        method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
           Authorization: authHeader,
         },
-        body: JSON.stringify({ pid, startDate, endDate }),
       }
     );
 

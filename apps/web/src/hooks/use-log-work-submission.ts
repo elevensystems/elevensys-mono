@@ -58,7 +58,7 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
       time: string
     ): Promise<{ success: boolean; error?: string }> => {
       try {
-        const response = await fetch('/api/timesheet/logwork', {
+        const response = await fetch('/api/jira/worklogs/logwork', {
           method: 'POST',
           headers,
           body: JSON.stringify({

@@ -1,28 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { TIMESHEET_URLS } from '@/lib/api-urls';
+import { JIRA_URLS } from '@/lib/api-urls';
 import { sanitizeErrorText } from '@/lib/fetch-utils';
-import type { LogWorkRequest } from '@/types/timesheet';
+import { missingJiraInstanceResponse } from '@/lib/jira-proxy';
 
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('Authorization') || '';
-    const body: LogWorkRequest = await request.json();
-    const { worklog, jiraInstance } = body;
+    const body = await request.json();
+    const { pid, startDate, endDate, jiraInstance } = body;
 
-    if (!authHeader || !worklog || !jiraInstance) {
+    if (!jiraInstance) {
+      return missingJiraInstanceResponse();
+    }
+
+    if (!authHeader || !pid || !startDate || !endDate) {
       return NextResponse.json(
         {
           error:
-            'Missing required fields: Authorization header, worklog, and jiraInstance',
+            'Missing required fields: Authorization header, pid, startDate, endDate',
         },
-        { status: 400 }
-      );
-    }
-
-    if (!worklog.issueKey || !worklog.username || !worklog.startDate) {
-      return NextResponse.json(
-        { error: 'Missing required worklog fields' },
         { status: 400 }
       );
     }
@@ -30,14 +27,14 @@ export async function POST(request: NextRequest) {
     const params = new URLSearchParams({ jiraInstance });
 
     const response = await fetch(
-      `${TIMESHEET_URLS.LOGWORK}?${params.toString()}`,
+      `${JIRA_URLS.PROJECT_WORKLOGS_WARNING}?${params.toString()}`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: authHeader,
         },
-        body: JSON.stringify(worklog),
+        body: JSON.stringify({ pid, startDate, endDate }),
       }
     );
 

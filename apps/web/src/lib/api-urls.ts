@@ -1,17 +1,19 @@
 import { env } from '@/env';
 
 const BASE_URL = env.API_BASE_URL;
+const JIRA_BASE = `${BASE_URL}/jira`;
 
-export const TIMESHEET_URLS = {
-  AUTH: `${BASE_URL}/timesheet/auth`,
-  LOGWORK: `${BASE_URL}/timesheet/logwork`,
-  PROJECTS: `${BASE_URL}/timesheet/projects`,
-  WORKLOGS_WARNING: `${BASE_URL}/timesheet/project-worklogs-warning`,
-  ISSUE: `${BASE_URL}/timesheet/issue`,
-  WORKLOGS: `${BASE_URL}/timesheet/worklogs`,
-  PROJECT_WORKLOGS: `${BASE_URL}/timesheet/project-worklogs`,
-  PROJECT_WORKLOGS_PAGINATION: `${BASE_URL}/timesheet/project-worklogs/pagination`,
-  PROJECT_WORKLOGS_REPORT: `${BASE_URL}/timesheet/project-worklogs-report/get-all`,
+export const JIRA_URLS = {
+  AUTH_CHECK: `${JIRA_BASE}/auth/check`,
+  LOGWORK: `${JIRA_BASE}/worklogs/logwork`,
+  WORKLOGS: `${JIRA_BASE}/worklogs`,
+  PROJECTS: `${JIRA_BASE}/projects`,
+  PROJECTS_SEARCH: `${JIRA_BASE}/projects/search`,
+  ISSUE: `${JIRA_BASE}/issues`,
+  PROJECT_WORKLOGS: `${JIRA_BASE}/project-worklogs`,
+  PROJECT_WORKLOGS_PAGINATION: `${JIRA_BASE}/project-worklogs/pagination`,
+  PROJECT_WORKLOGS_WARNING: `${JIRA_BASE}/project-worklogs/warning`,
+  PROJECT_WORKLOGS_REPORT: `${JIRA_BASE}/project-worklogs/report`,
 };
 
 export const URLIFY_URLS = {

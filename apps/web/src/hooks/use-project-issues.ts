@@ -39,7 +39,7 @@ export function useProjectIssues({
     const id = String(++fetchIdRef.current);
     setActiveFetchId(id);
 
-    fetch('/api/timesheet/projects', {
+    fetch('/api/jira/projects/search', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -84,14 +84,15 @@ export function useProjectIssues({
       }
 
       try {
-        const response = await fetch(`/api/timesheet/issue/${issueId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ jiraInstance }),
-        });
+        const response = await fetch(
+          `/api/jira/issues/${issueId}?jiraInstance=${encodeURIComponent(jiraInstance)}`,
+          {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         if (!response.ok) return null;
 

@@ -69,7 +69,7 @@ export function useProjectWorklogs({
       setIsLoading(true);
       setError('');
       try {
-        const response = await fetch('/api/timesheet/project-worklogs', {
+        const response = await fetch('/api/jira/project-worklogs/report', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

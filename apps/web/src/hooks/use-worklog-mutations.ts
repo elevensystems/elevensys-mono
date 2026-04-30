@@ -105,9 +105,10 @@ export function useWorklogMutations({
       try {
         const params = new URLSearchParams({
           jiraInstance: settings.jiraInstance,
+          issueId: issueId.toString(),
         });
         const response = await fetch(
-          `/api/timesheet/worklogs/${issueId}/${worklogId}?${params.toString()}`,
+          `/api/jira/project-worklogs/${worklogId}?${params.toString()}`,
           {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${settings.token}` },
@@ -169,7 +170,7 @@ export function useWorklogMutations({
         };
 
         const response = await fetch(
-          `/api/timesheet/worklogs/${worklog.issueId}/${worklog.id}`,
+          `/api/jira/project-worklogs/${worklog.id}`,
           {
             method: 'PUT',
             headers: {
@@ -270,9 +271,10 @@ export function useWorklogMutations({
       try {
         const deleteParams = new URLSearchParams({
           jiraInstance: settings.jiraInstance,
+          issueId: worklog.issueId.toString(),
         });
         const response = await fetch(
-          `/api/timesheet/worklogs/${worklog.issueId}/${worklog.id}?${deleteParams.toString()}`,
+          `/api/jira/project-worklogs/${worklog.id}?${deleteParams.toString()}`,
           {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${settings.token}` },

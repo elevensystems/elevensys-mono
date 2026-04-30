@@ -69,7 +69,7 @@ export default function TimesheetConfigPage() {
     setIsSaving(true);
     try {
       const params = new URLSearchParams({ jiraInstance });
-      const response = await fetch(`/api/timesheet/auth?${params.toString()}`, {
+      const response = await fetch(`/api/jira/auth/check?${params.toString()}`, {
         headers: {
           Authorization: `Bearer ${token.trim()}`,
         },

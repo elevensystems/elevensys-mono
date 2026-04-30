@@ -392,7 +392,7 @@ describe('TimesheetConfigPage', () => {
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
-        '/api/timesheet/auth?jiraInstance=jiradc',
+        '/api/jira/auth/check?jiraInstance=jiradc',
         {
           headers: {
             Authorization: 'Bearer new-token',

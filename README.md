@@ -37,8 +37,6 @@ The Log Work page groups consecutive selected dates into ranges and submits one 
 | **Translately**      | Translate between Vietnamese and English with tone control   |
 | **Passly**           | Generate secure, random passwords with customizable options  |
 | **NPM Converter**    | Convert Lerna publish output to npm install commands         |
-| **PR Link Shrinker** | Shorten GitHub PR URLs to a compact, readable format         |
-| **Prompt Templates** | Browse and copy prompt templates for AI agents and workflows |
 | **Beatly**           | Get song recommendations based on your favorite artists      |
 
 ## Prerequisites

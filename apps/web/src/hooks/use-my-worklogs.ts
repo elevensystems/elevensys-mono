@@ -66,7 +66,7 @@ export function useMyWorklogs({ settings, isConfigured }: UseMyWorklogsParams) {
       });
 
       const response = await fetch(
-        `/api/timesheet/worklogs?${params.toString()}`,
+        `/api/jira/worklogs?${params.toString()}`,
         { headers: { Authorization: `Bearer ${settings.token}` } }
       );
 
