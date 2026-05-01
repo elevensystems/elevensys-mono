@@ -38,7 +38,7 @@ export function useAutolog({
     setIsLoading(true);
     try {
       const res = await fetch(
-        `/api/timesheet/autolog?username=${encodeURIComponent(username)}`,
+        `/api/jira/autolog?username=${encodeURIComponent(username)}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -60,7 +60,7 @@ export function useAutolog({
   const createConfig = useCallback(
     async (payload: CreateAutologConfigPayload): Promise<boolean> => {
       try {
-        const res = await fetch('/api/timesheet/autolog', {
+        const res = await fetch('/api/jira/autolog', {
           method: 'POST',
           headers: authHeaders,
           body: JSON.stringify(payload),
@@ -89,7 +89,7 @@ export function useAutolog({
       payload: UpdateAutologConfigPayload
     ): Promise<boolean> => {
       try {
-        const res = await fetch(`/api/timesheet/autolog/${configId}`, {
+        const res = await fetch(`/api/jira/autolog/${configId}`, {
           method: 'PUT',
           headers: authHeaders,
           body: JSON.stringify(payload),
@@ -118,7 +118,7 @@ export function useAutolog({
     async (configId: string): Promise<boolean> => {
       try {
         const res = await fetch(
-          `/api/timesheet/autolog/${configId}?username=${encodeURIComponent(username)}`,
+          `/api/jira/autolog/${configId}?username=${encodeURIComponent(username)}`,
           { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } }
         );
         if (!res.ok) {
@@ -141,7 +141,7 @@ export function useAutolog({
   const runConfig = useCallback(
     async (configId: string): Promise<boolean> => {
       try {
-        const res = await fetch(`/api/timesheet/autolog/${configId}/run`, {
+        const res = await fetch(`/api/jira/autolog/${configId}/run`, {
           method: 'POST',
           headers: authHeaders,
           body: JSON.stringify({ username }),
