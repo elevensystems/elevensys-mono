@@ -40,8 +40,7 @@ export function LogworkStepper({ currentStep }: LogworkStepperProps) {
               <span
                 className={cn(
                   'text-sm whitespace-nowrap transition-colors',
-                  isActive && 'font-semibold text-foreground',
-                  !isActive && 'text-muted-foreground'
+                  isActive ? 'inline font-semibold text-foreground' : 'hidden text-muted-foreground sm:inline'
                 )}
               >
                 {step.label}
@@ -50,7 +49,7 @@ export function LogworkStepper({ currentStep }: LogworkStepperProps) {
             {index < STEPS.length - 1 && (
               <div
                 className={cn(
-                  'mx-3 h-px min-w-8 flex-1 transition-colors',
+                  'mx-2 h-px min-w-4 flex-1 transition-colors sm:mx-3 sm:min-w-8',
                   stepNum < currentStep ? 'bg-primary' : 'bg-border'
                 )}
               />

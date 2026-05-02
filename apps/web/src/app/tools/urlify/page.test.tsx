@@ -70,6 +70,7 @@ jest.mock('@/components/layouts/tool-page-header', () => ({
 
 jest.mock('lucide-react', () => ({
   Copy: () => <span data-testid="icon-copy" />,
+  CornerDownLeft: () => <span data-testid="icon-corner-down-left" />,
   Link2: () => <span data-testid="icon-link2" />,
   Trash2: () => <span data-testid="icon-trash" />,
 }));

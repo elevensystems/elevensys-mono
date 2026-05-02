@@ -3,7 +3,7 @@
 import { useCallback, useState } from 'react';
 
 import { formatDistanceToNow } from 'date-fns';
-import { Copy, Link2, Trash2 } from 'lucide-react';
+import { Copy, CornerDownLeft, Link2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { ActionButton } from '@workspace/ui/components/action-button';
@@ -105,11 +105,7 @@ export default function UrlifyPage() {
         createdAt: data.createdAt || new Date().toISOString(),
       };
 
-      // Move previous result to history
-      if (result) {
-        add(result);
-      }
-
+      add(shortened);
       setResult(shortened);
       setUrl('');
       toast.success('URL shortened successfully');
@@ -118,7 +114,7 @@ export default function UrlifyPage() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [url, autoDelete, result, add]);
+  }, [url, autoDelete, add]);
 
   const handleCopy = useCallback(
     async (shortUrl: string, feedbackId: string) => {
@@ -233,8 +229,9 @@ export default function UrlifyPage() {
                   </button>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <p className="truncate text-sm text-muted-foreground">
-                        &hookleftarrow; {truncateUrl(result.originalUrl)}
+                      <p className="flex items-center gap-1 truncate text-sm text-muted-foreground">
+                        <CornerDownLeft className="size-3 shrink-0" />
+                        {truncateUrl(result.originalUrl)}
                       </p>
                     </TooltipTrigger>
                     {result.originalUrl.length > 60 && (
