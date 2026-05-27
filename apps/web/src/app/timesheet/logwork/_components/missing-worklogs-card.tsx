@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { CalendarPlus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -9,9 +9,16 @@ import { ActionButton } from '@workspace/ui/components/action-button';
 import { Badge } from '@workspace/ui/components/badge';
 import { Calendar } from '@workspace/ui/components/calendar';
 import { Checkbox } from '@workspace/ui/components/checkbox';
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from '@workspace/ui/components/combobox';
 import { DateRangePicker } from '@workspace/ui/components/date-range-picker';
 import { Label } from '@workspace/ui/components/label';
-import { NativeSelect } from '@workspace/ui/components/native-select';
 import {
   Popover,
   PopoverContent,
@@ -71,6 +78,28 @@ export function MissingWorklogsCard({
   dateError,
 }: MissingWorklogsCardProps) {
   const [manualDateKeys, setManualDateKeys] = useState<Set<string>>(new Set());
+  const [projectSearch, setProjectSearch] = useState('');
+
+  const selectedProject = useMemo(
+    () => projects.find(p => p.id === selectedProjectId) ?? null,
+    [projects, selectedProjectId]
+  );
+
+  const handleProjectInputChange = useCallback(
+    (value: string, eventDetails: { reason: string }) => {
+      if (eventDetails.reason === 'input-clear') return;
+      setProjectSearch(value);
+    },
+    []
+  );
+
+  const handleProjectSelect = useCallback(
+    (value: JiraProject | null) => {
+      onProjectChange(value?.id ?? '');
+      setProjectSearch('');
+    },
+    [onProjectChange]
+  );
 
   const handleRemoveDate = (date: Date) => {
     onSelectedDatesChange(
@@ -140,21 +169,33 @@ export function MissingWorklogsCard({
             <Label htmlFor="project-select">
               Project <span className="text-destructive">*</span>
             </Label>
-            <NativeSelect
-              id="project-select"
-              value={selectedProjectId}
-              onChange={e => onProjectChange(e.target.value)}
-              disabled={isLoadingProjects}
+            <Combobox
+              items={projects}
+              value={selectedProject}
+              inputValue={selectedProject ? `${selectedProject.key} — ${selectedProject.name}` : projectSearch}
+              onInputValueChange={handleProjectInputChange}
+              onValueChange={handleProjectSelect}
+              itemToStringLabel={(project: JiraProject) => `${project.key} — ${project.name}`}
             >
-              <option value="">
-                {isLoadingProjects ? 'Loading projects...' : 'Select a project'}
-              </option>
-              {projects.map(project => (
-                <option key={project.id} value={project.id}>
-                  {project.key} — {project.name}
-                </option>
-              ))}
-            </NativeSelect>
+              <ComboboxInput
+                id="project-select"
+                placeholder={isLoadingProjects ? 'Loading projects...' : 'Search project...'}
+                className="h-9"
+                disabled={isLoadingProjects}
+                showClear
+              />
+              <ComboboxContent>
+                <ComboboxList>
+                  {(project: JiraProject) => (
+                    <ComboboxItem key={project.id} value={project}>
+                      <span className="font-medium shrink-0">{project.key}</span>
+                      <span className="text-muted-foreground truncate">— {project.name}</span>
+                    </ComboboxItem>
+                  )}
+                </ComboboxList>
+                <ComboboxEmpty>No projects found</ComboboxEmpty>
+              </ComboboxContent>
+            </Combobox>
           </div>
           <div className="space-y-2 sm:col-span-2">
             <Label>Date Range</Label>

@@ -14,6 +14,7 @@ import {
   ComboboxChipsInput,
   ComboboxContent,
   ComboboxEmpty,
+  ComboboxInput,
   ComboboxItem,
   ComboboxList,
   ComboboxValue,
@@ -35,6 +36,8 @@ import {
 import { ToolPageHeader } from '@/components/layouts/tool-page-header';
 import { useProjectWorklogs } from '@/hooks/use-project-worklogs';
 import { useTimesheetSettings } from '@/hooks/use-timesheet-settings';
+
+import type { JiraProject } from '@/types/timesheet';
 
 import { TimesheetPagination } from '../_components/timesheet-pagination';
 import { ProjectWorklogRow } from './_components/project-worklog-row';
@@ -82,6 +85,24 @@ export default function ProjectWorklogsPage() {
     handleSearch,
     goToPage,
   } = useProjectWorklogs({ settings, isConfigured });
+
+  const [projectSearch, setProjectSearch] = React.useState('');
+
+  const handleProjectInputChange = React.useCallback(
+    (value: string, eventDetails: { reason: string }) => {
+      if (eventDetails.reason === 'input-clear') return;
+      setProjectSearch(value);
+    },
+    []
+  );
+
+  const handleProjectSelect = React.useCallback(
+    (value: JiraProject | null) => {
+      setSelectedProject(value);
+      setProjectSearch('');
+    },
+    [setSelectedProject]
+  );
 
   const uniqueContributors = React.useMemo(
     () => new Set(rows.map(r => r.user)).size,
@@ -134,27 +155,33 @@ export default function ProjectWorklogsPage() {
                 <Label htmlFor="project-select">
                   Project <span className="text-destructive">*</span>
                 </Label>
-                <NativeSelect
-                  id="project-select"
-                  value={selectedProject?.id ?? ''}
-                  onChange={e => {
-                    const project =
-                      projects.find(p => p.id === e.target.value) ?? null;
-                    setSelectedProject(project);
-                  }}
-                  disabled={!isConfigured || projectsLoading}
+                <Combobox
+                  items={projects}
+                  value={selectedProject}
+                  inputValue={selectedProject ? `${selectedProject.key} — ${selectedProject.name}` : projectSearch}
+                  onInputValueChange={handleProjectInputChange}
+                  onValueChange={handleProjectSelect}
+                  itemToStringLabel={(project: JiraProject) => `${project.key} — ${project.name}`}
                 >
-                  <option value="">
-                    {projectsLoading
-                      ? 'Loading projects…'
-                      : 'Select a project'}
-                  </option>
-                  {projects.map(project => (
-                    <option key={project.id} value={project.id}>
-                      {project.name} ({project.key})
-                    </option>
-                  ))}
-                </NativeSelect>
+                  <ComboboxInput
+                    id="project-select"
+                    placeholder={projectsLoading ? 'Loading projects…' : 'Search project...'}
+                    className="h-9"
+                    disabled={!isConfigured || projectsLoading}
+                    showClear
+                  />
+                  <ComboboxContent>
+                    <ComboboxList>
+                      {(project: JiraProject) => (
+                        <ComboboxItem key={project.id} value={project}>
+                          <span className="font-medium shrink-0">{project.key}</span>
+                          <span className="text-muted-foreground truncate">— {project.name}</span>
+                        </ComboboxItem>
+                      )}
+                    </ComboboxList>
+                    <ComboboxEmpty>No projects found</ComboboxEmpty>
+                  </ComboboxContent>
+                </Combobox>
               </div>
 
               <div className="space-y-1.5">
