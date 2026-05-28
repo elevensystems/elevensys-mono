@@ -169,33 +169,35 @@ export function MissingWorklogsCard({
             <Label htmlFor="project-select">
               Project <span className="text-destructive">*</span>
             </Label>
-            <Combobox
-              items={projects}
-              value={selectedProject}
-              inputValue={selectedProject ? `${selectedProject.key} — ${selectedProject.name}` : projectSearch}
-              onInputValueChange={handleProjectInputChange}
-              onValueChange={handleProjectSelect}
-              itemToStringLabel={(project: JiraProject) => `${project.key} — ${project.name}`}
-            >
-              <ComboboxInput
-                id="project-select"
-                placeholder={isLoadingProjects ? 'Loading projects...' : 'Search project...'}
-                className="h-9"
-                disabled={isLoadingProjects}
-                showClear
-              />
-              <ComboboxContent>
-                <ComboboxList>
-                  {(project: JiraProject) => (
-                    <ComboboxItem key={project.id} value={project}>
-                      <span className="font-medium shrink-0">{project.key}</span>
-                      <span className="text-muted-foreground truncate">— {project.name}</span>
-                    </ComboboxItem>
-                  )}
-                </ComboboxList>
-                <ComboboxEmpty>No projects found</ComboboxEmpty>
-              </ComboboxContent>
-            </Combobox>
+            <div className="relative">
+              <Combobox
+                items={projects}
+                value={selectedProject}
+                inputValue={selectedProject ? `${selectedProject.key} — ${selectedProject.name}` : projectSearch}
+                onInputValueChange={handleProjectInputChange}
+                onValueChange={handleProjectSelect}
+                itemToStringLabel={(project: JiraProject) => `${project.key} — ${project.name}`}
+              >
+                <ComboboxInput
+                  id="project-select"
+                  placeholder={isLoadingProjects ? 'Loading projects...' : 'Search project...'}
+                  className="w-full"
+                  disabled={isLoadingProjects}
+                  showClear
+                />
+                <ComboboxContent>
+                  <ComboboxList>
+                    {(project: JiraProject) => (
+                      <ComboboxItem key={project.id} value={project}>
+                        <span className="font-medium shrink-0">{project.key}</span>
+                        <span className="text-muted-foreground truncate">— {project.name}</span>
+                      </ComboboxItem>
+                    )}
+                  </ComboboxList>
+                  <ComboboxEmpty>No projects found</ComboboxEmpty>
+                </ComboboxContent>
+              </Combobox>
+            </div>
           </div>
           <div className="space-y-2 sm:col-span-2">
             <Label>Date Range</Label>
