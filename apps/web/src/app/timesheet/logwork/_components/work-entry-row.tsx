@@ -13,6 +13,11 @@ import {
   ComboboxItem,
   ComboboxList,
 } from '@workspace/ui/components/combobox';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@workspace/ui/components/tooltip';
 import { Input } from '@workspace/ui/components/input';
 import {
   Select,
@@ -154,9 +159,17 @@ export const WorkEntryRow = memo(function WorkEntryRow({
           <ComboboxContent>
             <ComboboxList>
               {(issue: JiraIssue) => (
-                <ComboboxItem key={issue.id} value={issue}>
-                  <span className="shrink-0">{issue.key}</span>
-                </ComboboxItem>
+                <Tooltip key={issue.id}>
+                  <TooltipTrigger asChild>
+                    <ComboboxItem value={issue}>
+                      <span className="shrink-0">{issue.key}</span>
+                    </ComboboxItem>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" sideOffset={8} className="max-w-xs">
+                    <p className="font-medium">{issue.summary}</p>
+                    <p className="text-background/70 mt-0.5">{issue.type.name} · {issue.status}</p>
+                  </TooltipContent>
+                </Tooltip>
               )}
             </ComboboxList>
             <ComboboxEmpty>No issues found</ComboboxEmpty>
