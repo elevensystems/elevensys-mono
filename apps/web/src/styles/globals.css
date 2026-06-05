@@ -27,6 +27,22 @@
   background-color: rgba(234, 179, 8, 0.06);
 }
 
+/* Rotating glow border — date chip list */
+@property --glow-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes glow-rotate {
+  to { --glow-angle: 360deg; }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 6px 0px color-mix(in oklch, var(--primary) 20%, transparent); }
+  50%       { box-shadow: 0 0 14px 3px color-mix(in oklch, var(--primary) 35%, transparent); }
+}
+
 /* jsondiffpatch HTML formatter styling (shadcn/ui-friendly) */
 .json-diff-viewer {
   font-size: 0.875rem;

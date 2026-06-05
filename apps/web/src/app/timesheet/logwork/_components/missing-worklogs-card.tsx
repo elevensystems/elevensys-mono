@@ -28,6 +28,7 @@ import { parseApiDate } from '@/lib/timesheet';
 import type { JiraProject } from '@/types/timesheet';
 
 import { DateChipList } from './date-chip-list';
+import { GlowPulseBox } from './glow-pulse-box';
 
 const isWeekend = (date: Date) => {
   const day = date.getDay();
@@ -303,13 +304,13 @@ export function MissingWorklogsCard({
 
           {/* Chip list — bordered box only when dates exist */}
           {selectedDates.length > 0 ? (
-            <div className="rounded-md border border-border bg-muted/30 p-2">
+            <GlowPulseBox>
               <DateChipList
                 dates={selectedDates}
                 manualDateKeys={manualDateKeys}
                 onRemove={handleRemoveDate}
               />
-            </div>
+            </GlowPulseBox>
           ) : (
             <span className="text-xs text-muted-foreground italic">
               No dates selected. Use &quot;Find Dates&quot; or add manually
