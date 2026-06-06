@@ -190,7 +190,7 @@ export default function TimesheetConfigPage() {
                   value={username}
                   onChange={e => setUsername(e.target.value)}
                 />
-                <p className="text-xs text-muted-foreground">Your Jira account username</p>
+                <p className="text-xs text-muted-foreground">Your FPT username account</p>
               </div>
             </div>
 
