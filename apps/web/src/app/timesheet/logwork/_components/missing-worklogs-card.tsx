@@ -138,20 +138,24 @@ export function MissingWorklogsCard({
 
   const handleSearchClick = async () => {
     const result = await onSearchWarnings();
-    if (result) {
-      const dates = result.dates
-        .split(',')
-        .map(s => s.trim())
-        .filter(Boolean)
-        .map(parseApiDate)
-        .filter((d): d is Date => {
-          if (d === null) return false;
-          if (!includeWeekends && isWeekend(d)) return false;
-          return true;
-        });
-      onSelectedDatesChange(dates);
-      setManualDateKeys(new Set());
-      toast.success(`Found missing dates for ${result.count} user(s)`);
+    if (result === null) return;
+
+    const dates = result.dates
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean)
+      .map(parseApiDate)
+      .filter((d): d is Date => {
+        if (d === null) return false;
+        if (!includeWeekends && isWeekend(d)) return false;
+        return true;
+      });
+    onSelectedDatesChange(dates);
+    setManualDateKeys(new Set());
+    if (dates.length > 0) {
+      toast.success(`Found ${dates.length} missing date${dates.length !== 1 ? 's' : ''}`);
+    } else {
+      toast.info('No missing dates found.');
     }
   };
 

@@ -97,11 +97,9 @@ export function useMissingWorklogs({
             count: result.data.length,
           };
         }
-        toast.info('No missing worklog dates found.');
-        return null;
+        return { dates: '', count: 0 };
       }
-      toast.info('No missing worklog dates found.');
-      return null;
+      return { dates: '', count: 0 };
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Failed to search warnings';
