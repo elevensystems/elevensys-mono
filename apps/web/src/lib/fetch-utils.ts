@@ -14,6 +14,14 @@ const HTTP_STATUS_MESSAGES: Record<number, string> = {
 };
 
 /**
+ * Returns true when a response status indicates an authentication/authorization
+ * failure (expired or invalid token).
+ */
+export function isAuthError(status: number): boolean {
+  return status === 401 || status === 403;
+}
+
+/**
  * Converts raw error response text (which may be HTML or very long)
  * into a short, user-friendly message.
  */

@@ -2,8 +2,12 @@
 
 import { useCallback, useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import { toast } from 'sonner';
 
+import { showAuthErrorToast } from '@/lib/auth-toast';
+import { isAuthError } from '@/lib/fetch-utils';
 import { formatDateForApi, getMonthEnd, getMonthStart } from '@/lib/timesheet';
 import type { MyWorklogsRow, TimesheetSettings } from '@/types/timesheet';
 
@@ -15,6 +19,8 @@ interface UseMyWorklogsParams {
 }
 
 export function useMyWorklogs({ settings, isConfigured }: UseMyWorklogsParams) {
+  const router = useRouter();
+
   // Filter form state
   const [statusWorklog, setStatusWorklog] = useState('All');
   const [fromDate, setFromDate] = useState(getMonthStart());
@@ -24,6 +30,7 @@ export function useMyWorklogs({ settings, isConfigured }: UseMyWorklogsParams) {
   const [worklogs, setWorklogs] = useState<MyWorklogsRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [authError, setAuthError] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
   const mutations = useWorklogMutations({
@@ -53,6 +60,7 @@ export function useMyWorklogs({ settings, isConfigured }: UseMyWorklogsParams) {
     }
 
     setError('');
+    setAuthError(false);
     setHasSearched(true);
     setIsLoading(true);
 
@@ -71,6 +79,12 @@ export function useMyWorklogs({ settings, isConfigured }: UseMyWorklogsParams) {
       );
 
       if (!response.ok) {
+        if (isAuthError(response.status)) {
+          setAuthError(true);
+          showAuthErrorToast(() => router.push('/timesheet/config'));
+          setWorklogs([]);
+          return;
+        }
         const errorData = await response.json().catch(() => null);
         throw new Error(
           errorData?.error || `Failed to fetch: HTTP ${response.status}`
@@ -94,7 +108,15 @@ export function useMyWorklogs({ settings, isConfigured }: UseMyWorklogsParams) {
     } finally {
       setIsLoading(false);
     }
-  }, [isConfigured, settings, fromDate, toDate, statusWorklog, clearSelection]);
+  }, [
+    isConfigured,
+    settings,
+    fromDate,
+    toDate,
+    statusWorklog,
+    clearSelection,
+    router,
+  ]);
 
   return {
     // Filter form
@@ -108,6 +130,7 @@ export function useMyWorklogs({ settings, isConfigured }: UseMyWorklogsParams) {
     worklogs,
     isLoading,
     error,
+    authError,
     hasSearched,
     // Mutations (delete, edit, selection, bulk delete)
     ...mutations,

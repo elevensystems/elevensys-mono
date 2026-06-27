@@ -10,10 +10,12 @@ import { Plus, Send } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
+import { TokenExpiredAlert } from '@/components/features/timesheet/token-expired-alert';
 import MainLayout from '@/components/layouts/main-layout';
 import { useLogWorkSubmission } from '@/hooks/use-log-work-submission';
 import { useMissingWorklogs } from '@/hooks/use-missing-worklogs';
 import { useTimesheetSettings } from '@/hooks/use-timesheet-settings';
+import { showAuthErrorToast } from '@/lib/auth-toast';
 import {
   STANDARD_HOURS,
   formatDateForApi,
@@ -108,6 +110,7 @@ export default function LogWorkPage() {
     issuesByKey,
     isLoadingProjects,
     isLoadingIssues,
+    authError,
     warningFromDate,
     setWarningFromDate,
     warningToDate,
@@ -120,6 +123,7 @@ export default function LogWorkPage() {
   const {
     isSubmitting,
     isCancelled,
+    hasAuthError,
     results,
     requestStatuses,
     submitEntries,
@@ -289,17 +293,25 @@ export default function LogWorkPage() {
           },
           duration: 10000,
         });
+        return;
+      }
+
+      if (hasAuthError) {
+        showAuthErrorToast(() => router.push('/timesheet/config'));
       } else if (successCount > 0) {
         toast.warning(`${successCount} succeeded, ${errorCount} failed`);
+      } else {
+        toast.error(`All ${errorCount} entries failed`);
+      }
+
+      if (successCount > 0) {
         const failedIssueKeys = new Set(
           logResults.filter(r => !r.success).map(r => r.entry.issueKey)
         );
         setEntries(prev => prev.filter(e => failedIssueKeys.has(e.issueKey)));
-      } else {
-        toast.error(`All ${errorCount} entries failed`);
       }
     },
-    [router]
+    [router, hasAuthError]
   );
 
   const handleLogWork = useCallback(async () => {
@@ -383,6 +395,8 @@ export default function LogWorkPage() {
           </div>
 
           <NotConfiguredAlert isConfigured={isConfigured} />
+
+          {isConfigured && <TokenExpiredAlert authError={authError} />}
 
           <MissingWorklogsCard
             projects={projects}

@@ -2,8 +2,12 @@
 
 import { useCallback, useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import { toast } from 'sonner';
 
+import { showAuthErrorToast } from '@/lib/auth-toast';
+import { isAuthError } from '@/lib/fetch-utils';
 import { formatDateForApi, getMonthEnd, getMonthStart } from '@/lib/timesheet';
 import type {
   TimesheetSettings,
@@ -22,9 +26,12 @@ export function useMissingWorklogs({
   settings,
   isConfigured,
 }: UseMissingWorklogsParams) {
+  const router = useRouter();
+
   const {
     projects,
     isLoading: isLoadingProjects,
+    authError,
     selectedProject,
     setSelectedProject,
   } = useProjects({ settings, isConfigured });
@@ -81,6 +88,10 @@ export function useMissingWorklogs({
       });
 
       if (!response.ok) {
+        if (isAuthError(response.status)) {
+          showAuthErrorToast(() => router.push('/timesheet/config'));
+          return null;
+        }
         const errorData = await response.json().catch(() => null);
         throw new Error(errorData?.error || `HTTP ${response.status}`);
       }
@@ -114,10 +125,12 @@ export function useMissingWorklogs({
     warningToDate,
     settings.jiraInstance,
     settings.token,
+    router,
   ]);
 
   return {
     projects,
+    authError,
     selectedProjectId,
     setSelectedProjectId,
     selectedProject,

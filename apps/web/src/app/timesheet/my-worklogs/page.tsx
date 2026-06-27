@@ -6,6 +6,7 @@ import { Search } from 'lucide-react';
 
 import { ActionButton } from '@workspace/ui/components/action-button';
 import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
+import { TokenExpiredAlert } from '@/components/features/timesheet/token-expired-alert';
 import MainLayout from '@/components/layouts/main-layout';
 import { Checkbox } from '@workspace/ui/components/checkbox';
 import { DateRangePicker } from '@workspace/ui/components/date-range-picker';
@@ -41,6 +42,7 @@ export default function MyWorklogsPage() {
     setToDate,
     worklogs,
     isLoading,
+    authError,
     hasSearched,
     totalHours,
     deletingId,
@@ -121,6 +123,8 @@ export default function MyWorklogsPage() {
           />
 
           <NotConfiguredAlert isConfigured={isConfigured} />
+
+          {isConfigured && <TokenExpiredAlert authError={authError} />}
 
           {/* Inline filter bar */}
           <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_auto] gap-3 items-end">

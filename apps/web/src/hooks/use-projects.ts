@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { toast } from 'sonner';
 
+import { isAuthError } from '@/lib/fetch-utils';
 import type { JiraProject, TimesheetSettings } from '@/types/timesheet';
 
 interface UseProjectsParams {
@@ -14,6 +15,7 @@ interface UseProjectsParams {
 export function useProjects({ settings, isConfigured }: UseProjectsParams) {
   const [projects, setProjects] = useState<JiraProject[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [authError, setAuthError] = useState(false);
   const [selectedProject, setSelectedProjectState] =
     useState<JiraProject | null>(null);
 
@@ -35,9 +37,16 @@ export function useProjects({ settings, isConfigured }: UseProjectsParams) {
         );
 
         if (!response.ok) {
-          if (alive) toast.error('Failed to fetch projects');
+          if (alive) {
+            setAuthError(isAuthError(response.status));
+            if (!isAuthError(response.status)) {
+              toast.error('Failed to fetch projects');
+            }
+          }
           return;
         }
+
+        if (alive) setAuthError(false);
 
         const data = await response.json();
         if (data.success && Array.isArray(data.data)) {
@@ -67,6 +76,7 @@ export function useProjects({ settings, isConfigured }: UseProjectsParams) {
   return {
     projects,
     isLoading,
+    authError,
     selectedProject,
     setSelectedProject,
   };
