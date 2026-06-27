@@ -4,29 +4,23 @@ import { JIRA_URLS } from '@/lib/api-urls';
 import { sanitizeErrorText } from '@/lib/fetch-utils';
 import { missingJiraInstanceResponse } from '@/lib/jira-proxy';
 
-interface ProjectIssuesRequest {
+interface IssuesSearchRequest {
   jiraInstance: string;
   jql: string;
-  columnConfig: string;
-  layoutKey: string;
-  startIndex: string;
 }
 
 interface JiraIssueRaw {
-  id: number;
+  id: string;
   key: string;
-  status: string;
-  summary: string;
-  type: {
-    description: string;
-    name: string;
-    iconUrl: string;
+  fields: {
+    summary: string;
+    customfield_10400: string | null;
   };
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const payload = (await request.json()) as Partial<ProjectIssuesRequest>;
+    const payload = (await request.json()) as Partial<IssuesSearchRequest>;
 
     if (!payload.jiraInstance) {
       return missingJiraInstanceResponse();
@@ -44,7 +38,7 @@ export async function POST(request: NextRequest) {
     const params = new URLSearchParams({ jiraInstance });
 
     const response = await fetch(
-      `${JIRA_URLS.PROJECTS_SEARCH}?${params.toString()}`,
+      `${JIRA_URLS.ISSUES_SEARCH}?${params.toString()}`,
       {
         method: 'POST',
         headers: {
@@ -53,9 +47,9 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({
           jql: payload.jql,
-          columnConfig: payload.columnConfig || 'explicit',
-          layoutKey: payload.layoutKey || 'split-view',
-          startIndex: payload.startIndex || '0',
+          startAt: 0,
+          maxResults: 100,
+          fields: ['summary', 'customfield_10400'],
         }),
       }
     );
@@ -70,19 +64,17 @@ export async function POST(request: NextRequest) {
 
     const result = await response.json();
 
-    if (result.success && result.data?.issueTable) {
-      const { table, total } = result.data.issueTable;
-      const issues = (table as JiraIssueRaw[]).map(issue => ({
+    if (result.success && Array.isArray(result.data?.issues)) {
+      const issues = (result.data.issues as JiraIssueRaw[]).map(issue => ({
         id: issue.id,
         key: issue.key,
-        status: issue.status,
-        summary: issue.summary,
-        type: issue.type,
+        summary: issue.fields?.summary,
+        typeOfWork: issue.fields?.customfield_10400 ?? undefined,
       }));
 
       return NextResponse.json({
         success: true,
-        data: { total, issues },
+        data: { total: result.data.total ?? issues.length, issues },
       });
     }
 

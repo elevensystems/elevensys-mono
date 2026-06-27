@@ -117,7 +117,6 @@ export default function LogWorkPage() {
     setWarningToDate,
     isSearchingWarnings,
     handleSearchWarnings,
-    fetchIssueTypeOfWork,
   } = useMissingWorklogs({ settings, isConfigured });
 
   const {
@@ -471,7 +470,6 @@ export default function LogWorkPage() {
                   isLoadingIssues={isLoadingIssues}
                   onUpdate={updateEntry}
                   onRemove={removeEntry}
-                  onFetchTypeOfWork={fetchIssueTypeOfWork}
                   onClearError={clearRowError}
                   errors={errors.rows.get(entry.id)}
                   isLastRow={entries.length === 1}

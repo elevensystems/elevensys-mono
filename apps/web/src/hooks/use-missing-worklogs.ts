@@ -50,7 +50,7 @@ export function useMissingWorklogs({
   const [warningToDate, setWarningToDate] = useState(getMonthEnd());
   const [isSearchingWarnings, setIsSearchingWarnings] = useState(false);
 
-  const { issues, issuesByKey, isLoadingIssues, fetchIssueTypeOfWork } =
+  const { issues, issuesByKey, isLoadingIssues } =
     useProjectIssues({
       projectId: selectedProjectId,
       token: settings.token,
@@ -144,6 +144,5 @@ export function useMissingWorklogs({
     setWarningToDate,
     isSearchingWarnings,
     handleSearchWarnings,
-    fetchIssueTypeOfWork,
   };
 }
