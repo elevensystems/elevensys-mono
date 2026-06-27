@@ -26,6 +26,8 @@ import { useAuth } from '@/contexts/auth-context';
 interface MainLayoutProps {
   children: ReactNode;
   className?: string;
+  /** Optional announcement banner rendered flush under the sticky header. */
+  banner?: ReactNode;
 }
 
 /**
@@ -36,6 +38,7 @@ interface MainLayoutProps {
 export default function MainLayout({
   children,
   className = '',
+  banner,
 }: MainLayoutProps) {
   const pathname = usePathname();
   const { user } = useAuth();
@@ -100,6 +103,7 @@ export default function MainLayout({
             </Breadcrumb>
           </div>
         </header>
+        {banner}
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           <main className={className}>{children}</main>
         </div>

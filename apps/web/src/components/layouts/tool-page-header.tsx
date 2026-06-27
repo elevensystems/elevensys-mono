@@ -1,6 +1,4 @@
-import { Info, OctagonX } from 'lucide-react';
-
-import { Alert, AlertDescription } from '@workspace/ui/components/alert';
+import { Banner } from '@workspace/ui/components/banner';
 
 interface ToolPageHeaderProps {
   title: string;
@@ -27,24 +25,11 @@ export function ToolPageHeader({
       </div>
 
       {infoMessage && (
-        <Alert className="mb-4 border-color-4/25 bg-color-4/8 text-alert-info-text [&>svg]:text-alert-info-text dark:border-color-4/30 dark:bg-color-4/10">
-          <Info />
-          <AlertDescription>
-            {infoMessage}
-          </AlertDescription>
-        </Alert>
+        <Banner state="info" title="Info" message={infoMessage} className="mb-4" />
       )}
 
       {error && (
-        <Alert
-          variant="destructive"
-          className="mb-4 border-color-6/25 bg-color-6/8 text-alert-error-text [&>svg]:text-alert-error-text dark:border-color-6/30 dark:bg-color-6/10"
-        >
-          <OctagonX />
-          <AlertDescription>
-            {error}
-          </AlertDescription>
-        </Alert>
+        <Banner state="error" title="Error" message={error} className="mb-4" />
       )}
     </>
   );

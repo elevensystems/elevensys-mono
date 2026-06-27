@@ -60,6 +60,40 @@
   --alert-error-text: oklch(0.40 0.12 15);
   --alert-warning-text: oklch(0.42 0.10 75);
   --alert-success-text: oklch(0.35 0.10 130);
+
+  /* Announcement banner (soft tint) — light mode */
+  --banner-info-bg: #eff5ff;
+  --banner-info-border: #cfe0fb;
+  --banner-info-icon: #2563eb;
+  --banner-info-title: #1d4ed8;
+  --banner-success-bg: #ecfdf3;
+  --banner-success-border: #bce7cb;
+  --banner-success-icon: #16a34a;
+  --banner-success-title: #15803d;
+  --banner-warning-bg: #fff8eb;
+  --banner-warning-border: #fae3ae;
+  --banner-warning-icon: #d97706;
+  --banner-warning-title: #b45309;
+  --banner-error-bg: #fef2f2;
+  --banner-error-border: #f7cbcb;
+  --banner-error-icon: #dc2626;
+  --banner-error-title: #b91c1c;
+  --banner-promo-bg: #f7f2fe;
+  --banner-promo-border: #e3d5fb;
+  --banner-promo-icon: #7c3aed;
+  --banner-promo-title: #6d28d9;
+  --banner-body: #475467;
+  --banner-dismiss: #667085;
+  --banner-dismiss-hover: rgba(0, 0, 0, 0.05);
+  --banner-action-hover: rgba(0, 0, 0, 0.035);
+  --banner-promo-grad: linear-gradient(
+    90deg,
+    oklch(66.2% 0.225 25.9),
+    oklch(60.4% 0.26 302),
+    oklch(69.6% 0.165 251),
+    oklch(80.2% 0.134 225),
+    oklch(90.7% 0.231 133)
+  );
 }
 
 .dark {
@@ -118,6 +152,32 @@
   --alert-error-text: oklch(0.85 0.06 15);
   --alert-warning-text: oklch(0.88 0.06 75);
   --alert-success-text: oklch(0.85 0.06 130);
+
+  /* Announcement banner (soft tint) — dark mode */
+  --banner-info-bg: rgba(59, 130, 246, 0.16);
+  --banner-info-border: rgba(96, 165, 250, 0.34);
+  --banner-info-icon: #60a5fa;
+  --banner-info-title: #bfdbfe;
+  --banner-success-bg: rgba(34, 197, 94, 0.15);
+  --banner-success-border: rgba(74, 222, 128, 0.32);
+  --banner-success-icon: #4ade80;
+  --banner-success-title: #bbf7d0;
+  --banner-warning-bg: rgba(245, 158, 11, 0.16);
+  --banner-warning-border: rgba(251, 191, 36, 0.34);
+  --banner-warning-icon: #fbbf24;
+  --banner-warning-title: #fde68a;
+  --banner-error-bg: rgba(239, 68, 68, 0.16);
+  --banner-error-border: rgba(248, 113, 113, 0.34);
+  --banner-error-icon: #f87171;
+  --banner-error-title: #fecaca;
+  --banner-promo-bg: rgba(139, 92, 246, 0.16);
+  --banner-promo-border: rgba(167, 139, 250, 0.34);
+  --banner-promo-icon: #a78bfa;
+  --banner-promo-title: #ddd6fe;
+  --banner-body: rgba(255, 255, 255, 0.74);
+  --banner-dismiss: rgba(255, 255, 255, 0.62);
+  --banner-dismiss-hover: rgba(255, 255, 255, 0.08);
+  --banner-action-hover: rgba(255, 255, 255, 0.06);
 }
 
 @theme inline {
@@ -201,6 +261,31 @@
   --color-alert-error-text: var(--alert-error-text);
   --color-alert-warning-text: var(--alert-warning-text);
   --color-alert-success-text: var(--alert-success-text);
+
+  --color-banner-info-bg: var(--banner-info-bg);
+  --color-banner-info-border: var(--banner-info-border);
+  --color-banner-info-icon: var(--banner-info-icon);
+  --color-banner-info-title: var(--banner-info-title);
+  --color-banner-success-bg: var(--banner-success-bg);
+  --color-banner-success-border: var(--banner-success-border);
+  --color-banner-success-icon: var(--banner-success-icon);
+  --color-banner-success-title: var(--banner-success-title);
+  --color-banner-warning-bg: var(--banner-warning-bg);
+  --color-banner-warning-border: var(--banner-warning-border);
+  --color-banner-warning-icon: var(--banner-warning-icon);
+  --color-banner-warning-title: var(--banner-warning-title);
+  --color-banner-error-bg: var(--banner-error-bg);
+  --color-banner-error-border: var(--banner-error-border);
+  --color-banner-error-icon: var(--banner-error-icon);
+  --color-banner-error-title: var(--banner-error-title);
+  --color-banner-promo-bg: var(--banner-promo-bg);
+  --color-banner-promo-border: var(--banner-promo-border);
+  --color-banner-promo-icon: var(--banner-promo-icon);
+  --color-banner-promo-title: var(--banner-promo-title);
+  --color-banner-body: var(--banner-body);
+  --color-banner-dismiss: var(--banner-dismiss);
+  --color-banner-dismiss-hover: var(--banner-dismiss-hover);
+  --color-banner-action-hover: var(--banner-action-hover);
 
   @keyframes rainbow {
     0% {
