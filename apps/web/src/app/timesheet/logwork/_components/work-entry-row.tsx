@@ -145,10 +145,29 @@ export const WorkEntryRow = memo(function WorkEntryRow({
                   <TooltipTrigger asChild>
                     <ComboboxItem value={issue}>
                       <span className="shrink-0">{issue.key}</span>
+                      {issue.typeOfWork && (
+                        <span
+                          className={cn(
+                            'ml-auto size-2 shrink-0 rounded-full',
+                            getWorkTypeDotClass(issue.typeOfWork)
+                          )}
+                        />
+                      )}
                     </ComboboxItem>
                   </TooltipTrigger>
                   <TooltipContent side="right" sideOffset={8} className="max-w-xs">
                     <p className="font-medium">{issue.summary}</p>
+                    {issue.typeOfWork && (
+                      <p className="mt-1 flex items-center gap-1.5">
+                        <span
+                          className={cn(
+                            'size-2 shrink-0 rounded-full',
+                            getWorkTypeDotClass(issue.typeOfWork)
+                          )}
+                        />
+                        {issue.typeOfWork}
+                      </p>
+                    )}
                   </TooltipContent>
                 </Tooltip>
               )}
