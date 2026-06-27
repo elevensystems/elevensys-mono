@@ -111,6 +111,12 @@ jest.mock('lucide-react', () => ({
   AlertCircle: () => <span data-testid="icon-alert-circle" />,
   ClipboardList: () => <span data-testid="icon-clipboard-list" />,
   Search: () => <span data-testid="icon-search" />,
+  Info: () => <span data-testid="icon-info" />,
+  CircleCheck: () => <span data-testid="icon-circle-check" />,
+  TriangleAlert: () => <span data-testid="icon-triangle-alert" />,
+  OctagonAlert: () => <span data-testid="icon-octagon-alert" />,
+  Sparkles: () => <span data-testid="icon-sparkles" />,
+  X: () => <span data-testid="icon-x" />,
 }));
 
 jest.mock('@workspace/ui/components/spinner', () => ({
@@ -453,9 +459,7 @@ describe('WorklogManagementPage', () => {
       isConfigured: false,
     });
     render(<WorklogManagementPage />);
-    expect(
-      screen.getByText(/Jira settings not configured/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Token not configured/)).toBeInTheDocument();
   });
 
   it('renders link to config page in configuration warning', () => {
@@ -471,7 +475,7 @@ describe('WorklogManagementPage', () => {
   it('hides configuration warning when Jira is configured', () => {
     render(<WorklogManagementPage />);
     expect(
-      screen.queryByText(/Jira settings not configured/)
+      screen.queryByText(/Token not configured/)
     ).not.toBeInTheDocument();
   });
 
