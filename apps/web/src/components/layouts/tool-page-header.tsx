@@ -27,9 +27,9 @@ export function ToolPageHeader({
       </div>
 
       {infoMessage && (
-        <Alert className="mb-4 border-blue-200 bg-blue-50 text-blue-800 [&>svg]:text-blue-800 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-200 dark:[&>svg]:text-blue-200">
+        <Alert className="mb-4 border-color-4/25 bg-color-4/8 text-alert-info-text [&>svg]:text-alert-info-text dark:border-color-4/30 dark:bg-color-4/10">
           <Info />
-          <AlertDescription className="text-blue-800 dark:text-blue-200">
+          <AlertDescription>
             {infoMessage}
           </AlertDescription>
         </Alert>
@@ -38,10 +38,10 @@ export function ToolPageHeader({
       {error && (
         <Alert
           variant="destructive"
-          className="mb-4 border-red-200 bg-red-50 text-red-800 [&>svg]:text-red-800 dark:border-red-800 dark:bg-red-950/50 dark:text-red-200 dark:[&>svg]:text-red-200"
+          className="mb-4 border-color-6/25 bg-color-6/8 text-alert-error-text [&>svg]:text-alert-error-text dark:border-color-6/30 dark:bg-color-6/10"
         >
           <OctagonX />
-          <AlertDescription className="text-red-800 dark:text-red-200">
+          <AlertDescription>
             {error}
           </AlertDescription>
         </Alert>

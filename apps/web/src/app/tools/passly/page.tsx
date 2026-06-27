@@ -45,9 +45,9 @@ const calculatePasswordStrength = (
   score += varietyCount;
 
   // Determine strength
-  if (score <= 2) return { label: 'Weak', color: 'text-red-500' };
-  if (score <= 4) return { label: 'Medium', color: 'text-yellow-500' };
-  return { label: 'Strong', color: 'text-green-500' };
+  if (score <= 2) return { label: 'Weak', color: 'text-color-6' };
+  if (score <= 4) return { label: 'Medium', color: 'text-color-17' };
+  return { label: 'Strong', color: 'text-color-18' };
 };
 
 const passlySchema = z.object({

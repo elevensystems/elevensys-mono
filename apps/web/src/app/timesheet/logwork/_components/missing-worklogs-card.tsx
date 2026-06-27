@@ -245,7 +245,7 @@ export function MissingWorklogsCard({
               {parsedDates.length > 0 && (
                 <Badge
                   variant="secondary"
-                  className="ml-1 bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-300 border-green-200 dark:border-green-800"
+                  className="ml-1 bg-color-8 text-white"
                 >
                   {parsedDates.length} date
                   {parsedDates.length !== 1 ? 's' : ''}
@@ -259,7 +259,7 @@ export function MissingWorklogsCard({
                 variant="ghost"
                 size="sm"
                 onClick={handleClearAll}
-                className={`h-7 text-xs text-destructive hover:bg-destructive hover:text-white ${parsedDates.length > 0 ? 'visible' : 'invisible'}`}
+                className={`h-7 text-xs text-destructive hover:bg-destructive hover:text-white dark:hover:bg-destructive dark:hover:text-white ${parsedDates.length > 0 ? 'visible' : 'invisible'}`}
                 leftIcon={<Trash2 />}
               >
                 Clear all

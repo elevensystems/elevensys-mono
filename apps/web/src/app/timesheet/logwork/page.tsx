@@ -4,13 +4,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { ActionButton } from '@workspace/ui/components/action-button';
+import { Spinner } from '@workspace/ui/components/spinner';
 import { Plus, Send } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { ActionButton } from '@workspace/ui/components/action-button';
 import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
 import MainLayout from '@/components/layouts/main-layout';
-import { Spinner } from '@workspace/ui/components/spinner';
 import { useLogWorkSubmission } from '@/hooks/use-log-work-submission';
 import { useMissingWorklogs } from '@/hooks/use-missing-worklogs';
 import { useTimesheetSettings } from '@/hooks/use-timesheet-settings';
@@ -355,19 +355,20 @@ export default function LogWorkPage() {
 
   const hoursColor =
     totalHours === STANDARD_HOURS
-      ? 'text-green-600 dark:text-green-400'
+      ? 'text-color-8'
       : totalHours > STANDARD_HOURS
-        ? 'text-orange-500 dark:text-orange-400'
+        ? 'text-color-1'
         : 'text-foreground';
 
   const progressBarColor =
-    totalHours > STANDARD_HOURS ? 'bg-orange-500' : 'bg-green-500';
+    totalHours > STANDARD_HOURS ? 'bg-color-1' : 'bg-color-8';
 
   const progressPercent = Math.min((totalHours / STANDARD_HOURS) * 100, 100);
 
   const currentStep = ((): 1 | 2 | 3 | 4 => {
     if (isSubmitting) return 4;
-    if (selectedDates.length > 0 && entries.some(e => e.issueKey.trim())) return 3;
+    if (selectedDates.length > 0 && entries.some(e => e.issueKey.trim()))
+      return 3;
     if (selectedDates.length > 0) return 2;
     return 1;
   })();
@@ -415,7 +416,9 @@ export default function LogWorkPage() {
             <div className="flex items-end justify-end">
               <div className="flex w-48 flex-col gap-1.5 text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground text-xs">Daily target</span>
+                  <span className="text-muted-foreground text-xs">
+                    Daily target
+                  </span>
                   <span className={`font-semibold ${hoursColor}`}>
                     {formatHours(totalHours)}h / {formatHours(STANDARD_HOURS)}h
                   </span>
@@ -428,74 +431,74 @@ export default function LogWorkPage() {
                 </div>
               </div>
             </div>
-              {/* Entries Table */}
-              <div className="flex mb-3 items-center gap-2 text-sm font-medium text-muted-foreground">
-                <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                  3
-                </span>
-                Add work entries
+            {/* Entries Table */}
+            <div className="flex mb-3 items-center gap-2 text-sm font-medium text-muted-foreground">
+              <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                3
+              </span>
+              Add work entries
+            </div>
+            <div className="overflow-hidden rounded-lg border">
+              {/* Grid header */}
+              <div className="grid grid-cols-[230px_1fr_150px_140px_50px] gap-2 bg-muted/50 px-3 py-2 text-sm font-semibold text-muted-foreground">
+                <span>Key</span>
+                <span>Description</span>
+                <span>Type of Work</span>
+                <span>Hours</span>
+                <span />
               </div>
-              <div className="overflow-hidden rounded-lg border">
-                {/* Grid header */}
-                <div className="grid grid-cols-[230px_1fr_150px_140px_50px] gap-2 bg-muted/50 px-3 py-2 text-sm font-semibold text-muted-foreground">
-                  <span>Key</span>
-                  <span>Description</span>
-                  <span>Type of Work</span>
-                  <span>Hours</span>
-                  <span />
-                </div>
-                {/* Entry rows */}
-                {entries.map(entry => (
-                  <WorkEntryRow
-                    key={entry.id}
-                    entry={entry}
-                    issues={issues}
-                    issuesByKey={issuesByKey}
-                    isLoadingIssues={isLoadingIssues}
-                    onUpdate={updateEntry}
-                    onRemove={removeEntry}
-                    onFetchTypeOfWork={fetchIssueTypeOfWork}
-                    onClearError={clearRowError}
-                    errors={errors.rows.get(entry.id)}
-                    isLastRow={entries.length === 1}
-                  />
-                ))}
-              </div>
+              {/* Entry rows */}
+              {entries.map(entry => (
+                <WorkEntryRow
+                  key={entry.id}
+                  entry={entry}
+                  issues={issues}
+                  issuesByKey={issuesByKey}
+                  isLoadingIssues={isLoadingIssues}
+                  onUpdate={updateEntry}
+                  onRemove={removeEntry}
+                  onFetchTypeOfWork={fetchIssueTypeOfWork}
+                  onClearError={clearRowError}
+                  errors={errors.rows.get(entry.id)}
+                  isLastRow={entries.length === 1}
+                />
+              ))}
+            </div>
 
-              {/* Global entries error */}
-              {errors.global.entries && (
-                <p className="text-sm text-destructive" role="alert">
-                  {errors.global.entries}
-                </p>
-              )}
+            {/* Global entries error */}
+            {errors.global.entries && (
+              <p className="text-sm text-destructive" role="alert">
+                {errors.global.entries}
+              </p>
+            )}
 
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row sm:justify-between gap-3 border-t pt-6">
-                <ActionButton
-                  variant="outline"
-                  onClick={addEntry}
-                  disabled={isSubmitting || !isConfigured}
-                  className="w-full sm:w-auto"
-                  leftIcon={<Plus />}
-                >
-                  Add Entry
-                </ActionButton>
-                <ActionButton
-                  onClick={handleSubmitClick}
-                  disabled={isSubmitting || !isConfigured}
-                  className="w-full sm:w-auto"
-                  leftIcon={<Send />}
-                  isLoading={isSubmitting}
-                  loadingText="Submitting..."
-                  title={
-                    parsedDates.length > 0 && validEntryCount > 0
-                      ? `Will send ${validEntryCount * dateRanges.length} request${validEntryCount * dateRanges.length !== 1 ? 's' : ''} (${validEntryCount} entr${validEntryCount !== 1 ? 'ies' : 'y'} × ${dateRanges.length} range${dateRanges.length !== 1 ? 's' : ''}) covering ${parsedDates.length} date${parsedDates.length !== 1 ? 's' : ''}`
-                      : undefined
-                  }
-                >
-                  Submit Work Logs
-                </ActionButton>
-              </div>
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row sm:justify-between gap-3 border-t pt-6">
+              <ActionButton
+                variant="outline"
+                onClick={addEntry}
+                disabled={isSubmitting || !isConfigured}
+                className="w-full sm:w-auto"
+                leftIcon={<Plus />}
+              >
+                Add Entry
+              </ActionButton>
+              <ActionButton
+                onClick={handleSubmitClick}
+                disabled={isSubmitting || !isConfigured}
+                className="w-full sm:w-auto"
+                leftIcon={<Send />}
+                isLoading={isSubmitting}
+                loadingText="Submitting..."
+                title={
+                  parsedDates.length > 0 && validEntryCount > 0
+                    ? `Will send ${validEntryCount * dateRanges.length} request${validEntryCount * dateRanges.length !== 1 ? 's' : ''} (${validEntryCount} entr${validEntryCount !== 1 ? 'ies' : 'y'} × ${dateRanges.length} range${dateRanges.length !== 1 ? 's' : ''}) covering ${parsedDates.length} date${parsedDates.length !== 1 ? 's' : ''}`
+                    : undefined
+                }
+              >
+                Submit Work Logs
+              </ActionButton>
+            </div>
           </div>
         </div>
 

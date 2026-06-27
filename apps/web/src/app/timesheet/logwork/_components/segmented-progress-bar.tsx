@@ -57,7 +57,7 @@ export function SegmentedProgressBar({
       >
         <div
           className={cn(
-            'h-full rounded-full bg-green-500 transition-all duration-500 ease-out',
+            'h-full rounded-full bg-color-8 transition-all duration-500 ease-out',
             isInProgress && 'animate-pulse'
           )}
           style={{ width: `${pct}%` }}
@@ -68,19 +68,19 @@ export function SegmentedProgressBar({
           {completedCount}/{total} requests
         </span>
         <div className="flex items-center gap-1.5">
-          <Badge className="gap-1 bg-transparent text-green-600 dark:text-green-400 border-green-500/20">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
+          <Badge className="gap-1 bg-transparent text-color-18 border-color-18/20">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-color-8" />
             {successCount}
           </Badge>
           {failedCount > 0 && (
-            <Badge className="gap-1 bg-transparent text-red-600 dark:text-red-400 border-red-500/20">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-500" />
+            <Badge className="gap-1 bg-transparent text-color-6 border-color-6/20">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-color-20" />
               {failedCount}
             </Badge>
           )}
           {skippedCount > 0 && (
             <Badge className="gap-1 bg-transparent text-muted-foreground border-muted-foreground/20">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground/50" />
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-color-16" />
               {skippedCount}
             </Badge>
           )}

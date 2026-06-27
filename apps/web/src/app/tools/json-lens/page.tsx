@@ -318,13 +318,13 @@ export default function JsonLensPage() {
               <div className="space-y-1.5 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Formatted</span>
-                  <span className="font-mono font-semibold text-blue-500">
+                  <span className="font-mono font-semibold text-color-4">
                     {jsonStats ? jsonStats.formattedSize : '—'}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Minified</span>
-                  <span className="font-mono font-semibold text-green-500">
+                  <span className="font-mono font-semibold text-color-18">
                     {jsonStats ? jsonStats.minifiedSize : '—'}
                   </span>
                 </div>

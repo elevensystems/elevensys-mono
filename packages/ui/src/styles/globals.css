@@ -41,6 +41,25 @@
   --color-3: oklch(0.7213 0.0918 179.04);
   --color-4: oklch(0.6281 0.0637 249.64);
   --color-5: oklch(0.5749 0.0615 321.35);
+  --color-6: oklch(0.5400 0.1650 15.00);
+  --color-7: oklch(0.7400 0.1350 95.00);
+  --color-8: oklch(0.6600 0.1150 145.00);
+  --color-9: oklch(0.6800 0.0850 210.00);
+  --color-10: oklch(0.6200 0.1200 345.00);
+  --color-11: oklch(0.7800 0.1400 50.00);
+  --color-12: oklch(0.7000 0.1250 115.00);
+  --color-13: oklch(0.7200 0.0950 160.00);
+  --color-14: oklch(0.5900 0.1300 270.00);
+  --color-15: oklch(0.6000 0.1400 300.00);
+  --color-16: oklch(0.6000 0.1550 25.00);
+  --color-17: oklch(0.8200 0.1300 75.00);
+  --color-18: oklch(0.6800 0.1200 130.00);
+  --color-19: oklch(0.7300 0.0900 195.00);
+  --color-20: oklch(0.6400 0.0750 235.00);
+  --alert-info-text: oklch(0.35 0.10 249);
+  --alert-error-text: oklch(0.40 0.12 15);
+  --alert-warning-text: oklch(0.42 0.10 75);
+  --alert-success-text: oklch(0.35 0.10 130);
 }
 
 .dark {
@@ -80,6 +99,25 @@
   --color-3: oklch(0.7738 0.0923 178.62);
   --color-4: oklch(0.7082 0.0571 251.16);
   --color-5: oklch(0.6688 0.0649 321.75);
+  --color-6: oklch(0.6300 0.1750 15.00);
+  --color-7: oklch(0.8000 0.1400 95.00);
+  --color-8: oklch(0.7200 0.1200 145.00);
+  --color-9: oklch(0.7400 0.0900 210.00);
+  --color-10: oklch(0.7000 0.1300 345.00);
+  --color-11: oklch(0.8400 0.1450 50.00);
+  --color-12: oklch(0.7600 0.1300 115.00);
+  --color-13: oklch(0.7800 0.1000 160.00);
+  --color-14: oklch(0.6700 0.1400 270.00);
+  --color-15: oklch(0.6800 0.1500 300.00);
+  --color-16: oklch(0.6900 0.1650 25.00);
+  --color-17: oklch(0.8800 0.1350 75.00);
+  --color-18: oklch(0.7500 0.1250 130.00);
+  --color-19: oklch(0.7900 0.0950 195.00);
+  --color-20: oklch(0.7100 0.0800 235.00);
+  --alert-info-text: oklch(0.85 0.06 249);
+  --alert-error-text: oklch(0.85 0.06 15);
+  --alert-warning-text: oklch(0.88 0.06 75);
+  --alert-success-text: oklch(0.85 0.06 130);
 }
 
 @theme inline {
@@ -143,7 +181,26 @@
   --color-color-4: var(--color-4);
   --color-color-3: var(--color-3);
   --color-color-2: var(--color-2);
+  --color-color-20: var(--color-20);
+  --color-color-19: var(--color-19);
+  --color-color-18: var(--color-18);
+  --color-color-17: var(--color-17);
+  --color-color-16: var(--color-16);
+  --color-color-15: var(--color-15);
+  --color-color-14: var(--color-14);
+  --color-color-13: var(--color-13);
+  --color-color-12: var(--color-12);
+  --color-color-11: var(--color-11);
+  --color-color-10: var(--color-10);
+  --color-color-9: var(--color-9);
+  --color-color-8: var(--color-8);
+  --color-color-7: var(--color-7);
+  --color-color-6: var(--color-6);
   --color-color-1: var(--color-1);
+  --color-alert-info-text: var(--alert-info-text);
+  --color-alert-error-text: var(--alert-error-text);
+  --color-alert-warning-text: var(--alert-warning-text);
+  --color-alert-success-text: var(--alert-success-text);
 
   @keyframes rainbow {
     0% {

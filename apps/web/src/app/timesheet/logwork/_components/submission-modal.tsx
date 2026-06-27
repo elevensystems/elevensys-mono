@@ -97,9 +97,9 @@ export function SubmissionModal({
     if (!isDone) return '';
     if (isCancelled) return 'bg-muted text-muted-foreground border-border';
     if (failedCount === 0)
-      return 'bg-green-50 text-green-800 border-green-200 [&>svg]:text-green-800 dark:bg-green-950/50 dark:text-green-200 dark:border-green-800 dark:[&>svg]:text-green-200';
+      return 'bg-color-18/8 text-alert-success-text border-color-18/25 [&>svg]:text-alert-success-text dark:bg-color-18/10 dark:border-color-18/30';
     if (successCount === 0)
-      return 'bg-red-50 text-red-800 border-red-200 [&>svg]:text-red-800 dark:bg-red-950/50 dark:text-red-200 dark:border-red-800 dark:[&>svg]:text-red-200';
+      return 'bg-color-6/8 text-alert-error-text border-color-6/25 [&>svg]:text-alert-error-text dark:bg-color-6/10 dark:border-color-6/30';
     return 'bg-muted text-muted-foreground border-border';
   }, [isDone, isCancelled, failedCount, successCount]);
 

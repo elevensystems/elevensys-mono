@@ -40,13 +40,8 @@ export function SupportModal({ open, onOpenChange }: SupportModalProps) {
               <Phone className="h-5 w-5 text-muted-foreground" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium">Phone</p>
-              <a
-                href="tel:+840981029371"
-                className="text-sm text-muted-foreground hover:text-foreground hover:underline"
-              >
-                (+84) 0981029371
-              </a>
+              <p className="text-sm font-medium">FPT Account</p>
+              <p className="text-sm text-muted-foreground">BaoHQ11</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -56,10 +51,10 @@ export function SupportModal({ open, onOpenChange }: SupportModalProps) {
             <div className="flex-1">
               <p className="text-sm font-medium">Email</p>
               <a
-                href="mailto:huynhquocbao0188@gmail.com"
+                href="mailto:baohq11@fpt.com"
                 className="text-sm text-muted-foreground hover:text-foreground hover:underline"
               >
-                huynhquocbao0188@gmail.com
+                baohq11@fpt.com
               </a>
             </div>
           </div>
