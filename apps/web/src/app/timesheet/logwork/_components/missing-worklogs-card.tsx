@@ -138,20 +138,24 @@ export function MissingWorklogsCard({
 
   const handleSearchClick = async () => {
     const result = await onSearchWarnings();
-    if (result) {
-      const dates = result.dates
-        .split(',')
-        .map(s => s.trim())
-        .filter(Boolean)
-        .map(parseApiDate)
-        .filter((d): d is Date => {
-          if (d === null) return false;
-          if (!includeWeekends && isWeekend(d)) return false;
-          return true;
-        });
-      onSelectedDatesChange(dates);
-      setManualDateKeys(new Set());
-      toast.success(`Found missing dates for ${result.count} user(s)`);
+    if (result === null) return;
+
+    const dates = result.dates
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean)
+      .map(parseApiDate)
+      .filter((d): d is Date => {
+        if (d === null) return false;
+        if (!includeWeekends && isWeekend(d)) return false;
+        return true;
+      });
+    onSelectedDatesChange(dates);
+    setManualDateKeys(new Set());
+    if (dates.length > 0) {
+      toast.success(`Found ${dates.length} missing date${dates.length !== 1 ? 's' : ''}`);
+    } else {
+      toast.info('No missing dates found.');
     }
   };
 
@@ -241,7 +245,7 @@ export function MissingWorklogsCard({
               {parsedDates.length > 0 && (
                 <Badge
                   variant="secondary"
-                  className="ml-1 bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-300 border-green-200 dark:border-green-800"
+                  className="ml-1 bg-color-8 text-white"
                 >
                   {parsedDates.length} date
                   {parsedDates.length !== 1 ? 's' : ''}
@@ -255,7 +259,7 @@ export function MissingWorklogsCard({
                 variant="ghost"
                 size="sm"
                 onClick={handleClearAll}
-                className={`h-7 text-xs text-destructive hover:bg-destructive hover:text-white ${parsedDates.length > 0 ? 'visible' : 'invisible'}`}
+                className={`h-7 text-xs text-destructive hover:bg-destructive hover:text-white dark:hover:bg-destructive dark:hover:text-white ${parsedDates.length > 0 ? 'visible' : 'invisible'}`}
                 leftIcon={<Trash2 />}
               >
                 Clear all

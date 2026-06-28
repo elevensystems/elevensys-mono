@@ -24,14 +24,14 @@ function StatusIcon({ status }: { status: RequestStatusState }) {
     case 'pending':
       return <Clock className="h-3.5 w-3.5 text-muted-foreground" />;
     case 'in-progress':
-      return <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-500" />;
+      return <Loader2 className="h-3.5 w-3.5 animate-spin text-color-4" />;
     case 'success':
       return (
-        <CheckCircle2 className="h-3.5 w-3.5 text-green-600 dark:text-green-400 animate-in fade-in-0 zoom-in-75 duration-150" />
+        <CheckCircle2 className="h-3.5 w-3.5 text-color-18 animate-in fade-in-0 zoom-in-75 duration-150" />
       );
     case 'failed':
       return (
-        <XCircle className="h-3.5 w-3.5 text-red-600 dark:text-red-400 animate-in fade-in-0 zoom-in-75 duration-150" />
+        <XCircle className="h-3.5 w-3.5 text-color-6 animate-in fade-in-0 zoom-in-75 duration-150" />
       );
     case 'skipped':
       return <Clock className="h-3.5 w-3.5 text-muted-foreground/50" />;
@@ -60,7 +60,7 @@ function EntryMiniBar({
     >
       <div
         className={cn(
-          'h-full rounded-full bg-green-500 transition-all duration-500 ease-out',
+          'h-full rounded-full bg-color-8 transition-all duration-500 ease-out',
           isInProgress && 'animate-pulse'
         )}
         style={{ width: `${completedPct}%` }}
@@ -179,14 +179,14 @@ export function EntryStatusRow({
         {hasStarted && (
           <div className="ml-auto flex items-center gap-1.5">
             {successCount > 0 && (
-              <Badge className="gap-1 bg-transparent text-green-600 dark:text-green-400 border-green-500/20">
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
+              <Badge className="gap-1 bg-transparent text-color-18 border-color-18/20">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-color-8" />
                 {successCount}
               </Badge>
             )}
             {failedCount > 0 && (
-              <Badge className="gap-1 bg-transparent text-red-600 dark:text-red-400 border-red-500/20">
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-500" />
+              <Badge className="gap-1 bg-transparent text-color-6 border-color-6/20">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-color-6" />
                 {failedCount}
               </Badge>
             )}
@@ -268,7 +268,7 @@ export function EntryStatusRow({
                 {ds.status === 'failed' && ds.error && (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className="ml-1 cursor-help text-red-600 dark:text-red-400 underline decoration-dotted">
+                      <span className="ml-1 cursor-help text-color-6 underline decoration-dotted">
                         error
                       </span>
                     </TooltipTrigger>

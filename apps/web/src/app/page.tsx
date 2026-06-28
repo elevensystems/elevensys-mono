@@ -96,7 +96,7 @@ export default function Home() {
                 <h2 className="text-xl font-semibold">Timesheet</h2>
                 {isLoaded && isConfigured && (
                   <Badge variant="secondary" className="gap-1.5 ml-1">
-                    <span className="h-2 w-2 rounded-full bg-green-500" />
+                    <span className="h-2 w-2 rounded-full bg-color-3" />
                     Connected
                   </Badge>
                 )}
@@ -110,7 +110,7 @@ export default function Home() {
             </div>
 
             {isLoaded && !isConfigured && (
-              <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800 dark:border-yellow-800 dark:bg-yellow-950/50 dark:text-yellow-200">
+              <div className="rounded-lg border border-color-17/25 bg-color-17/8 p-4 text-sm text-alert-warning-text dark:border-color-17/30 dark:bg-color-17/10">
                 <p>
                   <strong>Getting started:</strong> Head to{' '}
                   <Link
@@ -135,7 +135,7 @@ export default function Home() {
                   >
                     {action.primary && (
                       <ShineBorder
-                        shineColor={['#38bdf8', '#8b5cf6', '#f472b6']}
+                        shineColor={['#facc15', '#22c55e', '#f97316', '#e11d48', '#38bdf8', '#8b5cf6', '#f472b6']}
                         borderWidth={1.5}
                         duration={10}
                       />

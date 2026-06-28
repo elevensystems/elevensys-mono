@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback } from 'react';
 
 import { Trash2 } from 'lucide-react';
 
@@ -49,7 +49,6 @@ interface WorkEntryRowProps {
     value: string | number
   ) => void;
   onRemove: (id: string) => void;
-  onFetchTypeOfWork: (issueId: number) => Promise<WorkType | null>;
   onClearError?: (id: string, field: keyof RowErrors) => void;
   errors?: RowErrors;
   disabled?: boolean;
@@ -63,14 +62,11 @@ export const WorkEntryRow = memo(function WorkEntryRow({
   isLoadingIssues,
   onUpdate,
   onRemove,
-  onFetchTypeOfWork,
   onClearError,
   errors,
   disabled = false,
   isLastRow = false,
 }: WorkEntryRowProps) {
-  const [isFetchingTypeOfWork, setIsFetchingTypeOfWork] = useState(false);
-
   const handleIssueInputChange = useCallback(
     (value: string, eventDetails: { reason: string }) => {
       if (eventDetails.reason === 'input-clear') return;
@@ -88,26 +84,12 @@ export const WorkEntryRow = memo(function WorkEntryRow({
 
       if (!value) return;
 
-      // Use cached typeOfWork if available
+      // typeOfWork is always returned with the issue list now
       if (value.typeOfWork) {
         onUpdate(entry.id, 'typeOfWork', value.typeOfWork);
-        return;
       }
-
-      // Fetch in background — row stays fully interactive
-      setIsFetchingTypeOfWork(true);
-      onFetchTypeOfWork(value.id)
-        .then(typeOfWork => {
-          if (typeOfWork) {
-            onUpdate(entry.id, 'typeOfWork', typeOfWork);
-          }
-        })
-        .catch(() => {
-          // Silent failure — field stays on current value
-        })
-        .finally(() => setIsFetchingTypeOfWork(false));
     },
-    [entry.id, onUpdate, onClearError, onFetchTypeOfWork]
+    [entry.id, onUpdate, onClearError]
   );
 
   const handleDescriptionChange = useCallback(
@@ -163,11 +145,29 @@ export const WorkEntryRow = memo(function WorkEntryRow({
                   <TooltipTrigger asChild>
                     <ComboboxItem value={issue}>
                       <span className="shrink-0">{issue.key}</span>
+                      {issue.typeOfWork && (
+                        <span
+                          className={cn(
+                            'ml-auto size-2 shrink-0 rounded-full',
+                            getWorkTypeDotClass(issue.typeOfWork)
+                          )}
+                        />
+                      )}
                     </ComboboxItem>
                   </TooltipTrigger>
                   <TooltipContent side="right" sideOffset={8} className="max-w-xs">
                     <p className="font-medium">{issue.summary}</p>
-                    <p className="text-background/70 mt-0.5">{issue.type.name} · {issue.status}</p>
+                    {issue.typeOfWork && (
+                      <p className="mt-1 flex items-center gap-1.5">
+                        <span
+                          className={cn(
+                            'size-2 shrink-0 rounded-full',
+                            getWorkTypeDotClass(issue.typeOfWork)
+                          )}
+                        />
+                        {issue.typeOfWork}
+                      </p>
+                    )}
                   </TooltipContent>
                 </Tooltip>
               )}
@@ -200,44 +200,36 @@ export const WorkEntryRow = memo(function WorkEntryRow({
         )}
       </div>
       <div>
-        {/* Subtle pulse border while background fetch is in flight */}
-        <div
-          className={cn(
-            'rounded-md',
-            isFetchingTypeOfWork && 'ring-2 ring-primary/30 animate-pulse'
-          )}
-        >
-          <Select value={entry.typeOfWork} onValueChange={handleTypeChange}>
-            <SelectTrigger size="sm" className="w-full">
-              <SelectValue>
+        <Select value={entry.typeOfWork} onValueChange={handleTypeChange}>
+          <SelectTrigger size="sm" className="w-full">
+            <SelectValue>
+              <span className="flex items-center gap-2">
+                <span
+                  className={cn(
+                    'size-2 shrink-0 rounded-full',
+                    getWorkTypeDotClass(entry.typeOfWork)
+                  )}
+                />
+                {entry.typeOfWork}
+              </span>
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {WORK_TYPES.map(type => (
+              <SelectItem key={type} value={type}>
                 <span className="flex items-center gap-2">
                   <span
                     className={cn(
                       'size-2 shrink-0 rounded-full',
-                      getWorkTypeDotClass(entry.typeOfWork)
+                      getWorkTypeDotClass(type)
                     )}
                   />
-                  {entry.typeOfWork}
+                  {type}
                 </span>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {WORK_TYPES.map(type => (
-                <SelectItem key={type} value={type}>
-                  <span className="flex items-center gap-2">
-                    <span
-                      className={cn(
-                        'size-2 shrink-0 rounded-full',
-                        getWorkTypeDotClass(type)
-                      )}
-                    />
-                    {type}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <div>
         <HoursStepper
@@ -251,7 +243,7 @@ export const WorkEntryRow = memo(function WorkEntryRow({
           aria-label="Delete"
           variant="ghost"
           size="icon"
-          className="size-8 text-destructive hover:bg-destructive hover:text-white"
+          className="size-8 text-destructive hover:bg-destructive hover:text-white dark:hover:bg-destructive dark:hover:text-white"
           onClick={handleRemove}
           disabled={isLastRow}
           leftIcon={<Trash2 />}

@@ -82,9 +82,9 @@ export function DateChipList({
               className={cn(
                 'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors',
                 isManual
-                  ? 'border-blue-300 bg-blue-50/80 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-400'
+                  ? 'border-color-4/50 bg-color-4/10 text-color-4'
                   : isWeekend
-                    ? 'border-amber-200 bg-amber-50/80 text-amber-700 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-400'
+                    ? 'border-color-2/50 bg-color-2/10 text-color-2'
                     : 'border-border bg-muted/50 text-foreground',
                 'hover:border-destructive/60 hover:bg-destructive/10 hover:text-destructive cursor-pointer'
               )}

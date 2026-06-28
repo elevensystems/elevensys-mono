@@ -6,6 +6,7 @@ import { Search } from 'lucide-react';
 
 import { ActionButton } from '@workspace/ui/components/action-button';
 import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
+import { TokenExpiredAlert } from '@/components/features/timesheet/token-expired-alert';
 import MainLayout from '@/components/layouts/main-layout';
 import {
   Combobox,
@@ -61,6 +62,7 @@ export default function ProjectWorklogsPage() {
   const {
     projects,
     projectsLoading,
+    authError,
     selectedProject,
     setSelectedProject,
     username,
@@ -146,6 +148,8 @@ export default function ProjectWorklogsPage() {
           />
 
           <NotConfiguredAlert isConfigured={isConfigured} />
+
+          {isConfigured && <TokenExpiredAlert authError={authError} />}
 
           {/* Filters */}
           <div className="space-y-4">

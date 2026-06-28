@@ -2,8 +2,12 @@
 
 import { useCallback, useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import { toast } from 'sonner';
 
+import { showAuthErrorToast } from '@/lib/auth-toast';
+import { isAuthError } from '@/lib/fetch-utils';
 import { formatDateForApi, getMonthEnd, getMonthStart } from '@/lib/timesheet';
 import type {
   TimesheetSettings,
@@ -22,9 +26,12 @@ export function useMissingWorklogs({
   settings,
   isConfigured,
 }: UseMissingWorklogsParams) {
+  const router = useRouter();
+
   const {
     projects,
     isLoading: isLoadingProjects,
+    authError,
     selectedProject,
     setSelectedProject,
   } = useProjects({ settings, isConfigured });
@@ -43,7 +50,7 @@ export function useMissingWorklogs({
   const [warningToDate, setWarningToDate] = useState(getMonthEnd());
   const [isSearchingWarnings, setIsSearchingWarnings] = useState(false);
 
-  const { issues, issuesByKey, isLoadingIssues, fetchIssueTypeOfWork } =
+  const { issues, issuesByKey, isLoadingIssues } =
     useProjectIssues({
       projectId: selectedProjectId,
       token: settings.token,
@@ -81,6 +88,10 @@ export function useMissingWorklogs({
       });
 
       if (!response.ok) {
+        if (isAuthError(response.status)) {
+          showAuthErrorToast(() => router.push('/timesheet/config'));
+          return null;
+        }
         const errorData = await response.json().catch(() => null);
         throw new Error(errorData?.error || `HTTP ${response.status}`);
       }
@@ -97,11 +108,9 @@ export function useMissingWorklogs({
             count: result.data.length,
           };
         }
-        toast.info('No missing worklog dates found.');
-        return null;
+        return { dates: '', count: 0 };
       }
-      toast.info('No missing worklog dates found.');
-      return null;
+      return { dates: '', count: 0 };
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Failed to search warnings';
@@ -116,10 +125,12 @@ export function useMissingWorklogs({
     warningToDate,
     settings.jiraInstance,
     settings.token,
+    router,
   ]);
 
   return {
     projects,
+    authError,
     selectedProjectId,
     setSelectedProjectId,
     selectedProject,
@@ -133,6 +144,5 @@ export function useMissingWorklogs({
     setWarningToDate,
     isSearchingWarnings,
     handleSearchWarnings,
-    fetchIssueTypeOfWork,
   };
 }

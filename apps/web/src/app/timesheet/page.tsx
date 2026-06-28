@@ -89,7 +89,7 @@ export default function TimesheetPage() {
           />
 
           {isLoaded && !isConfigured && (
-            <div className="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800 dark:border-yellow-800 dark:bg-yellow-950/50 dark:text-yellow-200">
+            <div className="mb-6 rounded-lg border border-color-17/25 bg-color-17/8 p-4 text-sm text-alert-warning-text dark:border-color-17/30 dark:bg-color-17/10">
               <p>
                 <strong>Getting started:</strong> Head to{' '}
                 <Link
@@ -146,7 +146,7 @@ export default function TimesheetPage() {
           {isLoaded && isConfigured && (
             <div className="mt-8 text-center">
               <Badge variant="secondary" className="gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-green-500" />
+                <span className="h-2 w-2 rounded-full bg-color-3" />
                 Jira settings configured
               </Badge>
             </div>

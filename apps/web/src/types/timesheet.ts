@@ -123,18 +123,10 @@ export interface WorklogsWarningEntry {
   value: string;
 }
 
-export interface JiraIssueType {
-  description: string;
-  name: string;
-  iconUrl: string;
-}
-
 export interface JiraIssue {
-  id: number;
+  id: string;
   key: string;
-  status: string;
   summary: string;
-  type: JiraIssueType;
   typeOfWork?: string;
 }
 

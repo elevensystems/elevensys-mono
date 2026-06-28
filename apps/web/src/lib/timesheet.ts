@@ -251,19 +251,19 @@ export function getUsernameColor(username: string): string {
 export function getWorkTypeDotClass(type: string): string {
   switch (type.toLowerCase()) {
     case 'create':
-      return 'bg-blue-500';
+      return 'bg-color-14';
     case 'review':
-      return 'bg-purple-500';
+      return 'bg-color-5';
     case 'study':
-      return 'bg-amber-500';
+      return 'bg-color-11';
     case 'correct':
-      return 'bg-red-500';
+      return 'bg-color-6';
     case 'translate':
-      return 'bg-cyan-500';
+      return 'bg-color-19';
     case 'test':
-      return 'bg-green-500';
+      return 'bg-color-8';
     default:
-      return 'bg-slate-400';
+      return 'bg-color-9';
   }
 }
 

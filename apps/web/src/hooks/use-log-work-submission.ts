@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 
+import { isAuthError } from '@/lib/fetch-utils';
 import { REQUEST_DELAY_MS, delay, formatRangeLabel, getCurrentTime } from '@/lib/timesheet';
 import type {
   DateRange,
@@ -23,6 +24,7 @@ interface RetryParams {
 export function useLogWorkSubmission(settings: TimesheetSettings) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelled, setIsCancelled] = useState(false);
+  const [hasAuthError, setHasAuthError] = useState(false);
   const [results, setResults] = useState<LogWorkResult[]>([]);
   const [requestStatuses, setRequestStatuses] = useState<RequestStatus[]>([]);
   const abortRef = useRef(false);
@@ -56,7 +58,7 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
       range: DateRange,
       headers: Record<string, string>,
       time: string
-    ): Promise<{ success: boolean; error?: string }> => {
+    ): Promise<{ success: boolean; error?: string; isAuthError?: boolean }> => {
       try {
         const response = await fetch('/api/jira/worklogs/logwork', {
           method: 'POST',
@@ -80,7 +82,11 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => null);
-          throw new Error(errorData?.error || `HTTP ${response.status}`);
+          return {
+            success: false,
+            error: errorData?.error || `HTTP ${response.status}`,
+            isAuthError: isAuthError(response.status),
+          };
         }
 
         return { success: true };
@@ -117,6 +123,7 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
       setRequestStatuses(initialStatuses);
       setIsSubmitting(true);
       setIsCancelled(false);
+      setHasAuthError(false);
       setResults([]);
       abortRef.current = false;
 
@@ -172,6 +179,7 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
             successCount++;
           } else {
             updateRequestStatus(entry.id, label, 'failed', result.error);
+            if (result.isAuthError) setHasAuthError(true);
             failedRanges.push(range);
             entryErrors.push(`${label}: ${result.error || 'Unknown error'}`);
           }
@@ -236,6 +244,7 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
 
       setIsSubmitting(true);
       setIsCancelled(false);
+      setHasAuthError(false);
       abortRef.current = false;
 
       const logResults: LogWorkResult[] = [];
@@ -279,6 +288,7 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
             successCount++;
           } else {
             updateRequestStatus(entry.id, label, 'failed', result.error);
+            if (result.isAuthError) setHasAuthError(true);
             entryFailedRanges.push(range);
             entryErrors.push(`${label}: ${result.error || 'Unknown error'}`);
           }
@@ -330,6 +340,7 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
   return {
     isSubmitting,
     isCancelled,
+    hasAuthError,
     results,
     requestStatuses,
     submitEntries,

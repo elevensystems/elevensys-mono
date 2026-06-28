@@ -95,7 +95,7 @@ export function ConfigForm({
   );
 
   // Issues for WorkEntryRow
-  const { issues, issuesByKey, isLoadingIssues, fetchIssueTypeOfWork } =
+  const { issues, issuesByKey, isLoadingIssues } =
     useProjectIssues({
       projectId: selectedProject?.id ?? '',
       token: settings.token,
@@ -241,7 +241,6 @@ export function ConfigForm({
                 isLoadingIssues={isLoadingIssues}
                 onUpdate={updateEntry}
                 onRemove={removeEntry}
-                onFetchTypeOfWork={fetchIssueTypeOfWork}
                 disabled={!selectedProject}
                 isLastRow={entries.length === 1}
               />

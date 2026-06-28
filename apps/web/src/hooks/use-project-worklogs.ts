@@ -2,8 +2,12 @@
 
 import { useCallback, useRef, useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import { toast } from 'sonner';
 
+import { showAuthErrorToast } from '@/lib/auth-toast';
+import { isAuthError } from '@/lib/fetch-utils';
 import { formatDateForApi, getMonthEnd, getMonthStart } from '@/lib/timesheet';
 import type {
   ProjectWorklogRow,
@@ -33,9 +37,12 @@ export function useProjectWorklogs({
   settings,
   isConfigured,
 }: UseProjectWorklogsParams) {
+  const router = useRouter();
+
   const {
     projects,
     isLoading: projectsLoading,
+    authError,
     selectedProject,
     setSelectedProject,
   } = useProjects({ settings, isConfigured });
@@ -93,6 +100,11 @@ export function useProjectWorklogs({
         });
 
         if (!response.ok) {
+          if (isAuthError(response.status)) {
+            showAuthErrorToast(() => router.push('/timesheet/config'));
+            setRows([]);
+            return;
+          }
           const errorData = await response.json().catch(() => null);
           throw new Error(
             errorData?.error || `Failed to fetch: HTTP ${response.status}`
@@ -127,7 +139,7 @@ export function useProjectWorklogs({
         setIsLoading(false);
       }
     },
-    [settings.token, settings.jiraInstance]
+    [settings.token, settings.jiraInstance, router]
   );
 
   const handleSearch = useCallback(async () => {
@@ -188,6 +200,7 @@ export function useProjectWorklogs({
     // Projects list
     projects,
     projectsLoading,
+    authError,
     // Filter form
     selectedProject,
     setSelectedProject,

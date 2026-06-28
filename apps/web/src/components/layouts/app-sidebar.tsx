@@ -75,7 +75,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
 
   return (
     <>
-      <Sidebar variant="floating" collapsible="icon" {...props}>
+      <Sidebar variant="sidebar" collapsible="icon" {...props}>
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
@@ -93,7 +93,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                       <span className="truncate font-medium">
                         {domainConfig.appName}
                       </span>
-                      <span className="truncate text-xs">Version 6.9.8</span>
+                      <span className="truncate text-xs">Version 7.1.6</span>
                     </div>
                     <ChevronsUpDown className="ml-auto size-4" />
                   </SidebarMenuButton>

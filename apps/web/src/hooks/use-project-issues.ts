@@ -1,9 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
-import type { JiraIssue, WorkType } from '@/types/timesheet';
-import { WORK_TYPES } from '@/types/timesheet';
+import type { JiraIssue } from '@/types/timesheet';
 
 interface UseProjectIssuesParams {
   projectId: string;
@@ -39,7 +38,7 @@ export function useProjectIssues({
     const id = String(++fetchIdRef.current);
     setActiveFetchId(id);
 
-    fetch('/api/jira/projects/search', {
+    fetch('/api/jira/issues/search', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -48,9 +47,6 @@ export function useProjectIssues({
       body: JSON.stringify({
         jiraInstance,
         jql: `project = ${projectId} AND resolution = Unresolved ORDER BY priority DESC, updated DESC`,
-        columnConfig: 'explicit',
-        layoutKey: 'split-view',
-        startIndex: '0',
       }),
       signal: controller.signal,
     })
@@ -74,51 +70,6 @@ export function useProjectIssues({
     return () => controller.abort();
   }, [shouldFetch, projectId, jiraInstance, token]);
 
-  const fetchIssueTypeOfWork = useCallback(
-    async (issueId: number): Promise<WorkType | null> => {
-      const cached = issues.find(i => i.id === issueId);
-      if (cached?.typeOfWork) {
-        return (WORK_TYPES as readonly string[]).includes(cached.typeOfWork)
-          ? (cached.typeOfWork as WorkType)
-          : null;
-      }
-
-      try {
-        const response = await fetch(
-          `/api/jira/issues/${issueId}?jiraInstance=${encodeURIComponent(jiraInstance)}`,
-          {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!response.ok) return null;
-
-        const result = await response.json();
-        const typeOfWork = result?.data?.fields?.customfield_10400 as
-          | string
-          | null;
-
-        if (
-          typeOfWork &&
-          (WORK_TYPES as readonly string[]).includes(typeOfWork)
-        ) {
-          setFetchedIssues(prev =>
-            prev.map(i => (i.id === issueId ? { ...i, typeOfWork } : i))
-          );
-          return typeOfWork as WorkType;
-        }
-
-        return null;
-      } catch {
-        return null;
-      }
-    },
-    [issues, token, jiraInstance]
-  );
-
   const issuesByKey = useMemo(
     () => new Map(issues.map(i => [i.key, i])),
     [issues]
@@ -128,6 +79,5 @@ export function useProjectIssues({
     issues,
     issuesByKey,
     isLoadingIssues,
-    fetchIssueTypeOfWork,
   };
 }

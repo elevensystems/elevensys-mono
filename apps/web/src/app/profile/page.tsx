@@ -60,7 +60,7 @@ export default function ProfilePage() {
                   <AvatarImage src={user.avatar} alt={user.name} />
                   <AvatarFallback
                     className={clsx('rounded-xl text-lg font-semibold', {
-                      'bg-indigo-500 text-white': user.role === 'pro',
+                      'bg-color-14 text-white': user.role === 'pro',
                     })}
                   >
                     {getUserInitials(user.name)}
@@ -77,7 +77,7 @@ export default function ProfilePage() {
                     <Badge
                       variant={user.role === 'free' ? 'secondary' : 'default'}
                       className={clsx({
-                        'bg-indigo-500 hover:bg-indigo-600 text-white':
+                        'bg-color-14 hover:bg-color-14/80 text-white':
                           user.role === 'pro',
                       })}
                     >
