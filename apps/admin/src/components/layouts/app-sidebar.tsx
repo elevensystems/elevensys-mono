@@ -4,8 +4,6 @@ import * as React from 'react';
 
 import Link from 'next/link';
 
-import { Shield } from 'lucide-react';
-
 import {
   Sidebar,
   SidebarContent,
@@ -15,6 +13,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@workspace/ui/components/sidebar';
+import { Shield } from 'lucide-react';
 
 import { NavMain } from '@/components/layouts/nav-main';
 import { NavUser } from '@/components/layouts/nav-user';
@@ -27,7 +26,7 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
 
 export function AppSidebar({ user, ...props }: AppSidebarProps) {
   return (
-    <Sidebar variant="floating" collapsible="icon" {...props}>
+    <Sidebar variant="sidebar" collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
