@@ -248,22 +248,35 @@ export function getUsernameColor(username: string): string {
   return `hsl(${hue}, 65%, 48%)`;
 }
 
+const WORK_TYPE_COLOR_NUMS: Record<string, number> = {
+  create: 14,
+  review: 5,
+  study: 11,
+  correct: 6,
+  translate: 19,
+  test: 8,
+};
+
+function workTypeColorNum(type: string): number {
+  return WORK_TYPE_COLOR_NUMS[type.toLowerCase()] ?? 9;
+}
+
 export function getWorkTypeDotClass(type: string): string {
-  switch (type.toLowerCase()) {
-    case 'create':
-      return 'bg-color-14';
-    case 'review':
-      return 'bg-color-5';
-    case 'study':
-      return 'bg-color-11';
-    case 'correct':
-      return 'bg-color-6';
-    case 'translate':
-      return 'bg-color-19';
-    case 'test':
-      return 'bg-color-8';
-    default:
-      return 'bg-color-9';
-  }
+  return `bg-color-${workTypeColorNum(type)}`;
+}
+
+/**
+ * Pill/badge classes (border + tinted background + matching text color) for a work type.
+ */
+export function getWorkTypeBadgeClass(type: string): string {
+  const n = workTypeColorNum(type);
+  return `border-color-${n}/30 bg-color-${n}/10 text-color-${n}`;
+}
+
+/**
+ * Solid border color for a work type, used as a left accent stripe on entry rows.
+ */
+export function getWorkTypeBorderClass(type: string): string {
+  return `border-color-${workTypeColorNum(type)}`;
 }
 

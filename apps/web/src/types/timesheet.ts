@@ -110,6 +110,7 @@ export interface RequestStatus {
   dates: string[];
   status: RequestStatusState;
   error?: string;
+  errorStatus?: number;
 }
 
 export interface JiraProject {

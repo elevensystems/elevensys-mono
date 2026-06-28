@@ -1,10 +1,16 @@
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, Link as LinkIcon } from 'lucide-react';
+import { LayoutDashboard, Link as LinkIcon, ScrollText } from 'lucide-react';
+
+export interface NavSubItem {
+  title: string;
+  url: string;
+}
 
 export interface NavItem {
   title: string;
   url: string;
   icon: LucideIcon;
+  items?: NavSubItem[];
 }
 
 export const appSidebarData: {
@@ -15,5 +21,14 @@ export const appSidebarData: {
   navMain: [
     { title: 'Dashboard', url: '/', icon: LayoutDashboard },
     { title: 'Urlify', url: '/urlify', icon: LinkIcon },
+    {
+      title: 'Audit',
+      url: '/audit',
+      icon: ScrollText,
+      items: [
+        { title: 'Logs', url: '/audit' },
+        { title: 'Stats', url: '/audit/stats' },
+      ],
+    },
   ],
 };

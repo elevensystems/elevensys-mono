@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 
-import { ChevronsUpDown, LogOut } from 'lucide-react';
+import { ChevronsUpDown, LogOut, Monitor, Moon, Sun } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 import {
   Avatar,
@@ -13,6 +14,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@workspace/ui/components/dropdown-menu';
 import {
@@ -23,6 +28,12 @@ import {
 } from '@workspace/ui/components/sidebar';
 
 import type { AuthUser } from '@/types/auth';
+
+const THEMES = [
+  { label: 'Light', value: 'light', icon: Sun },
+  { label: 'Dark', value: 'dark', icon: Moon },
+  { label: 'System', value: 'system', icon: Monitor },
+] as const;
 
 const getUserInitials = (name: string) => {
   return name
@@ -36,6 +47,7 @@ const getUserInitials = (name: string) => {
 
 export function NavUser({ user }: { user: AuthUser | null }) {
   const { isMobile } = useSidebar();
+  const { setTheme, theme } = useTheme();
 
   if (!user) return null;
 
@@ -67,6 +79,25 @@ export function NavUser({ user }: { user: AuthUser | null }) {
             align="end"
             sideOffset={4}
           >
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <Sun />
+                Theme
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                {THEMES.map(({ label, value, icon: Icon }) => (
+                  <DropdownMenuItem
+                    key={value}
+                    onClick={() => setTheme(value)}
+                    className={theme === value ? 'bg-accent' : ''}
+                  >
+                    <Icon />
+                    {label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+            <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link
                 href="/api/auth/logout"

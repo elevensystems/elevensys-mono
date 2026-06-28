@@ -39,7 +39,9 @@
       "Bash(pnpm *)",
       "Bash(vercel link *)",
       "Bash(vercel env *)",
-      "Bash(npx jest *)"
+      "Bash(npx jest *)",
+      "PowerShell(pnpm *)",
+      "Bash(pnpm --filter elevensys-admin build)"
     ]
   },
   "enabledMcpjsonServers": [

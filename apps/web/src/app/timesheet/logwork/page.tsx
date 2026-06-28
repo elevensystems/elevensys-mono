@@ -453,7 +453,8 @@ export default function LogWorkPage() {
             </div>
             <div className="overflow-hidden rounded-lg border">
               {/* Grid header */}
-              <div className="grid grid-cols-[230px_1fr_150px_140px_50px] gap-2 bg-muted/50 px-3 py-2 text-sm font-semibold text-muted-foreground">
+              <div className="grid grid-cols-[40px_230px_1fr_150px_140px_50px] gap-2 bg-muted/50 px-3 py-2 text-sm font-semibold text-muted-foreground">
+                <span>#</span>
                 <span>Key</span>
                 <span>Description</span>
                 <span>Type of Work</span>
@@ -461,9 +462,10 @@ export default function LogWorkPage() {
                 <span />
               </div>
               {/* Entry rows */}
-              {entries.map(entry => (
+              {entries.map((entry, index) => (
                 <WorkEntryRow
                   key={entry.id}
+                  index={index}
                   entry={entry}
                   issues={issues}
                   issuesByKey={issuesByKey}

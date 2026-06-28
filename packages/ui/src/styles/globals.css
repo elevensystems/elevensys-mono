@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -28,6 +29,7 @@
   --chart-3: oklch(0.7716 0.1211 67.38);
   --chart-4: oklch(0.6281 0.0637 249.64);
   --chart-5: oklch(0.5749 0.0615 321.35);
+  --chart-6: oklch(0.58 0.11 180);
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -120,6 +122,7 @@
   --chart-3: oklch(0.8128 0.1118 70.28);
   --chart-4: oklch(0.7082 0.0571 251.16);
   --chart-5: oklch(0.6688 0.0649 321.75);
+  --chart-6: oklch(0.64 0.11 180);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.9696 0.0026 107.19);
@@ -195,6 +198,7 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+  --color-chart-6: var(--chart-6);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
