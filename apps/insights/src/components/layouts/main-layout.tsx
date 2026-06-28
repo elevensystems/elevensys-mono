@@ -27,6 +27,7 @@ import { useAuth } from '@/contexts/auth-context';
 interface MainLayoutProps {
   children: ReactNode;
   className?: string;
+  headerRight?: ReactNode;
 }
 
 const formatSegment = (segment: string) =>
@@ -38,6 +39,7 @@ const formatSegment = (segment: string) =>
 export default function MainLayout({
   children,
   className = '',
+  headerRight,
 }: MainLayoutProps) {
   const pathname = usePathname();
   const { user } = useAuth();
@@ -50,7 +52,8 @@ export default function MainLayout({
       <AppSidebar user={user} />
       <SidebarInset>
         <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b bg-background/50 backdrop-blur">
-          <div className="flex items-center gap-2 px-4">
+          <div className="flex flex-1 items-center gap-2 px-4">
+            <div className="flex items-center gap-2">
             <SidebarTrigger className="-ml-1" />
             <Separator
               orientation="vertical"
@@ -91,9 +94,13 @@ export default function MainLayout({
                 })}
               </BreadcrumbList>
             </Breadcrumb>
+            </div>
+            {headerRight && (
+              <div className="ml-auto pr-4">{headerRight}</div>
+            )}
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+        <div className="flex flex-1 flex-col gap-4 p-6">
           <main className={className}>{children}</main>
         </div>
       </SidebarInset>

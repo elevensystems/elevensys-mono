@@ -31,7 +31,7 @@ export default async function InsightsDashboardPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <BarChart2 className="size-4" />
-                  Claude Usage
+                  Claude Watch
                 </CardTitle>
                 <CardDescription>
                   Track API usage, token consumption, and costs over time.
