@@ -10,22 +10,20 @@ import { getIdToken, getUserFromSession } from '@/lib/auth';
  * The incoming query string (from/to, sort, cursor, filters) is forwarded
  * verbatim to the matching backend endpoint.
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
-) {
+const BFF_PREFIX = '/api/claude-watch';
+
+export async function GET(request: NextRequest) {
   const user = await getUserFromSession();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const idToken = (await getIdToken()) ?? '';
-  const { path } = await params;
-  const segments = path.map(encodeURIComponent).join('/');
+  const backendPath = request.nextUrl.pathname.slice(BFF_PREFIX.length);
   const search = request.nextUrl.search;
 
   try {
-    const data = await apiFetch(`/claude-watch/${segments}${search}`, {
+    const data = await apiFetch(`/claude-watch${backendPath}${search}`, {
       idToken,
       method: 'GET',
     });
