@@ -8,9 +8,11 @@ import {
   userFromPayload,
 } from '@/lib/auth';
 
+const PUBLIC_PATHS = ['/'];
 const PUBLIC_PATH_PREFIXES = ['/login', '/api/auth/'];
 
 const isPublicPath = (pathname: string): boolean => {
+  if (PUBLIC_PATHS.includes(pathname)) return true;
   return PUBLIC_PATH_PREFIXES.some(prefix => pathname.startsWith(prefix));
 };
 

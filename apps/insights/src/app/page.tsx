@@ -8,10 +8,15 @@ import {
 } from '@workspace/ui/components/card';
 
 import MainLayout from '@/components/layouts/main-layout';
+import { Welcome } from '@/components/welcome';
 import { getUserFromSession } from '@/lib/auth';
 
 export default async function InsightsDashboardPage() {
   const user = await getUserFromSession();
+
+  if (!user) {
+    return <Welcome />;
+  }
 
   return (
     <MainLayout>
@@ -19,11 +24,9 @@ export default async function InsightsDashboardPage() {
         <div className="flex flex-col gap-6">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">
-              Welcome{user ? `, ${user.name}` : ''}
+              Welcome, {user.name}
             </h1>
-            <p className="text-sm text-muted-foreground">
-              {user?.email ?? 'Usage analytics dashboard'}
-            </p>
+            <p className="text-sm text-muted-foreground">{user.email}</p>
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
