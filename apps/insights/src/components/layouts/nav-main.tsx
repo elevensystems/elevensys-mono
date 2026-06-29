@@ -10,6 +10,7 @@ import {
 } from '@workspace/ui/components/collapsible';
 import {
   SidebarGroup,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -39,6 +40,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
 
   return (
     <SidebarGroup>
+      <SidebarGroupLabel>Claude Watch</SidebarGroupLabel>
       <SidebarMenu>
         {items.map(item =>
           item.items?.length ? (
