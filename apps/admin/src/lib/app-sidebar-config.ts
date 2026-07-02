@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, Link as LinkIcon } from 'lucide-react';
+import { LayoutDashboard, Link as LinkIcon, ScrollText } from 'lucide-react';
 
 export interface NavItem {
   title: string;
@@ -15,5 +15,6 @@ export const appSidebarData: {
   navMain: [
     { title: 'Dashboard', url: '/', icon: LayoutDashboard },
     { title: 'Urlify', url: '/urlify', icon: LinkIcon },
+    { title: 'Audit', url: '/audit', icon: ScrollText },
   ],
 };
