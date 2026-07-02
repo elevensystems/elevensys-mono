@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation';
+
 import { BarChart2 } from 'lucide-react';
 
 import {
@@ -8,15 +10,12 @@ import {
 } from '@workspace/ui/components/card';
 
 import MainLayout from '@/components/layouts/main-layout';
-import { Welcome } from '@/components/welcome';
 import { getUserFromSession } from '@/lib/auth';
 
 export default async function InsightsDashboardPage() {
   const user = await getUserFromSession();
 
-  if (!user) {
-    return <Welcome />;
-  }
+  if (!user) redirect('/login');
 
   return (
     <MainLayout>
