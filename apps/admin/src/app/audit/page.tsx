@@ -13,9 +13,6 @@ export default async function AuditPage() {
       <section className="container mx-auto px-2 py-8">
         <div className="mb-6">
           <h1 className="text-2xl font-semibold tracking-tight">Audit Logs</h1>
-          <p className="text-sm text-muted-foreground">
-            Query elevensys-core audit logs from CloudWatch Logs Insights.
-          </p>
         </div>
         <AuditTable />
       </section>

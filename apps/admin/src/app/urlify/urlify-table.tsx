@@ -210,7 +210,6 @@ export function UrlifyTable({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Urlify</h1>
-          <p className="text-sm text-muted-foreground">Manage shortened URLs</p>
         </div>
         <div className="flex items-center gap-2">
           <Button

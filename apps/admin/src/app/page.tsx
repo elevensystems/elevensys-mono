@@ -25,9 +25,6 @@ export default async function AdminDashboardPage() {
             <h1 className="text-3xl font-semibold tracking-tight">
               Welcome{user ? `, ${user.name}` : ''}
             </h1>
-            <p className="text-sm text-muted-foreground">
-              {user?.email ?? 'Signed-in staff dashboard'}
-            </p>
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
