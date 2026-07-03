@@ -2,11 +2,10 @@
 
 import { useCallback, useState } from 'react';
 
-import { Search } from 'lucide-react';
+import { ChevronRight, Search } from 'lucide-react';
 
-import { Badge } from '@workspace/ui/components/badge';
 import { Button } from '@workspace/ui/components/button';
-import { DateRangePicker } from '@workspace/ui/components/date-range-picker';
+import { DateTimeRangePicker } from '@workspace/ui/components/date-time-range-picker';
 import { Input } from '@workspace/ui/components/input';
 import {
   Select,
@@ -15,61 +14,83 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@workspace/ui/components/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@workspace/ui/components/sheet';
 import { Skeleton } from '@workspace/ui/components/skeleton';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@workspace/ui/components/table';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@workspace/ui/components/tooltip';
+import { cn } from '@workspace/ui/lib/utils';
 
 import { useSystemLogs, type LogEntry } from '@/hooks/use-system-logs';
 
-const today = () => new Date().toISOString().slice(0, 10);
-
-const KNOWN_EVENTS = [
-  'JIRA_PROXY',
-  'JIRA_PROXY_ERROR',
-];
-
-function levelBadge(level: string) {
-  if (level === 'ERROR') return <Badge variant="destructive">ERROR</Badge>;
-  if (level === 'WARN') return <Badge className="bg-yellow-500 text-white hover:bg-yellow-600">WARN</Badge>;
-  return <Badge variant="secondary">INFO</Badge>;
+function startOfToday() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
 }
 
-function statusBadge(status?: number) {
-  if (!status) return <span className="text-muted-foreground">—</span>;
-  const color =
-    status < 300 ? 'text-green-600' :
-    status < 500 ? 'text-yellow-600' :
-                   'text-red-600';
-  return <span className={`font-mono text-sm ${color}`}>{status}</span>;
+function endOfToday() {
+  const d = new Date();
+  d.setHours(23, 59, 59, 0);
+  return d;
 }
 
-function TruncatedUrl({ url }: { url?: string }) {
-  if (!url) return <span className="text-muted-foreground">—</span>;
-  const short = url.length > 60 ? `${url.slice(0, 60)}…` : url;
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="cursor-default font-mono text-xs">{short}</span>
-        </TooltipTrigger>
-        <TooltipContent className="max-w-sm break-all font-mono text-xs">
-          {url}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
+const KNOWN_EVENTS = ['JIRA_PROXY', 'JIRA_PROXY_ERROR'];
+
+const LEVEL_SEGMENTS = [
+  { value: 'all', label: 'All' },
+  { value: 'INFO', label: 'Info' },
+  { value: 'WARN', label: 'Warn' },
+  { value: 'ERROR', label: 'Error' },
+] as const;
+
+// Shared grid template so the header and every row stay column-aligned.
+const GRID_COLS =
+  'grid-cols-[148px_92px_116px_minmax(150px,1fr)_78px_96px_96px_138px_minmax(180px,1.2fr)_26px]';
+
+// Literal class strings so Tailwind's JIT compiler picks them up.
+const LEVEL_STYLES: Record<string, { badge: string; dot: string }> = {
+  INFO: { badge: 'bg-banner-info-bg text-banner-info-title', dot: 'bg-banner-info-icon' },
+  WARN: { badge: 'bg-banner-warning-bg text-banner-warning-title', dot: 'bg-banner-warning-icon' },
+  ERROR: { badge: 'bg-banner-error-bg text-banner-error-title', dot: 'bg-banner-error-icon' },
+};
+
+function levelStyle(level: string) {
+  return LEVEL_STYLES[level] ?? LEVEL_STYLES.INFO;
+}
+
+function statusClass(status?: number) {
+  if (!status) return 'text-muted-foreground';
+  if (status < 300) return 'text-alert-success-text';
+  if (status < 500) return 'text-alert-warning-text';
+  return 'text-alert-error-text';
+}
+
+function durationClass(duration?: number) {
+  if (duration == null) return 'bg-muted text-muted-foreground';
+  if (duration > 2000) return 'bg-banner-error-bg text-banner-error-title';
+  if (duration > 900) return 'bg-banner-warning-bg text-banner-warning-title';
+  return 'bg-muted text-muted-foreground';
+}
+
+function shortUrl(url?: string) {
+  if (!url) return '—';
+  try {
+    const u = new URL(url);
+    const parts = u.pathname.split('/').filter(Boolean);
+    if (parts.length <= 2) return u.host + u.pathname;
+    return `${u.host}/…/${parts.slice(-2).join('/')}`;
+  } catch {
+    return url;
+  }
+}
+
+function clockOf(ts: string) {
+  const parts = ts.split(', ');
+  return parts[1] ?? ts;
 }
 
 function formatTimestamp(ts: string) {
@@ -80,132 +101,371 @@ function formatTimestamp(ts: string) {
   }
 }
 
-export function AuditTable() {
-  const [from, setFrom] = useState(today());
-  const [to, setTo] = useState(today());
+function statusMessage(status?: number) {
+  if (!status) return 'Request recorded.';
+  if (status < 300) return 'Request completed successfully.';
+  if (status < 500) return 'Completed with a client warning.';
+  return 'Request failed — upstream error.';
+}
+
+function rawLog(row: LogEntry) {
+  return JSON.stringify(
+    {
+      timestamp: row.timestamp,
+      level: row.level,
+      event: row.event ?? null,
+      operation: row.operation ?? null,
+      method: row.method ?? null,
+      status: row.status ?? null,
+      durationMs: row.duration ?? null,
+      username: row.username || null,
+      issueKey: row.issueKey || null,
+      url: row.url ?? null,
+      requestId: row.reqId ?? null,
+    },
+    null,
+    2,
+  );
+}
+
+function LevelBadge({ level }: { level: string }) {
+  const s = levelStyle(level);
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full py-0.5 pl-2 pr-2.5 text-[11px] font-bold tracking-wide',
+        s.badge,
+      )}
+    >
+      <span className={cn('size-1.5 rounded-full', s.dot)} />
+      {level}
+    </span>
+  );
+}
+
+interface AuditTableProps {
+  service?: string;
+  events?: string[];
+}
+
+export function AuditTable({ service, events }: AuditTableProps = {}) {
+  const [from, setFrom] = useState<Date>(startOfToday());
+  const [to, setTo] = useState<Date>(endOfToday());
   const [level, setLevel] = useState('all');
   const [event, setEvent] = useState('all');
   const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState<LogEntry | null>(null);
 
   const { items, loading, error, fetchLogs } = useSystemLogs();
+  const eventOptions = events ?? KNOWN_EVENTS;
 
-  const handleSearch = useCallback(() => {
-    fetchLogs({ from, to, level: level === 'all' ? undefined : level, event: event === 'all' ? undefined : event, search: search || undefined });
-  }, [from, to, level, event, search, fetchLogs]);
+  const runSearch = useCallback(
+    (overrides?: { level?: string; event?: string }) => {
+      const nextLevel = overrides?.level ?? level;
+      const nextEvent = overrides?.event ?? event;
+      fetchLogs({
+        from: from.toISOString(),
+        to: to.toISOString(),
+        level: nextLevel === 'all' ? undefined : nextLevel,
+        event: nextEvent === 'all' ? undefined : nextEvent,
+        service,
+        search: search || undefined,
+      });
+    },
+    [from, to, level, event, search, service, fetchLogs],
+  );
+
+  const handleLevelChange = useCallback(
+    (next: string) => {
+      setLevel(next);
+      runSearch({ level: next });
+    },
+    [runSearch],
+  );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') handleSearch();
+      if (e.key === 'Enter') runSearch();
     },
-    [handleSearch],
+    [runSearch],
   );
 
   return (
     <div className="flex flex-col gap-4">
       {/* Filter bar */}
-      <div className="flex flex-wrap items-end gap-3">
-        <DateRangePicker
-          from={from}
-          to={to}
-          onRangeChange={(f, t) => { setFrom(f); setTo(t); }}
-        />
+      <div className="flex flex-wrap items-center gap-2.5">
+          <DateTimeRangePicker
+            id="audit-range"
+            from={from}
+            to={to}
+            onRangeChange={(f, t) => {
+              setFrom(f);
+              setTo(t);
+            }}
+          />
 
-        <Select value={level} onValueChange={setLevel}>
-          <SelectTrigger className="w-36">
-            <SelectValue placeholder="All levels" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All levels</SelectItem>
-            <SelectItem value="INFO">INFO</SelectItem>
-            <SelectItem value="WARN">WARN</SelectItem>
-            <SelectItem value="ERROR">ERROR</SelectItem>
-          </SelectContent>
-        </Select>
+          <Select
+            value={event}
+            onValueChange={value => {
+              setEvent(value);
+              runSearch({ event: value });
+            }}
+          >
+            <SelectTrigger className="w-auto gap-2">
+              <SelectValue placeholder="All events" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All events</SelectItem>
+              {eventOptions.map(e => (
+                <SelectItem key={e} value={e}>
+                  {e}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-        <Select value={event} onValueChange={setEvent}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="All events" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All events</SelectItem>
-            {KNOWN_EVENTS.map(e => (
-              <SelectItem key={e} value={e}>{e}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          {/* Segmented level control */}
+          <div className="bg-muted flex items-center gap-0.5 rounded-[11px] p-[3px]">
+            {LEVEL_SEGMENTS.map(seg => {
+              const active = level === seg.value;
+              return (
+                <button
+                  key={seg.value}
+                  type="button"
+                  onClick={() => handleLevelChange(seg.value)}
+                  className={cn(
+                    'rounded-lg px-3 py-1.5 text-[13px] font-medium transition-colors',
+                    active
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {seg.label}
+                </button>
+              );
+            })}
+          </div>
 
-        <Input
-          className="w-56"
-          placeholder="Search…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          onKeyDown={handleKeyDown}
-        />
+          <div className="relative min-w-[200px] flex-1">
+            <Search className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-[15px] -translate-y-1/2" />
+            <Input
+              className="pl-9"
+              placeholder="Search operation, user, issue, URL…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              onKeyDown={handleKeyDown}
+            />
+          </div>
 
-        <Button onClick={handleSearch} disabled={loading}>
-          <Search className="mr-2 size-4" />
-          Search
-        </Button>
+          <Button onClick={() => runSearch()} disabled={loading}>
+            <Search className="size-4" />
+            Search
+          </Button>
+        </div>
+
+      {error && <p className="text-destructive text-sm">{error}</p>}
+
+      {/* Result meta */}
+      <div className="flex items-center justify-between">
+        <div className="text-muted-foreground text-sm">
+          Showing{' '}
+          <span className="text-foreground font-semibold">{items.length}</span>{' '}
+          events
+        </div>
+        <div className="text-muted-foreground flex items-center gap-3.5 text-xs">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="bg-banner-info-icon size-[7px] rounded-full" />
+            Info
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="bg-banner-warning-icon size-[7px] rounded-full" />
+            Warn
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="bg-banner-error-icon size-[7px] rounded-full" />
+            Error
+          </span>
+        </div>
       </div>
-
-      {/* Error */}
-      {error && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
 
       {/* Table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Time</TableHead>
-              <TableHead>Level</TableHead>
-              <TableHead>Event</TableHead>
-              <TableHead>Operation</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Duration</TableHead>
-              <TableHead>Username</TableHead>
-              <TableHead>Issue Key</TableHead>
-              <TableHead>URL</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              Array.from({ length: 8 }).map((_, i) => (
-                <TableRow key={i}>
-                  {Array.from({ length: 9 }).map((_, j) => (
-                    <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : items.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={9} className="py-10 text-center text-muted-foreground">
-                  {error ? 'Query failed.' : 'No audit logs found. Try adjusting the filters and clicking Search.'}
-                </TableCell>
-              </TableRow>
-            ) : (
-              items.map((row, i) => (
-                <TableRow key={row.reqId ?? i}>
-                  <TableCell className="whitespace-nowrap text-xs">{formatTimestamp(row.timestamp)}</TableCell>
-                  <TableCell>{levelBadge(row.level)}</TableCell>
-                  <TableCell className="font-mono text-xs">{row.event ?? '—'}</TableCell>
-                  <TableCell className="text-xs">{row.operation ?? '—'}</TableCell>
-                  <TableCell>{statusBadge(row.status)}</TableCell>
-                  <TableCell className="text-xs">{row.duration != null ? `${row.duration}ms` : '—'}</TableCell>
-                  <TableCell className="text-xs">{row.username ?? '—'}</TableCell>
-                  <TableCell className="font-mono text-xs">{row.issueKey ?? '—'}</TableCell>
-                  <TableCell><TruncatedUrl url={row.url} /></TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+      <div className="overflow-hidden rounded-lg border">
+        {/* Header row */}
+        <div
+          className={cn(
+            'bg-muted/40 text-muted-foreground grid gap-4 border-b px-4 py-3 text-[11px] font-semibold uppercase tracking-wide',
+            GRID_COLS,
+          )}
+        >
+          <div>Time</div>
+          <div>Level</div>
+          <div>Event</div>
+          <div>Operation</div>
+          <div>Status</div>
+          <div>Duration</div>
+          <div>User</div>
+          <div>Issue Key</div>
+          <div>Endpoint</div>
+          <div />
+        </div>
+
+        {loading ? (
+          Array.from({ length: 8 }).map((_, i) => (
+            <div
+              key={i}
+              className={cn('grid items-center gap-4 border-b px-4 py-3.5', GRID_COLS)}
+            >
+              {Array.from({ length: 10 }).map((_, j) => (
+                <Skeleton key={j} className="h-4 w-full" />
+              ))}
+            </div>
+          ))
+        ) : items.length === 0 ? (
+          <div className="text-muted-foreground px-8 py-16 text-center text-sm">
+            {error
+              ? 'Query failed.'
+              : 'No audit logs found. Try adjusting the filters and clicking Search.'}
+          </div>
+        ) : (
+          items.map((row, i) => (
+            <button
+              key={row.reqId ?? i}
+              type="button"
+              onClick={() => setSelected(row)}
+              className={cn(
+                'group hover:bg-muted/40 grid w-full items-center gap-4 border-b px-4 py-3.5 text-left transition-colors',
+                GRID_COLS,
+              )}
+            >
+              <div className="text-foreground/70 text-xs">
+                {clockOf(row.timestamp)}
+              </div>
+              <div>
+                <LevelBadge level={row.level} />
+              </div>
+              <div className="min-w-0">
+                <span className="bg-muted text-muted-foreground inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-[11px] font-semibold">
+                  {row.event ?? '—'}
+                </span>
+              </div>
+              <div className="text-foreground truncate text-sm font-medium">
+                {row.operation ?? '—'}
+              </div>
+              <div
+                className={cn('font-mono text-[13px] font-bold', statusClass(row.status))}
+              >
+                {row.status ?? '—'}
+              </div>
+              <div>
+                <span
+                  className={cn(
+                    'inline-flex items-center whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-semibold',
+                    durationClass(row.duration),
+                  )}
+                >
+                  {row.duration != null ? `${row.duration}ms` : '—'}
+                </span>
+              </div>
+              <div className="text-foreground/70 truncate text-[13px]">
+                {row.username || '—'}
+              </div>
+              <div className="text-foreground/70 truncate text-xs">
+                {row.issueKey || '–'}
+              </div>
+              <div
+                title={row.url}
+                className="text-muted-foreground truncate text-[11.5px]"
+              >
+                {shortUrl(row.url)}
+              </div>
+              <div className="opacity-0 transition-opacity group-hover:opacity-100">
+                <ChevronRight className="size-4 text-muted-foreground" />
+              </div>
+            </button>
+          ))
+        )}
       </div>
 
-      {!loading && items.length > 0 && (
-        <p className="text-right text-xs text-muted-foreground">{items.length} entries</p>
+      {/* Detail drawer */}
+      <Sheet open={!!selected} onOpenChange={open => !open && setSelected(null)}>
+        <SheetContent
+          side="right"
+          className="w-[460px] gap-0 overflow-y-auto sm:max-w-[460px]"
+        >
+          {selected && (
+            <div className="p-6 md:p-7">
+              <SheetHeader className="mb-5 flex-row items-center gap-2.5 p-0">
+                <LevelBadge level={selected.level} />
+                <span
+                  className={cn(
+                    'font-mono text-[13px] font-bold',
+                    statusClass(selected.status),
+                  )}
+                >
+                  {selected.status ?? '—'}
+                </span>
+              </SheetHeader>
+
+              <SheetTitle className="text-foreground text-[22px] font-bold tracking-tight">
+                {selected.operation ?? 'Event'}
+              </SheetTitle>
+              <SheetDescription className="mb-6 mt-1">
+                {selected.message || statusMessage(selected.status)}
+              </SheetDescription>
+
+              <dl className="mb-5 flex flex-col overflow-hidden rounded-xl border">
+                <DetailRow label="Timestamp" value={formatTimestamp(selected.timestamp)} />
+                <DetailRow label="Event" value={selected.event ?? '—'} />
+                <DetailRow label="Method" value={selected.method ?? '—'} />
+                <DetailRow
+                  label="Duration"
+                  value={selected.duration != null ? `${selected.duration}ms` : '—'}
+                />
+                <DetailRow label="Username" value={selected.username || '—'} />
+                <DetailRow label="Issue Key" value={selected.issueKey || '—'} last />
+              </dl>
+
+              <div className="text-muted-foreground mb-2 text-[11px] font-semibold uppercase tracking-wide">
+                Endpoint
+              </div>
+              <div className="bg-muted mb-5 rounded-xl border p-3">
+                <span className="text-foreground break-all text-[12.5px] leading-relaxed">
+                  {selected.url ?? '—'}
+                </span>
+              </div>
+
+              <div className="text-muted-foreground mb-2 text-[11px] font-semibold uppercase tracking-wide">
+                Raw log
+              </div>
+              <pre className="bg-secondary text-secondary-foreground overflow-x-auto rounded-xl p-4 text-xs leading-relaxed">
+                {rawLog(selected)}
+              </pre>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
+}
+
+function DetailRow({
+  label,
+  value,
+  last,
+}: {
+  label: string;
+  value: string;
+  last?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        'flex items-center justify-between gap-4 px-4 py-3',
+        !last && 'border-b',
       )}
+    >
+      <dt className="text-muted-foreground text-sm">{label}</dt>
+      <dd className="text-foreground text-right text-[13px]">{value}</dd>
     </div>
   );
 }

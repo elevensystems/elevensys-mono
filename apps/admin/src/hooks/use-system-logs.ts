@@ -23,8 +23,9 @@ export interface LogsQueryParams {
   to: string;
   level?: string;
   event?: string;
+  service?: string;
   search?: string;
-  limit?: string;
+  limit?: number;
 }
 
 export function useSystemLogs() {
@@ -36,15 +37,11 @@ export function useSystemLogs() {
     setLoading(true);
     setError('');
     try {
-      const query = new URLSearchParams();
-      query.set('from', params.from);
-      query.set('to', params.to);
-      if (params.level) query.set('level', params.level);
-      if (params.event) query.set('event', params.event);
-      if (params.search) query.set('search', params.search);
-      if (params.limit) query.set('limit', params.limit);
-
-      const res = await fetch(`/api/audit?${query.toString()}`);
+      const res = await fetch('/api/audit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+      });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         throw new Error(body?.error ?? `Request failed: HTTP ${res.status}`);

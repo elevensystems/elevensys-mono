@@ -15,10 +15,18 @@ import type { NavItem } from '@/lib/app-sidebar-config';
 export function NavMain({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
 
-  const isActive = (url: string) => {
+  const matches = (url: string) => {
     if (url === '/') return pathname === '/';
     return pathname === url || pathname.startsWith(`${url}/`);
   };
+
+  const activeUrl = items
+    .filter(item => matches(item.url))
+    .reduce<string | null>(
+      (longest, item) =>
+        longest === null || item.url.length > longest.length ? item.url : longest,
+      null,
+    );
 
   return (
     <SidebarGroup>
@@ -28,7 +36,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
             <SidebarMenuButton
               asChild
               tooltip={item.title}
-              isActive={isActive(item.url)}
+              isActive={item.url === activeUrl}
             >
               <Link href={item.url}>
                 <item.icon />
