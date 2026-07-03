@@ -143,12 +143,7 @@ function LevelBadge({ level }: { level: string }) {
   );
 }
 
-interface AuditTableProps {
-  service?: string;
-  events?: string[];
-}
-
-export function AuditTable({ service, events }: AuditTableProps = {}) {
+export function AuditTable() {
   const [from, setFrom] = useState<Date>(startOfToday());
   const [to, setTo] = useState<Date>(endOfToday());
   const [level, setLevel] = useState('all');
@@ -157,7 +152,7 @@ export function AuditTable({ service, events }: AuditTableProps = {}) {
   const [selected, setSelected] = useState<LogEntry | null>(null);
 
   const { items, loading, error, fetchLogs } = useSystemLogs();
-  const eventOptions = events ?? KNOWN_EVENTS;
+  const eventOptions = KNOWN_EVENTS;
 
   const runSearch = useCallback(
     (overrides?: { level?: string; event?: string }) => {
@@ -168,11 +163,10 @@ export function AuditTable({ service, events }: AuditTableProps = {}) {
         to: to.toISOString(),
         level: nextLevel === 'all' ? undefined : nextLevel,
         event: nextEvent === 'all' ? undefined : nextEvent,
-        service,
         search: search || undefined,
       });
     },
-    [from, to, level, event, search, service, fetchLogs],
+    [from, to, level, event, search, fetchLogs],
   );
 
   const handleLevelChange = useCallback(

@@ -23,7 +23,6 @@ export interface LogsQueryParams {
   to: string;
   level?: string;
   event?: string;
-  service?: string;
   search?: string;
   limit?: number;
 }
