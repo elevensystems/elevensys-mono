@@ -30,8 +30,7 @@ export function LogworkStepper({ currentStep }: LogworkStepperProps) {
                 className={cn(
                   'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-all',
                   isDone && 'bg-primary text-primary-foreground',
-                  isActive &&
-                    'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2',
+                  isActive && 'bg-primary text-primary-foreground',
                   !isDone && !isActive && 'bg-muted text-muted-foreground'
                 )}
               >

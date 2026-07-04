@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@workspace/ui/components/dialog';
+import { Shimmer } from '@workspace/ui/components/shimmer';
 
 interface ProgressDialogProps {
   open: boolean;
@@ -46,9 +47,11 @@ export function ProgressDialog({
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="text-muted-foreground text-sm text-right">
-            {progress}% complete
-          </p>
+          <Shimmer asChild active={progress < 100}>
+            <p className="text-muted-foreground text-sm text-right">
+              {progress}% complete
+            </p>
+          </Shimmer>
         </div>
         {onCancel && (
           <DialogFooter>

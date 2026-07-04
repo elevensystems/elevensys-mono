@@ -34,12 +34,13 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
       entryId: string,
       rangeLabel: string,
       status: RequestStatus['status'],
-      error?: string
+      error?: string,
+      errorStatus?: number
     ) => {
       setRequestStatuses(prev =>
         prev.map(rs =>
           rs.entryId === entryId && rs.rangeLabel === rangeLabel
-            ? { ...rs, status, error }
+            ? { ...rs, status, error, errorStatus }
             : rs
         )
       );
@@ -58,7 +59,12 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
       range: DateRange,
       headers: Record<string, string>,
       time: string
-    ): Promise<{ success: boolean; error?: string; isAuthError?: boolean }> => {
+    ): Promise<{
+      success: boolean;
+      error?: string;
+      errorStatus?: number;
+      isAuthError?: boolean;
+    }> => {
       try {
         const response = await fetch('/api/jira/worklogs/logwork', {
           method: 'POST',
@@ -85,6 +91,7 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
           return {
             success: false,
             error: errorData?.error || `HTTP ${response.status}`,
+            errorStatus: response.status,
             isAuthError: isAuthError(response.status),
           };
         }
@@ -178,7 +185,13 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
             updateRequestStatus(entry.id, label, 'success');
             successCount++;
           } else {
-            updateRequestStatus(entry.id, label, 'failed', result.error);
+            updateRequestStatus(
+              entry.id,
+              label,
+              'failed',
+              result.error,
+              result.errorStatus
+            );
             if (result.isAuthError) setHasAuthError(true);
             failedRanges.push(range);
             entryErrors.push(`${label}: ${result.error || 'Unknown error'}`);
@@ -237,7 +250,7 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
       setRequestStatuses(prev =>
         prev.map(rs =>
           rs.status === 'failed'
-            ? { ...rs, status: 'pending', error: undefined }
+            ? { ...rs, status: 'pending', error: undefined, errorStatus: undefined }
             : rs
         )
       );
@@ -287,7 +300,13 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
             updateRequestStatus(entry.id, label, 'success');
             successCount++;
           } else {
-            updateRequestStatus(entry.id, label, 'failed', result.error);
+            updateRequestStatus(
+              entry.id,
+              label,
+              'failed',
+              result.error,
+              result.errorStatus
+            );
             if (result.isAuthError) setHasAuthError(true);
             entryFailedRanges.push(range);
             entryErrors.push(`${label}: ${result.error || 'Unknown error'}`);

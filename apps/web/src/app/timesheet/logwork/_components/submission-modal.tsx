@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 
-import { CheckCircle2, RefreshCw, X, XCircle } from 'lucide-react';
+import { RefreshCw, X } from 'lucide-react';
 
 import { ActionButton } from '@workspace/ui/components/action-button';
 import {
@@ -10,14 +10,19 @@ import {
   DialogContent,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
 } from '@workspace/ui/components/dialog';
 import { cn } from '@workspace/ui/lib/utils';
 import type { LogWorkResult, RequestStatus } from '@/types/timesheet';
 
 import { CancelConfirmDialog } from './cancel-confirm-dialog';
-import { EntryStatusList } from './entry-status-list';
-import { SegmentedProgressBar } from './segmented-progress-bar';
+import { IssueLogGroup } from './issue-log-group';
+import {
+  classifyOverallStatus,
+  getStatusCounts,
+  groupStatusesByEntry,
+  type OverallStatus,
+} from './submission-log-utils';
+import { SubmissionStatusHeader } from './submission-status-header';
 
 interface SubmissionModalProps {
   open: boolean;
@@ -30,11 +35,17 @@ interface SubmissionModalProps {
   onRetryFailed: () => void;
 }
 
+const PROGRESS_FILL_CLASSES: Record<OverallStatus, string> = {
+  'in-progress': 'bg-color-4',
+  complete: 'bg-color-18',
+  partial: 'bg-color-17',
+  failed: 'bg-color-6',
+};
+
 export function SubmissionModal({
   open,
   onClose,
   isSubmitting,
-  isCancelled,
   requestStatuses,
   results,
   onCancel,
@@ -42,28 +53,33 @@ export function SubmissionModal({
 }: SubmissionModalProps) {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
-  const successCount = useMemo(
-    () => requestStatuses.filter(s => s.status === 'success').length,
+  const counts = useMemo(
+    () => getStatusCounts(requestStatuses),
     [requestStatuses]
   );
 
-  const failedCount = useMemo(
-    () => requestStatuses.filter(s => s.status === 'failed').length,
+  const status = useMemo(
+    () =>
+      classifyOverallStatus(
+        isSubmitting,
+        counts.successCount,
+        counts.failedCount,
+        counts.skippedCount
+      ),
+    [isSubmitting, counts.successCount, counts.failedCount, counts.skippedCount]
+  );
+
+  const entryGroups = useMemo(
+    () => groupStatusesByEntry(requestStatuses),
     [requestStatuses]
   );
 
-  const skippedCount = useMemo(
-    () => requestStatuses.filter(s => s.status === 'skipped').length,
-    [requestStatuses]
-  );
+  const progressPct =
+    counts.totalRanges > 0
+      ? Math.round((counts.completedCount / counts.totalRanges) * 100)
+      : 0;
 
   const isDone = !isSubmitting && requestStatuses.length > 0;
-
-  const title = isSubmitting
-    ? 'Submitting Worklogs'
-    : isCancelled
-      ? 'Submission Cancelled'
-      : 'Submission Complete';
 
   const handleCancelClick = useCallback(() => {
     setShowCancelConfirm(true);
@@ -73,42 +89,13 @@ export function SubmissionModal({
     onCancel();
   }, [onCancel]);
 
-  const summaryLine = useMemo(() => {
-    if (!isDone) return null;
-
-    if (isCancelled) {
-      const parts: string[] = [];
-      if (successCount > 0) parts.push(`${successCount} succeeded`);
-      if (failedCount > 0) parts.push(`${failedCount} failed`);
-      if (skippedCount > 0) parts.push(`${skippedCount} skipped`);
-      return parts.join(', ') || 'No worklogs were submitted.';
+  const handleCloseButtonClick = useCallback(() => {
+    if (isSubmitting) {
+      handleCancelClick();
+    } else {
+      onClose();
     }
-
-    if (failedCount === 0) {
-      return `All ${successCount} worklog${successCount !== 1 ? 's' : ''} submitted successfully`;
-    }
-    if (successCount === 0) {
-      return `All ${failedCount} worklog${failedCount !== 1 ? 's' : ''} failed`;
-    }
-    return `${successCount} succeeded, ${failedCount} failed`;
-  }, [isDone, isCancelled, successCount, failedCount, skippedCount]);
-
-  const summaryColor = useMemo(() => {
-    if (!isDone) return '';
-    if (isCancelled) return 'bg-muted text-muted-foreground border-border';
-    if (failedCount === 0)
-      return 'bg-color-18/8 text-alert-success-text border-color-18/25 [&>svg]:text-alert-success-text dark:bg-color-18/10 dark:border-color-18/30';
-    if (successCount === 0)
-      return 'bg-color-6/8 text-alert-error-text border-color-6/25 [&>svg]:text-alert-error-text dark:bg-color-6/10 dark:border-color-6/30';
-    return 'bg-muted text-muted-foreground border-border';
-  }, [isDone, isCancelled, failedCount, successCount]);
-
-  const SummaryIcon = useMemo(() => {
-    if (!isDone) return null;
-    if (isCancelled) return XCircle;
-    if (failedCount === 0) return CheckCircle2;
-    return XCircle;
-  }, [isDone, isCancelled, failedCount]);
+  }, [isSubmitting, handleCancelClick, onClose]);
 
   const hasFailedResults = results.some(
     r => !r.success && r.error !== 'Cancelled'
@@ -120,7 +107,7 @@ export function SubmissionModal({
         open={open}
         onOpenChange={isOpen => {
           if (!isOpen && isSubmitting) {
-            // Pressing ESC during submission triggers cancel
+            // Pressing ESC/outside-click during submission triggers cancel
             handleCancelClick();
             return;
           }
@@ -143,40 +130,55 @@ export function SubmissionModal({
           }}
         >
           <DialogHeader>
-            <div className="flex items-center justify-between">
-              <DialogTitle>{title}</DialogTitle>
-              <div className="flex items-center gap-3">
-                {isSubmitting ? (
-                  <ActionButton
-                    variant="ghost"
-                    size="default"
-                    onClick={handleCancelClick}
-                    className="h-7 px-2 text-muted-foreground hover:text-destructive"
-                  >
-                    <X className="size-4" />
-                    Cancel
-                  </ActionButton>
-                ) : null}
-              </div>
+            <div className="flex items-center justify-between gap-4">
+              <SubmissionStatusHeader status={status} counts={counts} />
+              <ActionButton
+                variant="outline"
+                size="icon-sm"
+                aria-label="Close"
+                onClick={handleCloseButtonClick}
+              >
+                <X className="size-4" />
+              </ActionButton>
             </div>
           </DialogHeader>
 
           <div className="space-y-4">
-            <SegmentedProgressBar statuses={requestStatuses} />
-
-            {isDone && summaryLine && (
+            <div
+              className="h-2 w-full overflow-hidden rounded-full bg-muted"
+              role="progressbar"
+              aria-valuenow={progressPct}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
               <div
                 className={cn(
-                  'flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium',
-                  summaryColor
+                  'h-full rounded-full transition-all duration-500 ease-out',
+                  PROGRESS_FILL_CLASSES[status]
                 )}
-              >
-                {SummaryIcon && <SummaryIcon className="size-4" />}
-                {summaryLine}
-              </div>
-            )}
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
 
-            <EntryStatusList statuses={requestStatuses} />
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span>
+                {isSubmitting
+                  ? `${counts.completedCount} of ${counts.totalRanges} ranges`
+                  : `${counts.totalRanges} ranges`}
+              </span>
+              <span>{counts.issueCount} issues</span>
+            </div>
+
+            <div className="max-h-[420px] overflow-y-auto pr-1">
+              {entryGroups.map(({ entryId, issueKey, dateStatuses }, index) => (
+                <IssueLogGroup
+                  key={entryId}
+                  issueKey={issueKey}
+                  dateStatuses={dateStatuses}
+                  isLast={index === entryGroups.length - 1}
+                />
+              ))}
+            </div>
 
             {isDone && (
               <DialogFooter className="border-t pt-3 gap-2">
@@ -191,11 +193,7 @@ export function SubmissionModal({
                     Retry Failed
                   </ActionButton>
                 )}
-                <ActionButton
-                  size="default"
-                  onClick={onClose}
-                  leftIcon={<X className="size-4" />}
-                >
+                <ActionButton size="default" onClick={onClose}>
                   Close
                 </ActionButton>
               </DialogFooter>
@@ -208,7 +206,7 @@ export function SubmissionModal({
         open={showCancelConfirm}
         onOpenChange={setShowCancelConfirm}
         onConfirmCancel={handleConfirmCancel}
-        successCount={successCount}
+        successCount={counts.successCount}
       />
     </>
   );

@@ -39,6 +39,7 @@ import {
 import { HoursStepper } from './hours-stepper';
 
 interface WorkEntryRowProps {
+  index: number;
   entry: WorkEntry;
   issues: JiraIssue[];
   issuesByKey: Map<string, JiraIssue>;
@@ -56,6 +57,7 @@ interface WorkEntryRowProps {
 }
 
 export const WorkEntryRow = memo(function WorkEntryRow({
+  index,
   entry,
   issues,
   issuesByKey,
@@ -118,7 +120,10 @@ export const WorkEntryRow = memo(function WorkEntryRow({
   const selectedIssue = issuesByKey.get(entry.issueKey) ?? null;
 
   return (
-    <div className="grid grid-cols-[230px_1fr_150px_140px_50px] items-start gap-2 border-b px-3 py-2">
+    <div className="grid grid-cols-[40px_230px_1fr_150px_140px_50px] items-start gap-2 border-b px-3 py-2">
+      <div className="flex h-8 items-center text-sm text-muted-foreground">
+        {index + 1}
+      </div>
       <div>
         <Combobox
           items={issues}
