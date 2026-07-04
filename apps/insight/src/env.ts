@@ -5,7 +5,7 @@ const serverSchema = z.object({
   COGNITO_DOMAIN: z.string().min(1),
   COGNITO_CLIENT_ID: z.string().min(1),
   COGNITO_SCOPES: z.string().min(1),
-  COGNITO_REQUIRED_GROUP: z.string().min(1).default('insights'),
+  COGNITO_REQUIRED_GROUP: z.string().min(1).default('insight'),
   NEXT_PUBLIC_APP_URL: z.string().min(1),
   COOKIE_DOMAIN: z.string().optional(),
 });

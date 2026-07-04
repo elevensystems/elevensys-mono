@@ -80,7 +80,7 @@ export const userFromPayload = (payload: JwtPayload): AuthUser => {
   };
 };
 
-export const hasInsightsAccess = (user: AuthUser | null): boolean => {
+export const hasInsightAccess = (user: AuthUser | null): boolean => {
   return !!user && user.groups.includes(env.COGNITO_REQUIRED_GROUP);
 };
 
@@ -104,6 +104,6 @@ export const getUserFromSession = async (): Promise<AuthUser | null> => {
   const { payload, expired } = await getSession();
   if (!payload || expired) return null;
   const user = userFromPayload(payload);
-  if (!hasInsightsAccess(user)) return null;
+  if (!hasInsightAccess(user)) return null;
   return user;
 };

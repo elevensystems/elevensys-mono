@@ -21,7 +21,7 @@ const ubuntuMono = Ubuntu_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Insights',
+  title: 'Insight',
   description: 'Usage analytics dashboard',
 };
 

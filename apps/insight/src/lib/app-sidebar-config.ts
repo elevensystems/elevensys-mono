@@ -28,7 +28,7 @@ export const appSidebarData: {
   appName: string;
   navMain: NavItem[];
 } = {
-  appName: 'Insights',
+  appName: 'Insight',
   navMain: [
     { title: 'Overview', url: CLAUDE_WATCH, icon: LayoutDashboard },
     { title: 'Developers', url: `${CLAUDE_WATCH}/developers`, icon: Users },

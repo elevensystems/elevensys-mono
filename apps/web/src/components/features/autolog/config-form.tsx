@@ -224,7 +224,8 @@ export function ConfigForm({
           Add tickets to log work for. Hours are logged per missing date.
         </p>
         <div className="overflow-hidden rounded-lg border">
-          <div className="grid grid-cols-[230px_1fr_150px_140px_50px] gap-2 bg-muted/50 px-3 py-2 text-sm font-semibold text-muted-foreground">
+          <div className="grid grid-cols-[40px_230px_1fr_150px_140px_50px] gap-2 bg-muted/50 px-3 py-2 text-sm font-semibold text-muted-foreground">
+            <div>#</div>
             <div>Key</div>
             <div>Description</div>
             <div>Type of Work</div>
@@ -232,9 +233,10 @@ export function ConfigForm({
             <div />
           </div>
           <div>
-            {entries.map(entry => (
+            {entries.map((entry, index) => (
               <WorkEntryRow
                 key={entry.id}
+                index={index}
                 entry={entry}
                 issues={issues}
                 issuesByKey={issuesByKey}

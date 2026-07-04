@@ -5,5 +5,5 @@ process.env.API_BASE_URL = 'http://localhost:3001';
 process.env.COGNITO_DOMAIN = 'test-domain';
 process.env.COGNITO_CLIENT_ID = 'test-client-id';
 process.env.COGNITO_SCOPES = 'openid profile email';
-process.env.COGNITO_REQUIRED_GROUP = 'insights';
+process.env.COGNITO_REQUIRED_GROUP = 'insight';
 process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3003';

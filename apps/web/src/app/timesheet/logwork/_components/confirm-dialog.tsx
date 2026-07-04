@@ -1,13 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-
-import {
-  CheckCheckIcon,
-  ChevronDown,
-  ChevronRight,
-  LayoutList,
-} from 'lucide-react';
+import { CheckCheckIcon, LayoutList } from 'lucide-react';
 
 import { ActionButton } from '@workspace/ui/components/action-button';
 import { ScrollArea } from '@workspace/ui/components/scroll-area';
@@ -19,12 +12,16 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@workspace/ui/components/sheet';
+import { cn } from '@workspace/ui/lib/utils';
 import {
   formatHours,
+  getWorkTypeBadgeClass,
+  getWorkTypeBorderClass,
   getWorkTypeDotClass,
   parseApiDate,
 } from '@/lib/timesheet';
 import type { DateRange, JiraProject, WorkEntry } from '@/types/timesheet';
+import { WORK_TYPES } from '@/types/timesheet';
 
 function formatLongDate(date: Date): string {
   return date.toLocaleDateString('en-GB', {
@@ -43,19 +40,39 @@ function formatShortDate(date: Date): string {
   });
 }
 
-function formatRangeHeader(range: DateRange): string {
-  if (range.startDate === range.endDate) {
-    const d = parseApiDate(range.startDate);
-    return d ? formatLongDate(d) : range.startDate;
-  }
+function formatRangeShort(range: DateRange): string {
   const start = parseApiDate(range.startDate);
+  if (range.startDate === range.endDate) {
+    return start ? formatShortDate(start) : range.startDate;
+  }
   const end = parseApiDate(range.endDate);
   const startLabel = start ? formatShortDate(start) : range.startDate;
   const endLabel = end ? formatShortDate(end) : range.endDate;
-  return `${startLabel} → ${endLabel} (${range.dates.length} days)`;
+  return `${startLabel} → ${endLabel}`;
 }
 
-const COLLAPSE_THRESHOLD = 3;
+function formatDaysSummary(parsedDates: string[], dateRanges: DateRange[]): string {
+  const dayLabel = `${parsedDates.length} day${parsedDates.length !== 1 ? 's' : ''}`;
+  if (parsedDates.length === 1) {
+    const d = parseApiDate(parsedDates[0]);
+    return d ? `${dayLabel} · ${formatShortDate(d)}` : dayLabel;
+  }
+  if (dateRanges.length === 1) {
+    return `${dayLabel} · ${formatRangeShort(dateRanges[0])}`;
+  }
+  return `${dayLabel} across ${dateRanges.length} ranges`;
+}
+
+function formatGroupHeader(range: DateRange): string {
+  const start = parseApiDate(range.startDate);
+  if (range.startDate === range.endDate) {
+    return (start ? formatLongDate(start) : range.startDate).toUpperCase();
+  }
+  const end = parseApiDate(range.endDate);
+  const startLabel = start ? formatShortDate(start) : range.startDate;
+  const endLabel = end ? formatLongDate(end) : range.endDate;
+  return `${startLabel} → ${endLabel}`.toUpperCase();
+}
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -83,34 +100,20 @@ export function ConfirmDialog({
   const totalHoursAll = totalHours * parsedDates.length;
   const totalRequests = validEntries.length * dateRanges.length;
 
-  const shouldCollapse = dateRanges.length > COLLAPSE_THRESHOLD;
-  const rangeKeys = dateRanges.map(r => r.startDate);
-  const [expandedRanges, setExpandedRanges] = useState<Set<string>>(
-    () => new Set(shouldCollapse ? [] : rangeKeys)
-  );
-  const [allExpanded, setAllExpanded] = useState(!shouldCollapse);
+  const typeHoursByDay = new Map<string, number>();
+  for (const entry of validEntries) {
+    typeHoursByDay.set(
+      entry.typeOfWork,
+      (typeHoursByDay.get(entry.typeOfWork) ?? 0) + entry.hours
+    );
+  }
+  const typeBreakdown = WORK_TYPES.map(type => ({
+    type,
+    hours: (typeHoursByDay.get(type) ?? 0) * parsedDates.length,
+  })).filter(item => item.hours > 0);
 
-  const toggleRange = (key: string) => {
-    setExpandedRanges(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      return next;
-    });
-  };
-
-  const toggleAll = () => {
-    if (allExpanded) {
-      setExpandedRanges(new Set());
-      setAllExpanded(false);
-    } else {
-      setExpandedRanges(new Set(rangeKeys));
-      setAllExpanded(true);
-    }
-  };
+  const firstDate = parsedDates[0] ? parseApiDate(parsedDates[0]) : null;
+  const year = firstDate?.getFullYear();
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -127,117 +130,141 @@ export function ConfirmDialog({
           </SheetDescription>
 
           {/* Summary Banner */}
-          <div className="mt-2 rounded-lg border bg-muted/30 overflow-hidden">
-            <div className="grid grid-cols-4 divide-x">
-              <div className="flex flex-col items-center py-3 gap-0.5">
-                <span className="text-lg font-bold tabular-nums leading-none">
-                  {totalWorklogs}
-                </span>
-                <span className="text-xs text-muted-foreground">worklogs</span>
-              </div>
-              <div className="flex flex-col items-center py-3 gap-0.5">
-                <span className="text-lg font-bold tabular-nums leading-none">
-                  {parsedDates.length}
-                </span>
+          <div className="mt-2 rounded-lg border overflow-hidden">
+            <div className="grid grid-cols-2 divide-x">
+              <div className="flex flex-col gap-0.5 px-4 py-3">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-2xl font-bold tabular-nums leading-none">
+                    {totalWorklogs}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    worklog{totalWorklogs !== 1 ? 's' : ''}
+                  </span>
+                </div>
                 <span className="text-xs text-muted-foreground">
-                  {parsedDates.length !== 1 ? 'dates' : 'date'}
+                  across {totalRequests} request{totalRequests !== 1 ? 's' : ''}
                 </span>
               </div>
-              <div className="flex flex-col items-center py-3 gap-0.5">
-                <span className="text-lg font-bold tabular-nums leading-none">
-                  {totalRequests}
-                </span>
+              <div className="flex flex-col gap-0.5 px-4 py-3">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-bold tabular-nums leading-none">
+                    {formatHours(totalHoursAll)}
+                  </span>
+                  <span className="text-sm text-muted-foreground">h</span>
+                </div>
                 <span className="text-xs text-muted-foreground">
-                  {totalRequests !== 1 ? 'requests' : 'request'}
+                  {formatDaysSummary(parsedDates, dateRanges)}
                 </span>
-              </div>
-              <div className="flex flex-col items-center py-3 gap-0.5">
-                <span className="text-lg font-bold tabular-nums leading-none">
-                  {formatHours(totalHoursAll)}h
-                </span>
-                <span className="text-xs text-muted-foreground">total</span>
               </div>
             </div>
-            {selectedProject && (
-              <div className="flex items-center gap-1.5 border-t px-3 py-2">
-                <LayoutList className="h-3 w-3 shrink-0 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground font-mono">{`${selectedProject.key} — ${selectedProject.name}`}</span>
+
+            {typeBreakdown.length > 0 && (
+              <div className="border-t px-4 py-3 space-y-2.5">
+                <div className="flex h-2 w-full gap-0.5 overflow-hidden rounded-full bg-muted">
+                  {typeBreakdown.map(({ type, hours }) => (
+                    <div
+                      key={type}
+                      className={cn('h-full rounded-full', getWorkTypeDotClass(type))}
+                      style={{
+                        width: `${(hours / totalHoursAll) * 100}%`,
+                      }}
+                    />
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+                  {typeBreakdown.map(({ type, hours }) => (
+                    <span key={type} className="inline-flex items-center gap-1.5 text-xs">
+                      <span
+                        className={cn(
+                          'size-2 shrink-0 rounded-full',
+                          getWorkTypeDotClass(type)
+                        )}
+                      />
+                      <span className="font-semibold">{type}</span>
+                      <span className="text-muted-foreground">{formatHours(hours)}h</span>
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
           </div>
+
+          {selectedProject && (
+            <div className="flex items-center gap-2.5 rounded-lg border bg-muted/30 px-3 py-2.5">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-md border bg-background">
+                <LayoutList className="h-4 w-4 text-muted-foreground" />
+              </span>
+              <div className="min-w-0">
+                <p className="font-mono text-sm font-semibold leading-tight truncate">
+                  {selectedProject.key}
+                </p>
+                <p className="font-mono text-xs text-muted-foreground leading-tight truncate">
+                  {selectedProject.name}
+                  {year !== undefined && ` · ${year}`}
+                </p>
+              </div>
+            </div>
+          )}
         </SheetHeader>
 
-        {/* Scrollable range list */}
-        <div className="flex items-center justify-between px-6 py-3 shrink-0">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            Grouped by date range
-          </p>
-          {shouldCollapse && (
-            <button
-              type="button"
-              onClick={toggleAll}
-              className="text-xs text-primary hover:underline"
-            >
-              {allExpanded ? 'Collapse all' : 'Expand all'}
-            </button>
-          )}
-        </div>
-
+        {/* Scrollable date-grouped list */}
         <ScrollArea className="flex-1 min-h-0">
-          <div className="space-y-2 px-6 pb-4">
+          <div className="space-y-4 px-6 py-4">
             {dateRanges.map(range => {
-              const key = range.startDate;
-              const label = formatRangeHeader(range);
-              const isExpanded = expandedRanges.has(key);
               const hoursForRange = totalHours * range.dates.length;
 
               return (
-                <div key={key} className="rounded-md border overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => toggleRange(key)}
-                    className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm font-medium hover:bg-muted/50 transition-colors"
-                  >
-                    <span>{label}</span>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <span className="text-xs tabular-nums">
-                        {formatHours(hoursForRange)}h
-                      </span>
-                      {isExpanded ? (
-                        <ChevronDown className="h-3.5 w-3.5" />
-                      ) : (
-                        <ChevronRight className="h-3.5 w-3.5" />
-                      )}
-                    </div>
-                  </button>
+                <div key={range.startDate}>
+                  <div className="flex items-center justify-between px-1 pb-2">
+                    <p className="text-xs font-semibold tracking-wide text-muted-foreground">
+                      {formatGroupHeader(range)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {validEntries.length} entr{validEntries.length !== 1 ? 'ies' : 'y'} ·{' '}
+                      {formatHours(hoursForRange)}h
+                    </p>
+                  </div>
 
-                  {isExpanded && (
-                    <div className="border-t divide-y bg-muted/20">
-                      {validEntries.map(entry => (
-                        <div key={entry.id} className="px-3 py-2 space-y-0.5">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="font-mono text-sm font-medium">
+                  <div className="divide-y rounded-md border overflow-hidden">
+                    {validEntries.map(entry => (
+                      <div
+                        key={entry.id}
+                        className={cn(
+                          'flex items-start justify-between gap-3 border-l-[3px] bg-background px-3 py-2.5',
+                          getWorkTypeBorderClass(entry.typeOfWork)
+                        )}
+                      >
+                        <div className="min-w-0 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-sm font-semibold">
                               {entry.issueKey}
                             </span>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <span className="inline-flex items-center gap-1.5 text-xs">
-                                <span className={`size-2 rounded-full shrink-0 ${getWorkTypeDotClass(entry.typeOfWork)}`} />
-                                {entry.typeOfWork}
-                              </span>
-                              <span className="text-xs tabular-nums text-muted-foreground">
-                                {entry.hours}h x {range.dates.length}
-                              </span>
-                            </div>
+                            <span
+                              className={cn(
+                                'rounded-full border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+                                getWorkTypeBadgeClass(entry.typeOfWork)
+                              )}
+                            >
+                              {entry.typeOfWork}
+                            </span>
                           </div>
                           {entry.description && (
-                            <p className="w-90 text-xs text-muted-foreground truncate">
+                            <p className="truncate text-xs text-muted-foreground">
                               {entry.description}
                             </p>
                           )}
                         </div>
-                      ))}
-                    </div>
-                  )}
+                        <div className="shrink-0 text-right">
+                          <p className="text-sm font-semibold tabular-nums">
+                            {formatHours(entry.hours)}h
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            ×{range.dates.length}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               );
             })}

@@ -6,7 +6,7 @@ import { getIdToken, getUserFromSession } from '@/lib/auth';
 /**
  * Read-only proxy to the claude-watch backend (`/claude-watch/*`).
  *
- * Keeps `API_BASE_URL` server-side and gates access to the insights group.
+ * Keeps `API_BASE_URL` server-side and gates access to the insight group.
  * The incoming query string (from/to, sort, cursor, filters) is forwarded
  * verbatim to the matching backend endpoint.
  */

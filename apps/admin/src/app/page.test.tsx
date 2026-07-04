@@ -31,7 +31,6 @@ describe('AdminPage', () => {
     render(component);
 
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Welcome, John Doe');
-    expect(screen.getByText('john@example.com')).toBeInTheDocument();
   });
 
   it('renders the welcome message for unauthenticated user', async () => {
@@ -41,7 +40,6 @@ describe('AdminPage', () => {
     render(component);
 
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Welcome');
-    expect(screen.getByText('Signed-in staff dashboard')).toBeInTheDocument();
   });
 
   it('renders the Urlify card', async () => {

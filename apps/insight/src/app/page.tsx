@@ -12,7 +12,7 @@ import {
 import MainLayout from '@/components/layouts/main-layout';
 import { getUserFromSession } from '@/lib/auth';
 
-export default async function InsightsDashboardPage() {
+export default async function InsightDashboardPage() {
   const user = await getUserFromSession();
 
   if (!user) redirect('/login');
