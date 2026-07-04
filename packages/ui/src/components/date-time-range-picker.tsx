@@ -24,6 +24,8 @@ interface DateTimeRangePickerProps {
   onRangeChange: (from: Date, to: Date) => void;
   id?: string;
   className?: string;
+  /** Earliest selectable date; dates before it are disabled (e.g. log retention window). */
+  minDate?: Date;
 }
 
 function formatTime(date: Date) {
@@ -49,6 +51,7 @@ function DateTimeRangePicker({
   onRangeChange,
   id,
   className,
+  minDate,
 }: DateTimeRangePickerProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -101,6 +104,7 @@ function DateTimeRangePicker({
               selected={selected}
               onSelect={handleSelect}
               captionLayout="dropdown"
+              disabled={minDate ? { before: minDate } : undefined}
             />
             <div className="flex gap-4 border-t px-1 pt-3">
               <div className="flex flex-1 flex-col gap-2">

@@ -2,18 +2,8 @@
 
 import { useCallback, useState } from 'react';
 
-import { ChevronRight, Search } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
-import { Button } from '@workspace/ui/components/button';
-import { DateTimeRangePicker } from '@workspace/ui/components/date-time-range-picker';
-import { Input } from '@workspace/ui/components/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@workspace/ui/components/select';
 import {
   Sheet,
   SheetContent,
@@ -24,6 +14,7 @@ import {
 import { Skeleton } from '@workspace/ui/components/skeleton';
 import { cn } from '@workspace/ui/lib/utils';
 
+import { AuditFilters } from '@/components/features/audit/audit-filters';
 import { useSystemLogs, type LogEntry } from '@/hooks/use-system-logs';
 
 function startOfToday() {
@@ -37,15 +28,6 @@ function endOfToday() {
   d.setHours(23, 59, 59, 0);
   return d;
 }
-
-const KNOWN_EVENTS = ['JIRA_PROXY', 'JIRA_PROXY_ERROR'];
-
-const LEVEL_SEGMENTS = [
-  { value: 'all', label: 'All' },
-  { value: 'INFO', label: 'Info' },
-  { value: 'WARN', label: 'Warn' },
-  { value: 'ERROR', label: 'Error' },
-] as const;
 
 // Shared grid template so the header and every row stay column-aligned.
 const GRID_COLS =
@@ -89,8 +71,11 @@ function shortUrl(url?: string) {
 }
 
 function clockOf(ts: string) {
-  const parts = ts.split(', ');
-  return parts[1] ?? ts;
+  try {
+    return new Date(ts).toLocaleString();
+  } catch {
+    return ts;
+  }
 }
 
 function formatTimestamp(ts: string) {
@@ -152,7 +137,6 @@ export function AuditTable() {
   const [selected, setSelected] = useState<LogEntry | null>(null);
 
   const { items, loading, error, fetchLogs } = useSystemLogs();
-  const eventOptions = KNOWN_EVENTS;
 
   const runSearch = useCallback(
     (overrides?: { level?: string; event?: string }) => {
@@ -177,85 +161,33 @@ export function AuditTable() {
     [runSearch],
   );
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') runSearch();
+  const handleEventChange = useCallback(
+    (next: string) => {
+      setEvent(next);
+      runSearch({ event: next });
     },
     [runSearch],
   );
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Filter bar */}
-      <div className="flex flex-wrap items-center gap-2.5">
-          <DateTimeRangePicker
-            id="audit-range"
-            from={from}
-            to={to}
-            onRangeChange={(f, t) => {
-              setFrom(f);
-              setTo(t);
-            }}
-          />
-
-          <Select
-            value={event}
-            onValueChange={value => {
-              setEvent(value);
-              runSearch({ event: value });
-            }}
-          >
-            <SelectTrigger className="w-auto gap-2">
-              <SelectValue placeholder="All events" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All events</SelectItem>
-              {eventOptions.map(e => (
-                <SelectItem key={e} value={e}>
-                  {e}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* Segmented level control */}
-          <div className="bg-muted flex items-center gap-0.5 rounded-[11px] p-[3px]">
-            {LEVEL_SEGMENTS.map(seg => {
-              const active = level === seg.value;
-              return (
-                <button
-                  key={seg.value}
-                  type="button"
-                  onClick={() => handleLevelChange(seg.value)}
-                  className={cn(
-                    'rounded-lg px-3 py-1.5 text-[13px] font-medium transition-colors',
-                    active
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  {seg.label}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="relative min-w-[200px] flex-1">
-            <Search className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-[15px] -translate-y-1/2" />
-            <Input
-              className="pl-9"
-              placeholder="Search operation, user, issue, URL…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              onKeyDown={handleKeyDown}
-            />
-          </div>
-
-          <Button onClick={() => runSearch()} disabled={loading}>
-            <Search className="size-4" />
-            Search
-          </Button>
-        </div>
+      <AuditFilters
+        from={from}
+        to={to}
+        onRangeChange={(f, t) => {
+          setFrom(f);
+          setTo(t);
+        }}
+        level={level}
+        onLevelChange={handleLevelChange}
+        event={event}
+        onEventChange={handleEventChange}
+        search={search}
+        onSearchChange={setSearch}
+        onSearchSubmit={() => runSearch()}
+        showSearchButton
+        submitting={loading}
+      />
 
       {error && <p className="text-destructive text-sm">{error}</p>}
 
