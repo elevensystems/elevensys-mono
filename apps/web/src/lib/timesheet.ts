@@ -175,7 +175,11 @@ export function groupDatesIntoRanges(dates: string[]): DateRange[] {
       rangeEnd = dates[i];
       rangeDates.push(dates[i]);
     } else {
-      ranges.push({ startDate: rangeStart, endDate: rangeEnd, dates: rangeDates });
+      ranges.push({
+        startDate: rangeStart,
+        endDate: rangeEnd,
+        dates: rangeDates,
+      });
       rangeStart = dates[i];
       rangeEnd = dates[i];
       rangeDates = [dates[i]];
@@ -221,7 +225,6 @@ export function getStatusVariant(
   }
 }
 
-
 /**
  * Format a numeric hours value for display.
  * Integers are shown without decimals; decimals are trimmed of trailing zeros.
@@ -248,35 +251,43 @@ export function getUsernameColor(username: string): string {
   return `hsl(${hue}, 65%, 48%)`;
 }
 
-const WORK_TYPE_COLOR_NUMS: Record<string, number> = {
-  create: 14,
-  review: 5,
-  study: 11,
-  correct: 6,
-  translate: 19,
-  test: 8,
+const WORK_TYPE_DOT_CLASS: Record<string, string> = {
+  create: 'bg-color-14',
+  review: 'bg-color-5',
+  study: 'bg-color-11',
+  correct: 'bg-color-6',
+  translate: 'bg-color-19',
+  test: 'bg-color-8',
 };
 
-function workTypeColorNum(type: string): number {
-  return WORK_TYPE_COLOR_NUMS[type.toLowerCase()] ?? 9;
-}
+const WORK_TYPE_BORDER_CLASS: Record<string, string> = {
+  create: 'border-color-14',
+  review: 'border-color-5',
+  study: 'border-color-11',
+  correct: 'border-color-6',
+  translate: 'border-color-19',
+  test: 'border-color-8',
+};
+
+const DEFAULT_WORK_TYPE_DOT_CLASS = 'bg-color-9';
+const DEFAULT_WORK_TYPE_BORDER_CLASS = 'border-color-9';
 
 export function getWorkTypeDotClass(type: string): string {
-  return `bg-color-${workTypeColorNum(type)}`;
+  return WORK_TYPE_DOT_CLASS[type.toLowerCase()] ?? DEFAULT_WORK_TYPE_DOT_CLASS;
 }
 
 /**
- * Pill/badge classes (border + tinted background + matching text color) for a work type.
+ * Pill/badge classes (solid background + white text) for a work type.
  */
 export function getWorkTypeBadgeClass(type: string): string {
-  const n = workTypeColorNum(type);
-  return `border-color-${n}/30 bg-color-${n}/10 text-color-${n}`;
+  return `${getWorkTypeDotClass(type)} text-white`;
 }
 
 /**
  * Solid border color for a work type, used as a left accent stripe on entry rows.
  */
 export function getWorkTypeBorderClass(type: string): string {
-  return `border-color-${workTypeColorNum(type)}`;
+  return (
+    WORK_TYPE_BORDER_CLASS[type.toLowerCase()] ?? DEFAULT_WORK_TYPE_BORDER_CLASS
+  );
 }
-

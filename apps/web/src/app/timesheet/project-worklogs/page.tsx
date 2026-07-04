@@ -82,8 +82,6 @@ export default function ProjectWorklogsPage() {
     currentPage,
     totalPages,
     totalRecords,
-    pageStart,
-    pageEnd,
     handleSearch,
     goToPage,
   } = useProjectWorklogs({ settings, isConfigured });

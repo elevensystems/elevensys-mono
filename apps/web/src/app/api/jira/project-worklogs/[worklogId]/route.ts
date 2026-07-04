@@ -15,7 +15,7 @@ export async function PUT(
   try {
     const authHeader = request.headers.get('Authorization') || '';
     const body: UpdateWorklogRequest = await request.json();
-    const { id, jiraInstance, ...updateFields } = body;
+    const { id: _id, jiraInstance, ...updateFields } = body;
     const { worklogId } = await params;
 
     if (!jiraInstance) {

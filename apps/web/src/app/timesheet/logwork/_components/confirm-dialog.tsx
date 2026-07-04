@@ -16,7 +16,6 @@ import { cn } from '@workspace/ui/lib/utils';
 import {
   formatHours,
   getWorkTypeBadgeClass,
-  getWorkTypeBorderClass,
   getWorkTypeDotClass,
   parseApiDate,
 } from '@/lib/timesheet';
@@ -229,11 +228,14 @@ export function ConfirmDialog({
                     {validEntries.map(entry => (
                       <div
                         key={entry.id}
-                        className={cn(
-                          'flex items-start justify-between gap-3 border-l-[3px] bg-background px-3 py-2.5',
-                          getWorkTypeBorderClass(entry.typeOfWork)
-                        )}
+                        className="relative flex items-start justify-between gap-3 bg-background py-2.5 pl-4 pr-3"
                       >
+                        <span
+                          className={cn(
+                            'absolute left-1.5 top-2 bottom-2 w-1 rounded-full',
+                            getWorkTypeDotClass(entry.typeOfWork)
+                          )}
+                        />
                         <div className="min-w-0 space-y-1">
                           <div className="flex items-center gap-2">
                             <span className="font-mono text-sm font-semibold">
@@ -241,7 +243,7 @@ export function ConfirmDialog({
                             </span>
                             <span
                               className={cn(
-                                'rounded-full border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+                                'rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
                                 getWorkTypeBadgeClass(entry.typeOfWork)
                               )}
                             >
