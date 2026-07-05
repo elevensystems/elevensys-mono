@@ -16,6 +16,7 @@ const isPublicPath = (pathname: string): boolean => {
 
 type TokenResponse = {
   id_token?: string;
+  access_token?: string;
   refresh_token?: string;
   expires_in?: number;
 };
@@ -56,6 +57,10 @@ const redirectToLogin = (request: NextRequest): NextResponse => {
     ...baseCookieOptions,
     maxAge: 0,
   });
+  response.cookies.set(AUTH_COOKIES.accessToken, '', {
+    ...baseCookieOptions,
+    maxAge: 0,
+  });
   response.cookies.set(AUTH_COOKIES.refreshToken, '', {
     ...baseCookieOptions,
     maxAge: 0,
@@ -71,9 +76,12 @@ export async function proxy(request: NextRequest) {
   }
 
   const idToken = request.cookies.get(AUTH_COOKIES.idToken)?.value;
+  const accessToken = request.cookies.get(AUTH_COOKIES.accessToken)?.value;
   const refreshToken = request.cookies.get(AUTH_COOKIES.refreshToken)?.value;
 
-  if (idToken) {
+  // A missing access-token cookie (e.g. a session created before the
+  // access-token rollout) falls through to the refresh flow below.
+  if (idToken && accessToken) {
     const payload = decodeJwt(idToken);
     if (payload && !isTokenExpired(payload)) {
       const user = userFromPayload(payload);
@@ -86,7 +94,7 @@ export async function proxy(request: NextRequest) {
 
   if (refreshToken) {
     const tokens = await refreshTokens(refreshToken);
-    if (tokens?.id_token && tokens.expires_in) {
+    if (tokens?.id_token && tokens.access_token && tokens.expires_in) {
       const payload = decodeJwt(tokens.id_token);
       if (!payload) return redirectToLogin(request);
       const user = userFromPayload(payload);
@@ -96,6 +104,10 @@ export async function proxy(request: NextRequest) {
 
       const response = NextResponse.next();
       response.cookies.set(AUTH_COOKIES.idToken, tokens.id_token, {
+        ...baseCookieOptions,
+        maxAge: tokens.expires_in,
+      });
+      response.cookies.set(AUTH_COOKIES.accessToken, tokens.access_token, {
         ...baseCookieOptions,
         maxAge: tokens.expires_in,
       });

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { apiFetch, ApiError } from '@/lib/api-fetch';
-import { getIdToken, getUserFromSession } from '@/lib/auth';
+import { getAccessToken, getUserFromSession } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   const user = await getUserFromSession();
@@ -9,11 +9,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const idToken = (await getIdToken()) ?? '';
+  const accessToken = (await getAccessToken()) ?? '';
   const body = await request.json();
 
   try {
-    const data = await apiFetch('/audit/search', { idToken, method: 'POST', body });
+    const data = await apiFetch('/audit/search', { accessToken, method: 'POST', body });
     return NextResponse.json(data);
   } catch (error) {
     if (error instanceof ApiError) {

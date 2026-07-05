@@ -10,13 +10,13 @@ export class ApiError extends Error {
 }
 
 type ApiFetchOptions = Omit<RequestInit, 'body'> & {
-  idToken: string;
+  accessToken: string;
   body?: unknown;
 };
 
 export async function apiFetch<T = unknown>(
   path: string,
-  { idToken, body, headers, ...init }: ApiFetchOptions
+  { accessToken, body, headers, ...init }: ApiFetchOptions
 ): Promise<T> {
   const url = `${env.API_BASE_URL.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`;
 
@@ -24,7 +24,7 @@ export async function apiFetch<T = unknown>(
     ...init,
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${idToken}`,
+      Authorization: `Bearer ${accessToken}`,
       ...headers,
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,

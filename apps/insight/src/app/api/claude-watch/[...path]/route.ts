@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { apiFetch, ApiError } from '@/lib/api-fetch';
-import { getIdToken, getUserFromSession } from '@/lib/auth';
+import { getAccessToken, getUserFromSession } from '@/lib/auth';
 
 /**
  * Read-only proxy to the claude-watch backend (`/claude-watch/*`).
@@ -18,13 +18,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const idToken = (await getIdToken()) ?? '';
+  const accessToken = (await getAccessToken()) ?? '';
   const backendPath = request.nextUrl.pathname.slice(BFF_PREFIX.length);
   const search = request.nextUrl.search;
 
   try {
     const data = await apiFetch(`/claude-watch${backendPath}${search}`, {
-      idToken,
+      accessToken,
       method: 'GET',
     });
     return NextResponse.json(data);

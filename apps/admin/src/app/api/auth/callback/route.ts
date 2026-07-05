@@ -63,7 +63,11 @@ export const GET = async (request: NextRequest) => {
 
   const tokenJson = (await tokenResponse.json()) as TokenResponse;
 
-  if (!tokenJson.id_token || !tokenJson.refresh_token) {
+  if (
+    !tokenJson.id_token ||
+    !tokenJson.access_token ||
+    !tokenJson.refresh_token
+  ) {
     return NextResponse.json({ error: 'Missing tokens' }, { status: 400 });
   }
 
@@ -84,6 +88,12 @@ export const GET = async (request: NextRequest) => {
   response.cookies.set(
     AUTH_COOKIES.idToken,
     tokenJson.id_token,
+    authCookie(tokenJson.expires_in)
+  );
+
+  response.cookies.set(
+    AUTH_COOKIES.accessToken,
+    tokenJson.access_token,
     authCookie(tokenJson.expires_in)
   );
 

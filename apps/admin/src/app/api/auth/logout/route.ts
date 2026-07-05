@@ -16,6 +16,7 @@ export const GET = async () => {
   const response = NextResponse.redirect(logoutUrl.toString());
 
   response.cookies.set(AUTH_COOKIES.idToken, '', deletedCookie());
+  response.cookies.set(AUTH_COOKIES.accessToken, '', deletedCookie());
   response.cookies.set(AUTH_COOKIES.refreshToken, '', deletedCookie());
 
   return response;

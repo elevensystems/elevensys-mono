@@ -1,22 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { ApiError, apiFetch } from '@/lib/api-fetch';
-import { getIdToken } from '@/lib/auth';
+import { getAccessToken } from '@/lib/auth';
 
 export const DELETE = async (
   _request: NextRequest,
   { params }: { params: Promise<{ shortCode: string }> }
 ) => {
   const { shortCode } = await params;
-  const idToken = await getIdToken();
+  const accessToken = await getAccessToken();
 
-  if (!idToken) {
+  if (!accessToken) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     const result = await apiFetch(`/urlify/url/${encodeURIComponent(shortCode)}`, {
-      idToken,
+      accessToken,
       method: 'DELETE',
     });
     return NextResponse.json(result ?? { success: true });

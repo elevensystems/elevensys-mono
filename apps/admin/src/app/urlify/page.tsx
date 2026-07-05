@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 
 import MainLayout from '@/components/layouts/main-layout';
 import { apiFetch } from '@/lib/api-fetch';
-import { getIdToken } from '@/lib/auth';
+import { getAccessToken } from '@/lib/auth';
 import type { ShortenedUrl } from '@/types/urlify';
 
 import { UrlifyTable } from './urlify-table';
@@ -17,8 +17,8 @@ type PageProps = {
 };
 
 export default async function UrlifyPage({ searchParams }: PageProps) {
-  const idToken = await getIdToken();
-  if (!idToken) redirect('/login');
+  const accessToken = await getAccessToken();
+  if (!accessToken) redirect('/login');
 
   const { limit: limitParam, lastKey } = await searchParams;
   const limit = Number(limitParam ?? '20') || 20;
@@ -32,7 +32,7 @@ export default async function UrlifyPage({ searchParams }: PageProps) {
   try {
     const result = await apiFetch<UrlsResponse>(
       `/urlify/urls?${params.toString()}`,
-      { idToken, method: 'GET' }
+      { accessToken, method: 'GET' }
     );
     urls = result?.urls ?? [];
     nextCursor = result?.lastEvaluatedKey

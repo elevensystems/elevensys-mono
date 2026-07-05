@@ -5,6 +5,7 @@ import type { AuthUser, JwtPayload, UserRole } from '@/types/auth';
 
 export const AUTH_COOKIES = {
   idToken: 'cognito_id_token',
+  accessToken: 'cognito_access_token',
   refreshToken: 'cognito_refresh_token',
   oauthState: 'cognito_oauth_state',
   pkceVerifier: 'cognito_pkce_verifier',
@@ -86,6 +87,12 @@ export const hasInsightAccess = (user: AuthUser | null): boolean => {
 
 export const getIdToken = async (): Promise<string | null> => {
   return (await cookies()).get(AUTH_COOKIES.idToken)?.value ?? null;
+};
+
+// The access token is what gets forwarded to the backend API — the ID token
+// stays client-side for identity (OAuth2 convention).
+export const getAccessToken = async (): Promise<string | null> => {
+  return (await cookies()).get(AUTH_COOKIES.accessToken)?.value ?? null;
 };
 
 export const getRefreshToken = async (): Promise<string | null> => {
