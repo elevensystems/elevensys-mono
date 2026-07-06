@@ -38,16 +38,16 @@ const INTERVAL_MS: Record<string, number> = {
 };
 
 const LEVEL_SERIES: StackedBarSeries[] = [
-  { key: 'INFO', label: 'Info', color: 'var(--banner-info-icon)' },
-  { key: 'WARN', label: 'Warn', color: 'var(--banner-warning-icon)' },
-  { key: 'ERROR', label: 'Error', color: 'var(--banner-error-icon)' },
+  { key: 'INFO', label: 'Info', color: 'var(--banner-info-fg)' },
+  { key: 'WARN', label: 'Warn', color: 'var(--banner-warning-fg)' },
+  { key: 'ERROR', label: 'Error', color: 'var(--banner-error-fg)' },
 ];
 
 const STATUS_SERIES: StackedBarSeries[] = [
-  { key: 's2xx', label: '2xx', color: 'var(--banner-success-icon)' },
-  { key: 's3xx', label: '3xx', color: 'var(--banner-info-icon)' },
-  { key: 's4xx', label: '4xx', color: 'var(--banner-warning-icon)' },
-  { key: 's5xx', label: '5xx', color: 'var(--banner-error-icon)' },
+  { key: 's2xx', label: '2xx', color: 'var(--banner-success-fg)' },
+  { key: 's3xx', label: '3xx', color: 'var(--banner-info-fg)' },
+  { key: 's4xx', label: '4xx', color: 'var(--banner-warning-fg)' },
+  { key: 's5xx', label: '5xx', color: 'var(--banner-error-fg)' },
 ];
 
 const LATENCY_SERIES: TimeSeriesLineSeries[] = [
@@ -268,12 +268,12 @@ export function AuditChart() {
         <StatCard
           label="Errors"
           value={volume.loading ? null : volumeStats.errors.toLocaleString()}
-          accent="var(--banner-error-icon)"
+          accent="var(--banner-error-fg)"
         />
         <StatCard
           label="Error rate"
           value={volume.loading ? null : `${volumeStats.errorRate.toFixed(1)}%`}
-          accent={volumeStats.errorRate > 0 ? 'var(--banner-error-icon)' : undefined}
+          accent={volumeStats.errorRate > 0 ? 'var(--banner-error-fg)' : undefined}
         />
         <StatCard
           label="Avg latency"
@@ -301,7 +301,7 @@ export function AuditChart() {
         <StatCard
           label="5xx responses"
           value={status.loading ? null : serverErrors.toLocaleString()}
-          accent={serverErrors > 0 ? 'var(--banner-error-icon)' : undefined}
+          accent={serverErrors > 0 ? 'var(--banner-error-fg)' : undefined}
         />
       </div>
 

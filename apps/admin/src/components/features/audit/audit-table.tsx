@@ -35,9 +35,9 @@ const GRID_COLS =
 
 // Literal class strings so Tailwind's JIT compiler picks them up.
 const LEVEL_STYLES: Record<string, { badge: string; dot: string }> = {
-  INFO: { badge: 'bg-banner-info-bg text-banner-info-title', dot: 'bg-banner-info-icon' },
-  WARN: { badge: 'bg-banner-warning-bg text-banner-warning-title', dot: 'bg-banner-warning-icon' },
-  ERROR: { badge: 'bg-banner-error-bg text-banner-error-title', dot: 'bg-banner-error-icon' },
+  INFO: { badge: 'bg-banner-info-bg text-banner-info-fg', dot: 'bg-banner-info-fg' },
+  WARN: { badge: 'bg-banner-warning-bg text-banner-warning-fg', dot: 'bg-banner-warning-fg' },
+  ERROR: { badge: 'bg-banner-error-bg text-banner-error-fg', dot: 'bg-banner-error-fg' },
 };
 
 function levelStyle(level: string) {
@@ -53,8 +53,8 @@ function statusClass(status?: number) {
 
 function durationClass(duration?: number) {
   if (duration == null) return 'bg-muted text-muted-foreground';
-  if (duration > 2000) return 'bg-banner-error-bg text-banner-error-title';
-  if (duration > 900) return 'bg-banner-warning-bg text-banner-warning-title';
+  if (duration > 2000) return 'bg-banner-error-bg text-banner-error-fg';
+  if (duration > 900) return 'bg-banner-warning-bg text-banner-warning-fg';
   return 'bg-muted text-muted-foreground';
 }
 
@@ -200,15 +200,15 @@ export function AuditTable() {
         </div>
         <div className="text-muted-foreground flex items-center gap-3.5 text-xs">
           <span className="inline-flex items-center gap-1.5">
-            <span className="bg-banner-info-icon size-[7px] rounded-full" />
+            <span className="bg-banner-info-fg size-[7px] rounded-full" />
             Info
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="bg-banner-warning-icon size-[7px] rounded-full" />
+            <span className="bg-banner-warning-fg size-[7px] rounded-full" />
             Warn
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="bg-banner-error-icon size-[7px] rounded-full" />
+            <span className="bg-banner-error-fg size-[7px] rounded-full" />
             Error
           </span>
         </div>

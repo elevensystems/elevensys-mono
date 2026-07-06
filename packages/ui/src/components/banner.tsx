@@ -1,54 +1,37 @@
 import * as React from 'react';
 
 import { type VariantProps, cva } from 'class-variance-authority';
-import {
-  CircleCheck,
-  Info,
-  OctagonAlert,
-  Sparkles,
-  TriangleAlert,
-  X,
-  type LucideIcon,
-} from 'lucide-react';
+import { CircleCheckBig, CircleX, Info, TriangleAlert, X, type LucideIcon } from 'lucide-react';
 
 import { cn } from '@workspace/ui/lib/utils';
 
-const bannerVariants = cva(
-  "flex w-full items-center gap-3 box-border border pl-[15px] pr-3 py-[11px] font-sans [&_[data-slot=banner-icon]]:shrink-0 [&_[data-slot=banner-icon]]:self-start [&_[data-slot=banner-icon]]:mt-px",
-  {
-    variants: {
-      state: {
-        info: 'bg-banner-info-bg border-banner-info-border [&_[data-slot=banner-icon]]:text-banner-info-icon [&_[data-slot=banner-title]]:text-banner-info-title [&_[data-slot=banner-action]]:text-banner-info-icon [&_[data-slot=banner-action]]:border-banner-info-border',
-        success:
-          'bg-banner-success-bg border-banner-success-border [&_[data-slot=banner-icon]]:text-banner-success-icon [&_[data-slot=banner-title]]:text-banner-success-title [&_[data-slot=banner-action]]:text-banner-success-icon [&_[data-slot=banner-action]]:border-banner-success-border',
-        warning:
-          'bg-banner-warning-bg border-banner-warning-border [&_[data-slot=banner-icon]]:text-banner-warning-icon [&_[data-slot=banner-title]]:text-banner-warning-title [&_[data-slot=banner-action]]:text-banner-warning-icon [&_[data-slot=banner-action]]:border-banner-warning-border',
-        error:
-          'bg-banner-error-bg border-banner-error-border [&_[data-slot=banner-icon]]:text-banner-error-icon [&_[data-slot=banner-title]]:text-banner-error-title [&_[data-slot=banner-action]]:text-banner-error-icon [&_[data-slot=banner-action]]:border-banner-error-border',
-        promo:
-          'bg-banner-promo-bg border-banner-promo-border [&_[data-slot=banner-icon]]:text-banner-promo-icon [&_[data-slot=banner-title]]:bg-[image:var(--banner-promo-grad)] [&_[data-slot=banner-title]]:bg-clip-text [&_[data-slot=banner-title]]:text-transparent [&_[data-slot=banner-action]]:text-banner-promo-icon [&_[data-slot=banner-action]]:border-banner-promo-border',
-      },
-      flush: {
-        true: 'rounded-none border-x-0 border-t',
-        false: 'rounded-xl',
-      },
+const bannerVariants = cva('flex w-full gap-3 font-sans transition-colors', {
+  variants: {
+    state: {
+      info: 'bg-banner-info-bg text-banner-info-fg',
+      success: 'bg-banner-success-bg text-banner-success-fg',
+      warning: 'bg-banner-warning-bg text-banner-warning-fg',
+      error: 'bg-banner-error-bg text-banner-error-fg',
     },
-    defaultVariants: {
-      state: 'info',
-      flush: false,
+    flush: {
+      true: 'rounded-none px-6 py-4',
+      false: 'rounded-lg px-4 py-3.5',
     },
-  }
-);
+  },
+  defaultVariants: {
+    state: 'info',
+    flush: false,
+  },
+});
 
 const STATE_ICONS: Record<
   NonNullable<VariantProps<typeof bannerVariants>['state']>,
   LucideIcon
 > = {
   info: Info,
-  success: CircleCheck,
+  success: CircleCheckBig,
   warning: TriangleAlert,
-  error: OctagonAlert,
-  promo: Sparkles,
+  error: CircleX,
 };
 
 interface BannerAction {
@@ -78,28 +61,46 @@ function Banner({
 }: BannerProps) {
   const Icon = STATE_ICONS[state ?? 'info'];
   const urgent = state === 'error' || state === 'warning';
+  const centered = Boolean(action);
   const actionClasses =
-    'shrink-0 whitespace-nowrap rounded-lg border px-3 py-1.5 text-[13px] font-semibold leading-none transition-colors hover:bg-banner-action-hover';
+    'shrink-0 whitespace-nowrap rounded-sm bg-[color-mix(in_oklab,currentColor_12%,transparent)] px-4 py-2 text-sm font-medium text-inherit transition-colors hover:bg-[color-mix(in_oklab,currentColor_20%,transparent)]';
 
   return (
     <div
       data-slot="banner"
       role={urgent ? 'alert' : 'status'}
       aria-live={urgent ? 'assertive' : 'polite'}
-      className={cn(bannerVariants({ state, flush }), className)}
+      className={cn(
+        bannerVariants({ state, flush }),
+        centered ? 'items-center' : 'items-start',
+        className
+      )}
       {...props}
     >
-      <Icon data-slot="banner-icon" className="size-5" strokeWidth={1.85} />
+      <Icon
+        data-slot="banner-icon"
+        className="mt-px size-5 shrink-0 self-start"
+        strokeWidth={1.75}
+      />
 
-      <div className="min-w-0 flex-1 text-sm leading-snug">
-        {title && (
-          <span data-slot="banner-title" className="font-semibold">
-            {title}
-          </span>
+      <div className="min-w-0 flex-1">
+        {title ? (
+          <>
+            <div data-slot="banner-title" className="text-[15px] leading-[1.35] font-semibold">
+              {title}
+            </div>
+            <div
+              data-slot="banner-body"
+              className="mt-0.5 text-[13.5px] leading-[1.45] opacity-[.82]"
+            >
+              {message}
+            </div>
+          </>
+        ) : (
+          <div data-slot="banner-title" className="text-[15px] leading-[1.35] font-semibold">
+            {message}
+          </div>
         )}
-        <span data-slot="banner-body" className="text-banner-body">
-          {title ? ` — ${message}` : message}
-        </span>
       </div>
 
       {action &&
@@ -126,11 +127,15 @@ function Banner({
       {onDismiss && (
         <button
           type="button"
+          data-slot="banner-dismiss"
           aria-label="Dismiss"
           onClick={onDismiss}
-          className="grid size-[30px] shrink-0 place-items-center rounded-lg text-banner-dismiss transition-colors hover:bg-banner-dismiss-hover"
+          className={cn(
+            'grid size-7 shrink-0 place-items-center rounded-[8px] text-inherit transition-colors hover:bg-[color-mix(in_oklab,currentColor_14%,transparent)]',
+            !centered && '-mt-0.5'
+          )}
         >
-          <X className="size-4" />
+          <X className="size-[18px]" strokeWidth={1.75} />
         </button>
       )}
     </div>
