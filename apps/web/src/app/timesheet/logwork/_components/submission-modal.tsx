@@ -36,10 +36,10 @@ interface SubmissionModalProps {
 }
 
 const PROGRESS_FILL_CLASSES: Record<OverallStatus, string> = {
-  'in-progress': 'bg-color-4',
-  complete: 'bg-color-18',
-  partial: 'bg-color-17',
-  failed: 'bg-color-6',
+  'in-progress': 'bg-info',
+  complete: 'bg-success',
+  partial: 'bg-warning',
+  failed: 'bg-destructive',
 };
 
 export function SubmissionModal({

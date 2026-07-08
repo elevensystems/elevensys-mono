@@ -74,7 +74,7 @@ function TicketRow({
         <div className="flex items-center gap-2">
           {result &&
             (result.status === 'logged' ? (
-              <Check className="h-3.5 w-3.5 text-color-18" />
+              <Check className="h-3.5 w-3.5 text-success" />
             ) : result.status === 'skipped' ? (
               <Minus className="h-3.5 w-3.5 text-muted-foreground" />
             ) : (

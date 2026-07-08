@@ -38,20 +38,20 @@ const INTERVAL_MS: Record<string, number> = {
 };
 
 const LEVEL_SERIES: StackedBarSeries[] = [
-  { key: 'INFO', label: 'Info', color: 'var(--banner-info-fg)' },
-  { key: 'WARN', label: 'Warn', color: 'var(--banner-warning-fg)' },
-  { key: 'ERROR', label: 'Error', color: 'var(--banner-error-fg)' },
+  { key: 'INFO', label: 'Info', color: 'var(--info)' },
+  { key: 'WARN', label: 'Warn', color: 'var(--warning)' },
+  { key: 'ERROR', label: 'Error', color: 'var(--destructive)' },
 ];
 
 const STATUS_SERIES: StackedBarSeries[] = [
-  { key: 's2xx', label: '2xx', color: 'var(--banner-success-fg)' },
-  { key: 's3xx', label: '3xx', color: 'var(--banner-info-fg)' },
-  { key: 's4xx', label: '4xx', color: 'var(--banner-warning-fg)' },
-  { key: 's5xx', label: '5xx', color: 'var(--banner-error-fg)' },
+  { key: 's2xx', label: '2xx', color: 'var(--success)' },
+  { key: 's3xx', label: '3xx', color: 'var(--info)' },
+  { key: 's4xx', label: '4xx', color: 'var(--warning)' },
+  { key: 's5xx', label: '5xx', color: 'var(--destructive)' },
 ];
 
 const LATENCY_SERIES: TimeSeriesLineSeries[] = [
-  { key: 'avg', label: 'Avg', color: 'var(--chart-6)' },
+  { key: 'avg', label: 'Avg', color: 'var(--chart-2)' },
   { key: 'p95', label: 'p95', color: 'var(--chart-1)' },
 ];
 
@@ -268,12 +268,12 @@ export function AuditChart() {
         <StatCard
           label="Errors"
           value={volume.loading ? null : volumeStats.errors.toLocaleString()}
-          accent="var(--banner-error-fg)"
+          accent="var(--destructive)"
         />
         <StatCard
           label="Error rate"
           value={volume.loading ? null : `${volumeStats.errorRate.toFixed(1)}%`}
-          accent={volumeStats.errorRate > 0 ? 'var(--banner-error-fg)' : undefined}
+          accent={volumeStats.errorRate > 0 ? 'var(--destructive)' : undefined}
         />
         <StatCard
           label="Avg latency"
@@ -284,7 +284,7 @@ export function AuditChart() {
                 ? '—'
                 : formatMs(latencyStats.avg)
           }
-          accent="var(--chart-6)"
+          accent="var(--chart-2)"
         />
         <StatCard
           label="p95 latency"
@@ -301,7 +301,7 @@ export function AuditChart() {
         <StatCard
           label="5xx responses"
           value={status.loading ? null : serverErrors.toLocaleString()}
-          accent={serverErrors > 0 ? 'var(--banner-error-fg)' : undefined}
+          accent={serverErrors > 0 ? 'var(--destructive)' : undefined}
         />
       </div>
 

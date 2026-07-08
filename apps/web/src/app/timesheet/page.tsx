@@ -89,7 +89,7 @@ export default function TimesheetPage() {
           />
 
           {isLoaded && !isConfigured && (
-            <div className="mb-6 rounded-lg border border-color-17/25 bg-color-17/8 p-4 text-sm text-alert-warning-text dark:border-color-17/30 dark:bg-color-17/10">
+            <div className="mb-6 rounded-lg border border-banner-warning-fg/25 bg-banner-warning-bg p-4 text-sm text-banner-warning-fg">
               <p>
                 <strong>Getting started:</strong> Head to{' '}
                 <Link

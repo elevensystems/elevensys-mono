@@ -252,25 +252,25 @@ export function getUsernameColor(username: string): string {
 }
 
 const WORK_TYPE_DOT_CLASS: Record<string, string> = {
-  create: 'bg-color-14',
-  review: 'bg-color-5',
-  study: 'bg-color-11',
-  correct: 'bg-color-6',
-  translate: 'bg-color-19',
-  test: 'bg-color-8',
+  create: 'bg-worktype-create',
+  review: 'bg-worktype-review',
+  study: 'bg-worktype-study',
+  correct: 'bg-worktype-correct',
+  translate: 'bg-worktype-translate',
+  test: 'bg-worktype-test',
 };
 
 const WORK_TYPE_BORDER_CLASS: Record<string, string> = {
-  create: 'border-color-14',
-  review: 'border-color-5',
-  study: 'border-color-11',
-  correct: 'border-color-6',
-  translate: 'border-color-19',
-  test: 'border-color-8',
+  create: 'border-worktype-create',
+  review: 'border-worktype-review',
+  study: 'border-worktype-study',
+  correct: 'border-worktype-correct',
+  translate: 'border-worktype-translate',
+  test: 'border-worktype-test',
 };
 
-const DEFAULT_WORK_TYPE_DOT_CLASS = 'bg-color-9';
-const DEFAULT_WORK_TYPE_BORDER_CLASS = 'border-color-9';
+const DEFAULT_WORK_TYPE_DOT_CLASS = 'bg-token-gray-fg';
+const DEFAULT_WORK_TYPE_BORDER_CLASS = 'border-token-gray-fg';
 
 export function getWorkTypeDotClass(type: string): string {
   return WORK_TYPE_DOT_CLASS[type.toLowerCase()] ?? DEFAULT_WORK_TYPE_DOT_CLASS;

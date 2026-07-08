@@ -53,7 +53,7 @@ export function NavUser({ user }: { user?: AuthUser | null }) {
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               >
                 <Avatar className="h-8 w-8 rounded-sm">
-                  <AvatarFallback className="rounded-sm bg-color-9 text-white">
+                  <AvatarFallback className="rounded-sm bg-primary text-primary-foreground">
                     G
                   </AvatarFallback>
                 </Avatar>

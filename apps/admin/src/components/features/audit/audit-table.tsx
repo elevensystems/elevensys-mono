@@ -46,9 +46,9 @@ function levelStyle(level: string) {
 
 function statusClass(status?: number) {
   if (!status) return 'text-muted-foreground';
-  if (status < 300) return 'text-alert-success-text';
-  if (status < 500) return 'text-alert-warning-text';
-  return 'text-alert-error-text';
+  if (status < 300) return 'text-success';
+  if (status < 500) return 'text-warning';
+  return 'text-destructive';
 }
 
 function durationClass(duration?: number) {
@@ -200,15 +200,15 @@ export function AuditTable() {
         </div>
         <div className="text-muted-foreground flex items-center gap-3.5 text-xs">
           <span className="inline-flex items-center gap-1.5">
-            <span className="bg-banner-info-fg size-[7px] rounded-full" />
+            <span className="bg-info size-[7px] rounded-full" />
             Info
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="bg-banner-warning-fg size-[7px] rounded-full" />
+            <span className="bg-warning size-[7px] rounded-full" />
             Warn
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="bg-banner-error-fg size-[7px] rounded-full" />
+            <span className="bg-destructive size-[7px] rounded-full" />
             Error
           </span>
         </div>

@@ -2,6 +2,19 @@
 
 import Link from 'next/link';
 
+import { ActionButton } from '@workspace/ui/components/action-button';
+import { Badge } from '@workspace/ui/components/badge';
+import { Button } from '@workspace/ui/components/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@workspace/ui/components/card';
+import { Separator } from '@workspace/ui/components/separator';
+import { ShineBorder } from '@workspace/ui/components/shine-border';
 import {
   ArrowRight,
   Braces,
@@ -16,20 +29,7 @@ import {
   Wrench,
 } from 'lucide-react';
 
-import { ActionButton } from '@workspace/ui/components/action-button';
 import MainLayout from '@/components/layouts/main-layout';
-import { Badge } from '@workspace/ui/components/badge';
-import { Button } from '@workspace/ui/components/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@workspace/ui/components/card';
-import { Separator } from '@workspace/ui/components/separator';
-import { ShineBorder } from '@workspace/ui/components/shine-border';
 import { useDomain } from '@/contexts/domain-context';
 import { useTimesheetSettings } from '@/hooks/use-timesheet-settings';
 
@@ -96,7 +96,7 @@ export default function Home() {
                 <h2 className="text-xl font-semibold">Timesheet</h2>
                 {isLoaded && isConfigured && (
                   <Badge variant="secondary" className="gap-1.5 ml-1">
-                    <span className="h-2 w-2 rounded-full bg-color-3" />
+                    <span className="h-2 w-2 rounded-full bg-success" />
                     Connected
                   </Badge>
                 )}
@@ -110,7 +110,7 @@ export default function Home() {
             </div>
 
             {isLoaded && !isConfigured && (
-              <div className="rounded-lg border border-color-17/25 bg-color-17/8 p-4 text-sm text-alert-warning-text dark:border-color-17/30 dark:bg-color-17/10">
+              <div className="rounded-lg border border-banner-warning-fg/25 bg-banner-warning-bg p-4 text-sm text-banner-warning-fg">
                 <p>
                   <strong>Getting started:</strong> Head to{' '}
                   <Link
@@ -128,14 +128,21 @@ export default function Home() {
               {timesheetActions.map(action => (
                 <Link key={action.href} href={action.href} className="group">
                   <Card
-                    className={`relative h-full overflow-hidden transition-all group-hover:shadow-md ${action.primary
-                      ? 'bg-primary/[0.03] dark:bg-primary/[0.06]'
-                      : ''
-                      }`}
+                    className={`relative h-full overflow-hidden transition-all group-hover:shadow-md ${
+                      action.primary
+                        ? 'bg-primary/[0.03] dark:bg-primary/[0.06]'
+                        : ''
+                    }`}
                   >
                     {action.primary && (
                       <ShineBorder
-                        shineColor={['#facc15', '#22c55e', '#f97316', '#e11d48', '#38bdf8', '#8b5cf6', '#f472b6']}
+                        shineColor={[
+                          'var(--color-1)',
+                          'var(--color-2)',
+                          'var(--color-3)',
+                          'var(--color-4)',
+                          'var(--color-5)',
+                        ]}
                         borderWidth={1.5}
                         duration={10}
                       />
@@ -143,10 +150,11 @@ export default function Home() {
                     <CardHeader className="pb-2">
                       <div className="flex items-center gap-3">
                         <div
-                          className={`flex h-10 w-10 items-center justify-center rounded-lg ${action.primary
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-primary/10 text-primary'
-                            }`}
+                          className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                            action.primary
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-primary/10 text-primary'
+                          }`}
                         >
                           <action.icon className="h-5 w-5" />
                         </div>

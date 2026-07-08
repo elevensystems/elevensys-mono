@@ -366,13 +366,13 @@ export default function LogWorkPage() {
 
   const hoursColor =
     totalHours === STANDARD_HOURS
-      ? 'text-color-8'
+      ? 'text-success'
       : totalHours > STANDARD_HOURS
-        ? 'text-color-1'
+        ? 'text-warning'
         : 'text-foreground';
 
   const progressBarColor =
-    totalHours > STANDARD_HOURS ? 'bg-color-1' : 'bg-color-8';
+    totalHours > STANDARD_HOURS ? 'bg-warning' : 'bg-success';
 
   const progressPercent = Math.min((totalHours / STANDARD_HOURS) * 100, 100);
 

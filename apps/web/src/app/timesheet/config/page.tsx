@@ -125,8 +125,8 @@ export default function TimesheetConfigPage() {
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-2xl font-bold tracking-tight">Configurations</h1>
             {isConfigured ? (
-              <span className="flex items-center gap-1.5 text-sm font-medium text-color-3">
-                <span className="h-2 w-2 rounded-full bg-color-3" />
+              <span className="flex items-center gap-1.5 text-sm font-medium text-success">
+                <span className="h-2 w-2 rounded-full bg-success" />
                 Connected
               </span>
             ) : (
@@ -164,7 +164,7 @@ export default function TimesheetConfigPage() {
                     href={`https://insight.fsoft.com.vn/${jiraInstance}/secure/ViewProfile.jspa`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-medium text-color-14 underline underline-offset-4 hover:text-color-14/50"
+                    className="font-medium text-info underline underline-offset-4 hover:text-info/50"
                   >
                     here
                   </a>

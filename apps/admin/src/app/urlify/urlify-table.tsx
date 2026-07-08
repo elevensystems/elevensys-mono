@@ -300,7 +300,7 @@ export function UrlifyTable({
                       <ActionButton
                         variant="ghost"
                         size="icon"
-                        className="size-8 text-destructive hover:bg-destructive hover:text-white"
+                        className="size-8 text-destructive hover:bg-destructive hover:text-destructive-foreground"
                         isLoading={deletingId === url.shortCode}
                         onClick={() => deleteOne(url.shortCode)}
                         aria-label="Delete"

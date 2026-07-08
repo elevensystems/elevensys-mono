@@ -26,17 +26,17 @@ const ISSUE_ICON_CONFIG: Record<
   IssueState,
   { icon: LucideIcon; className: string }
 > = {
-  failed: { icon: XCircle, className: 'text-color-6' },
+  failed: { icon: XCircle, className: 'text-destructive' },
   'in-progress': {
     icon: CircleDashed,
-    className: 'text-color-4',
+    className: 'text-info',
   },
   pending: { icon: Clock, className: 'text-muted-foreground' },
   skipped: {
     icon: CircleMinus,
     className: 'text-muted-foreground',
   },
-  success: { icon: CheckCircle2, className: 'text-color-18' },
+  success: { icon: CheckCircle2, className: 'text-success' },
 };
 
 function RangeRow({ status }: { status: RequestStatus }) {
@@ -44,7 +44,7 @@ function RangeRow({ status }: { status: RequestStatus }) {
     case 'success':
       return (
         <div className="flex items-center gap-2.5 px-3 py-2 text-sm">
-          <Check className="size-4 shrink-0 text-color-18" />
+          <Check className="size-4 shrink-0 text-success" />
           <span className="font-mono text-muted-foreground">
             {status.rangeLabel}
           </span>
@@ -54,12 +54,12 @@ function RangeRow({ status }: { status: RequestStatus }) {
       return (
         <div className="flex items-center justify-between gap-2.5 px-3 py-2 text-sm">
           <div className="flex items-center gap-2.5">
-            <Loader2 className="size-4 shrink-0 animate-spin text-color-4" />
+            <Loader2 className="size-4 shrink-0 animate-spin text-info" />
             <span className="font-mono text-muted-foreground">
               {status.rangeLabel}
             </span>
           </div>
-          <Shimmer className="text-color-4">Submitting...</Shimmer>
+          <Shimmer className="text-info">Submitting...</Shimmer>
         </div>
       );
     case 'pending':
@@ -80,14 +80,14 @@ function RangeRow({ status }: { status: RequestStatus }) {
         status.errorStatus
       );
       return (
-        <div className="flex items-center justify-between gap-2.5 px-3 py-2 text-sm bg-color-6/8 dark:bg-color-6/10">
+        <div className="flex items-center justify-between gap-2.5 px-3 py-2 text-sm bg-destructive/8">
           <div className="flex items-center gap-2.5">
-            <XCircle className="size-4 shrink-0 text-color-6" />
+            <XCircle className="size-4 shrink-0 text-destructive" />
             <span className="font-mono text-muted-foreground">
               {status.rangeLabel}
             </span>
           </div>
-          <span className="text-color-6 text-right">
+          <span className="text-destructive text-right">
             {label} · {message}
           </span>
         </div>

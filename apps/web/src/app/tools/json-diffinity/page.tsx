@@ -357,7 +357,7 @@ export default function JsonDiffinityPage() {
                     {diffPaths.added.length > 0 && (
                       <Badge
                         className={cn(
-                          'bg-color-18 font-mono text-[10px] px-1.5 py-0',
+                          'bg-success text-success-foreground font-mono text-[10px] px-1.5 py-0',
                           isStale && 'line-through opacity-50'
                         )}
                       >
@@ -378,7 +378,7 @@ export default function JsonDiffinityPage() {
                     {diffPaths.modified.length > 0 && (
                       <Badge
                         className={cn(
-                          'bg-color-17 text-white font-mono text-[10px] px-1.5 py-0',
+                          'bg-warning text-warning-foreground font-mono text-[10px] px-1.5 py-0',
                           isStale && 'line-through opacity-50'
                         )}
                       >

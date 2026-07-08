@@ -6,7 +6,6 @@ import { CalendarPlus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { ActionButton } from '@workspace/ui/components/action-button';
-import { Badge } from '@workspace/ui/components/badge';
 import { Calendar } from '@workspace/ui/components/calendar';
 import { Checkbox } from '@workspace/ui/components/checkbox';
 import {
@@ -24,6 +23,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@workspace/ui/components/popover';
+import { Token } from '@workspace/ui/components/token';
 import { parseApiDate } from '@/lib/timesheet';
 import type { JiraProject } from '@/types/timesheet';
 
@@ -243,13 +243,10 @@ export function MissingWorklogsCard({
               </span>
               Select dates
               {parsedDates.length > 0 && (
-                <Badge
-                  variant="secondary"
-                  className="ml-1 bg-color-8 text-white"
-                >
+                <Token color="green" density="compact" className="ml-1">
                   {parsedDates.length} date
                   {parsedDates.length !== 1 ? 's' : ''}
-                </Badge>
+                </Token>
               )}
             </div>
 

@@ -20,7 +20,7 @@ export default function GuestLoginAlert({
           You can explore the tool now.{' '}
           <Link
             href="/login"
-            className="font-medium underline underline-offset-4 text-color-4 hover:text-color-4/70"
+            className="font-medium underline underline-offset-4 text-info hover:text-info/70"
           >
             Log in
           </Link>{' '}

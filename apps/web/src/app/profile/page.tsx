@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 
-import clsx from 'clsx';
 import { BadgeCheck, KeyRound, Mail, Users } from 'lucide-react';
 
 import MainLayout from '@/components/layouts/main-layout';
@@ -58,11 +57,7 @@ export default function ProfilePage() {
               <div className="flex items-center gap-5">
                 <Avatar className="h-16 w-16 rounded-xl">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback
-                    className={clsx('rounded-xl text-lg font-semibold', {
-                      'bg-color-14 text-white': user.role === 'pro',
-                    })}
-                  >
+                  <AvatarFallback className="rounded-xl text-lg font-semibold">
                     {getUserInitials(user.name)}
                   </AvatarFallback>
                 </Avatar>
@@ -76,10 +71,6 @@ export default function ProfilePage() {
                   <div className="mt-2">
                     <Badge
                       variant={user.role === 'free' ? 'secondary' : 'default'}
-                      className={clsx({
-                        'bg-color-14 hover:bg-color-14/80 text-white':
-                          user.role === 'pro',
-                      })}
                     >
                       {ROLE_LABELS[user.role] ?? user.role}
                     </Badge>

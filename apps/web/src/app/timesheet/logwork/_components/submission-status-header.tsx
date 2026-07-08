@@ -21,22 +21,22 @@ const STATE_CONFIG: Record<
 > = {
   'in-progress': {
     icon: Loader2,
-    avatarClasses: 'bg-color-4/10 text-color-4',
+    avatarClasses: 'bg-info/10 text-info',
     title: 'Submitting worklogs...',
   },
   complete: {
     icon: CalendarCheck2,
-    avatarClasses: 'bg-color-18/10 text-color-18',
+    avatarClasses: 'bg-success/10 text-success',
     title: 'Submission complete',
   },
   partial: {
     icon: CircleMinus,
-    avatarClasses: 'bg-color-17/10 text-color-17',
+    avatarClasses: 'bg-warning/10 text-warning',
     title: 'Submission partial',
   },
   failed: {
     icon: XCircle,
-    avatarClasses: 'bg-color-6/10 text-color-6',
+    avatarClasses: 'bg-destructive/10 text-destructive',
     title: 'Submission failed',
   },
 };
