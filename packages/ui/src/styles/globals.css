@@ -24,7 +24,7 @@
   /* Semantic surfaces */
   --background: var(--neutral-0);
   --foreground: var(--neutral-950);
-  --card: var(--neutral-50);
+  --card: var(--neutral-0);
   --card-foreground: var(--neutral-950);
   --popover: var(--neutral-0);
   --popover-foreground: var(--neutral-950);

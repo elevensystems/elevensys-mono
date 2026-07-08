@@ -7,7 +7,7 @@ import { Toaster } from '@workspace/ui/components/sonner';
 import { AuthProvider } from '@/contexts/auth-context';
 import { DomainProvider } from '@/contexts/domain-context';
 import { FlagsProvider } from '@/contexts/flags-context';
-import { autologFlag, sidebarToolsFlag } from '@/flags';
+import { autologFlag, sidebarToolsFlag, siteBannerFlag } from '@/flags';
 import { getUserFromSession } from '@/lib/auth';
 import {
   DEFAULT_TENANT,
@@ -66,6 +66,7 @@ export default async function RootLayout({
   const flags = {
     autolog: Boolean(await autologFlag()),
     'sidebar-tools': String((await sidebarToolsFlag()) ?? ''),
+    'site-banner': String((await siteBannerFlag()) ?? ''),
   };
 
   return (

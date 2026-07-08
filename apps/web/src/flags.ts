@@ -23,3 +23,12 @@ export const sidebarToolsFlag = flag<string>({
   ],
   adapter: vercelAdapter(),
 });
+
+export const siteBannerFlag = flag<string>({
+  key: 'site-banner',
+  description:
+    'Site-wide announcement/maintenance banner. JSON object: {"state","title"?,"message","actionLabel"?,"actionHref"?}. Empty string hides the banner.',
+  defaultValue: '',
+  options: [{ value: '', label: 'Hidden' }],
+  adapter: vercelAdapter(),
+});

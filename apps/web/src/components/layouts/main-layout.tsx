@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { AppSidebar } from '@/components/layouts/app-sidebar';
+import { SiteBanner } from '@/components/layouts/site-banner';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -26,7 +27,10 @@ import { useAuth } from '@/contexts/auth-context';
 interface MainLayoutProps {
   children: ReactNode;
   className?: string;
-  /** Optional announcement banner rendered flush under the sticky header. */
+  /**
+   * Announcement banner rendered flush under the sticky header. Defaults to
+   * the flag-driven `SiteBanner`; pass `null` to suppress it.
+   */
   banner?: ReactNode;
 }
 
@@ -103,7 +107,7 @@ export default function MainLayout({
             </Breadcrumb>
           </div>
         </header>
-        {banner}
+        {banner === undefined ? <SiteBanner /> : banner}
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           <main className={className}>{children}</main>
         </div>
