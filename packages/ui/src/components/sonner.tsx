@@ -11,12 +11,30 @@ import { Toaster as Sonner, ToasterProps } from 'sonner';
 
 import { Spinner } from '@workspace/ui/components/spinner';
 
+// globals.css only defines `:root` (light) and `.dark` popover colors, so
+// there's no `.light` class to force a light subtree back off of `.dark`.
+// Mirror the two palettes here to force the toast onto the opposite one.
+const POPOVER_COLORS = {
+  light: {
+    bg: 'var(--neutral-0)',
+    text: 'var(--neutral-950)',
+    border: 'var(--neutral-200)',
+  },
+  dark: {
+    bg: 'var(--neutral-900)',
+    text: 'var(--neutral-50)',
+    border: 'oklch(1 0 0 / 10%)',
+  },
+} as const;
+
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = 'system' } = useTheme();
+  const { resolvedTheme } = useTheme();
+  const invertedTheme = resolvedTheme === 'light' ? 'dark' : 'light';
+  const colors = POPOVER_COLORS[invertedTheme];
 
   return (
     <Sonner
-      theme={theme as ToasterProps['theme']}
+      theme={invertedTheme}
       className="toaster group"
       icons={{
         success: <CircleCheckIcon className="size-4" />,
@@ -27,9 +45,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       style={
         {
-          '--normal-bg': 'var(--popover)',
-          '--normal-text': 'var(--popover-foreground)',
-          '--normal-border': 'var(--border)',
+          '--normal-bg': colors.bg,
+          '--normal-text': colors.text,
+          '--normal-border': colors.border,
           '--border-radius': 'var(--radius)',
         } as React.CSSProperties
       }
