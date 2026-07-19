@@ -4,6 +4,7 @@ import Link from 'next/link';
 
 import { ActionButton } from '@workspace/ui/components/action-button';
 import { Badge } from '@workspace/ui/components/badge';
+import { Banner } from '@workspace/ui/components/banner';
 import { Button } from '@workspace/ui/components/button';
 import {
   Card,
@@ -110,18 +111,12 @@ export default function Home() {
             </div>
 
             {isLoaded && !isConfigured && (
-              <div className="rounded-lg border border-banner-warning-fg/25 bg-banner-warning-bg p-4 text-sm text-banner-warning-fg">
-                <p>
-                  <strong>Getting started:</strong> Head to{' '}
-                  <Link
-                    href="/timesheet/config"
-                    className="font-medium underline underline-offset-4"
-                  >
-                    Settings
-                  </Link>{' '}
-                  to configure your Jira credentials before logging work.
-                </p>
-              </div>
+              <Banner
+                state="warning"
+                title="Getting started"
+                message="Head to Settings to configure your Jira credentials before logging work."
+                action={{ label: 'Go to Configs', href: '/timesheet/config' }}
+              />
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
