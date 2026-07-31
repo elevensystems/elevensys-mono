@@ -314,20 +314,14 @@ export function MissingWorklogsCard({
           </div>
         </div>
 
-        {/* Chip list — bordered box only when dates exist */}
-        {selectedDates.length > 0 ? (
-          <div className="rounded-md border bg-card p-2">
-            <DateChipList
-              dates={selectedDates}
-              manualDateKeys={manualDateKeys}
-              onRemove={handleRemoveDate}
-            />
-          </div>
-        ) : (
-          <span className="text-xs text-muted-foreground italic">
-            No dates selected. Use &quot;Find Dates&quot; or add manually below.
-          </span>
-        )}
+        {/* Chip list — bordered box always shown, min-height keeps it stable when empty */}
+        <div className="rounded-md border bg-card p-2 min-h-11">
+          <DateChipList
+            dates={selectedDates}
+            manualDateKeys={manualDateKeys}
+            onRemove={handleRemoveDate}
+          />
+        </div>
         {dateError && (
           <p className="text-sm text-destructive" role="alert">
             {dateError}
