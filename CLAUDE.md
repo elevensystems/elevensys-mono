@@ -11,11 +11,13 @@ packages. It provides AI-powered productivity tools and an admin dashboard. Buil
 
 ### Monorepo Structure
 
-| Workspace        | Package Name       | Description                                  | Port |
-| ---------------- | ------------------ | -------------------------------------------- | ---- |
-| `apps/web`       | `elevensys-web`    | Main web app with tools, auth, and timesheet | 3000 |
-| `apps/admin`     | `elevensys-admin`  | Admin dashboard (newly scaffolded)           | 3002 |
-| `packages/ui`    | `@workspace/ui`    | Shared UI components (shadcn/ui + Radix)     | —    |
+| Workspace      | Package Name        | Description                                  | Port |
+| -------------- | ------------------- | -------------------------------------------- | ---- |
+| `apps/web`     | `elevensys-web`     | Main web app with tools, auth, and timesheet | 3000 |
+| `apps/admin`   | `elevensys-admin`   | Admin dashboard (newly scaffolded)           | 3002 |
+| `apps/insight` | `elevensys-insight` | Usage analytics dashboard                    | 3003 |
+| `apps/pulse`   | `elevensys-pulse`   | Jira timesheet & worklog app                 | 3004 |
+| `packages/ui`  | `@workspace/ui`     | Shared UI components (shadcn/ui + Radix)     | —    |
 
 ### Quick Start
 
@@ -29,6 +31,7 @@ pnpm dev
 # Start a specific app
 pnpm --filter elevensys-web dev
 pnpm --filter elevensys-admin dev
+pnpm --filter elevensys-pulse dev
 
 # Build all apps
 pnpm build
@@ -46,21 +49,21 @@ pnpm --filter elevensys-web test:coverage
 
 ## Tech Stack
 
-| Category        | Technology                              |
-| --------------- | --------------------------------------- |
-| Monorepo        | Turborepo + pnpm workspaces             |
-| Framework       | Next.js 16 (App Router, Turbopack)      |
-| UI Library      | React 19                                |
-| Language        | TypeScript 5 (strict mode)              |
-| Styling         | Tailwind CSS v4                         |
-| Components      | shadcn/ui + Radix UI primitives         |
-| Icons           | lucide-react                            |
-| Editor          | Monaco Editor                           |
-| Auth            | AWS Cognito OAuth2 (PKCE)               |
-| Theming         | next-themes                             |
-| Notifications   | sonner                                  |
-| Forms           | @tanstack/react-form                    |
-| Package Manager | pnpm 10                                 |
+| Category        | Technology                         |
+| --------------- | ---------------------------------- |
+| Monorepo        | Turborepo + pnpm workspaces        |
+| Framework       | Next.js 16 (App Router, Turbopack) |
+| UI Library      | React 19                           |
+| Language        | TypeScript 5 (strict mode)         |
+| Styling         | Tailwind CSS v4                    |
+| Components      | shadcn/ui + Radix UI primitives    |
+| Icons           | lucide-react                       |
+| Editor          | Monaco Editor                      |
+| Auth            | AWS Cognito OAuth2 (PKCE)          |
+| Theming         | next-themes                        |
+| Notifications   | sonner                             |
+| Forms           | @tanstack/react-form               |
+| Package Manager | pnpm 10                            |
 
 ## Directory Structure
 
@@ -122,16 +125,38 @@ elevensys-mono/
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   │
-│   └── admin/                      # Admin dashboard (elevensys-admin)
+│   ├── admin/                      # Admin dashboard (elevensys-admin)
+│   │   ├── src/
+│   │   │   ├── app/
+│   │   │   │   ├── layout.tsx      # Root layout (Inter font, ThemeProvider)
+│   │   │   │   └── page.tsx        # Admin dashboard page
+│   │   │   ├── components/
+│   │   │   │   └── theme-provider.tsx
+│   │   │   └── styles/
+│   │   │       └── globals.css
+│   │   ├── next.config.ts
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   │
+│   ├── insight/                    # Usage analytics dashboard (elevensys-insight)
+│   │
+│   └── pulse/                      # Jira timesheet & worklog app (elevensys-pulse)
 │       ├── src/
 │       │   ├── app/
-│       │   │   ├── layout.tsx      # Root layout (Inter font, ThemeProvider)
-│       │   │   └── page.tsx        # Admin dashboard page
+│       │   │   ├── api/jira/       # Proxy routes to backend Jira API (12 routes)
+│       │   │   ├── page.tsx        # Landing page (feature cards)
+│       │   │   ├── config/         # Jira credentials settings
+│       │   │   ├── logwork/        # Log work page (+ page-local _components)
+│       │   │   ├── my-worklogs/    # Personal worklogs grouped by date
+│       │   │   ├── project-worklogs/
+│       │   │   ├── worklog-management/  # Hidden page (direct URL only)
+│       │   │   └── autolog/        # Autolog configs (list, new, edit)
 │       │   ├── components/
-│       │   │   └── theme-provider.tsx
-│       │   └── styles/
-│       │       └── globals.css
-│       ├── next.config.ts
+│       │   │   ├── layouts/        # main-layout, app-sidebar, nav-*, tool-page-header
+│       │   │   └── features/       # timesheet + autolog shared components
+│       │   ├── hooks/              # 10 timesheet/autolog hooks
+│       │   ├── lib/                # timesheet.ts, api-urls, jira-proxy, fetch-utils
+│       │   └── types/              # timesheet.ts, autolog.ts
 │       ├── package.json
 │       └── tsconfig.json
 │
@@ -162,9 +187,11 @@ elevensys-mono/
 ```
 apps/web     ──depends on──▶  @workspace/ui
 apps/admin   ──depends on──▶  @workspace/ui
+apps/insight ──depends on──▶  @workspace/ui
+apps/pulse   ──depends on──▶  @workspace/ui
 ```
 
-Both apps declare `"@workspace/ui": "workspace:*"` in their `package.json` and configure
+All apps declare `"@workspace/ui": "workspace:*"` in their `package.json` and configure
 `transpilePackages: ['@workspace/ui']` in `next.config.ts`.
 
 ### Shared UI Package (`@workspace/ui`)
@@ -189,15 +216,12 @@ The `packages/ui` package exports via the `exports` field in `package.json`:
 import { Button } from '@workspace/ui/components/button';
 import { Sidebar } from '@workspace/ui/components/sidebar';
 import { Toaster } from '@workspace/ui/components/sonner';
-
-// Hooks
-import { useIsMobile } from '@workspace/ui/hooks/use-mobile';
-
-// Utilities
-import { cn, hasRole } from '@workspace/ui/lib/utils';
-
 // Styles (in app's globals.css or layout)
 import '@workspace/ui/globals.css';
+// Hooks
+import { useIsMobile } from '@workspace/ui/hooks/use-mobile';
+// Utilities
+import { cn, hasRole } from '@workspace/ui/lib/utils';
 ```
 
 ### Adding shadcn/ui Components
@@ -263,13 +287,14 @@ import { useCallback, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { toast } from 'sonner';
-
 import { Button } from '@workspace/ui/components/button';
 import { cn } from '@workspace/ui/lib/utils';
+import { toast } from 'sonner';
 
 import MainLayout from '@/components/layouts/main-layout';
 import type { AuthUser } from '@/types/auth';
+
+// Always use 'use client' directive for client components
 
 // Define interfaces above component
 interface MyComponentProps {
@@ -377,6 +402,21 @@ The admin dashboard application. Currently a minimal scaffold sharing `@workspac
 - **Port**: 3002 (`next dev -p 3002`)
 - **Providers**: `ThemeProvider` only (no auth/domain/flags yet)
 
+### apps/pulse (elevensys-pulse)
+
+The dedicated Jira timesheet app. Contains the timesheet feature migrated from `apps/web` (routes
+moved to the app root: `/`, `/logwork`, `/my-worklogs`, `/project-worklogs`, `/worklog-management`
+(hidden), `/autolog`, `/config`).
+
+- **Font**: Ubuntu (via `next/font/google`)
+- **Port**: 3004 (`next dev -p 3004`)
+- **Providers**: `ThemeProvider` only — no Cognito, no feature flags
+- **Auth**: Jira PAT saved in `localStorage` via `/config`, sent as a `Bearer` header to
+  `/api/jira/*` proxy routes (forwarded to `API_BASE_URL`)
+- **Env**: only `API_BASE_URL` (validated in `src/env.ts`)
+- Shared timesheet components live in `src/components/features/timesheet/`; page-private components
+  stay in each route's `_components/`
+
 ## Authentication System (apps/web)
 
 ### Architecture
@@ -400,8 +440,9 @@ type UserRole = 'pro' | 'free';
 ```tsx
 'use client';
 
-import { useAuth } from '@/contexts/auth-context';
 import { hasRole } from '@workspace/ui/lib/utils';
+
+import { useAuth } from '@/contexts/auth-context';
 
 function MyComponent() {
   const { user } = useAuth();
@@ -563,7 +604,7 @@ pnpm turbo dev --filter=elevensys-web
 | Component Testing | React Testing Library (`@testing-library/react`) |
 | User Interactions | `@testing-library/user-event`                    |
 | Assertions        | `@testing-library/jest-dom`                      |
-| Environment       | jsdom (`jest-environment-jsdom`)                  |
+| Environment       | jsdom (`jest-environment-jsdom`)                 |
 
 ### Commands
 
@@ -606,18 +647,21 @@ The timesheet feature (`src/app/timesheet/`) allows users to log, review, and ma
 
 ### Pages
 
-| Route                         | Page              | Description                                          |
-| ----------------------------- | ----------------- | ---------------------------------------------------- |
-| `/timesheet/logwork`          | Log Work          | Find missing dates and bulk-log entries to Jira      |
-| `/timesheet/worklogs`         | My Worklogs       | View personal worklogs grouped by date               |
-| `/timesheet/project-worklogs` | Project Worklogs  | View all worklogs for a project with filters         |
-| `/timesheet/config`           | Configuration     | Save Jira instance, username, and API token locally  |
+| Route                         | Page             | Description                                         |
+| ----------------------------- | ---------------- | --------------------------------------------------- |
+| `/timesheet/logwork`          | Log Work         | Find missing dates and bulk-log entries to Jira     |
+| `/timesheet/worklogs`         | My Worklogs      | View personal worklogs grouped by date              |
+| `/timesheet/project-worklogs` | Project Worklogs | View all worklogs for a project with filters        |
+| `/timesheet/config`           | Configuration    | Save Jira instance, username, and API token locally |
 
 ### Log Work — Bulk Date Range Submission
 
-Selected dates are grouped into contiguous ranges before submission. One API request covers the entire range (`startDate ≠ endDate`), reducing calls from N per entry to 1 per contiguous block.
+Selected dates are grouped into contiguous ranges before submission. One API request covers the
+entire range (`startDate ≠ endDate`), reducing calls from N per entry to 1 per contiguous block.
 
-**Grouping rule**: two dates are contiguous only if they are exactly 1 calendar day apart. This prevents ranges from spanning weekends or holidays — the backend rejects an entire range if any date within it is a holiday.
+**Grouping rule**: two dates are contiguous only if they are exactly 1 calendar day apart. This
+prevents ranges from spanning weekends or holidays — the backend rejects an entire range if any date
+within it is a holiday.
 
 Key utilities in `src/lib/timesheet.ts`:
 
@@ -633,16 +677,16 @@ formatRangeLabel(range: DateRange): string
 
 ```typescript
 interface DateRange {
-  startDate: string;  // Jira D/Mon/YY format
+  startDate: string; // Jira D/Mon/YY format
   endDate: string;
-  dates: string[];    // individual dates in the range
+  dates: string[]; // individual dates in the range
 }
 
 interface RequestStatus {
   entryId: string;
   issueKey: string;
   rangeLabel: string; // "4/May/26 → 8/May/26"
-  dates: string[];    // individual dates for display
+  dates: string[]; // individual dates for display
   status: 'pending' | 'in-progress' | 'success' | 'failed' | 'skipped';
   error?: string;
 }
@@ -657,20 +701,20 @@ interface LogWorkResult {
 
 ### Key Hooks
 
-| Hook                     | File                              | Purpose                                            |
-| ------------------------ | --------------------------------- | -------------------------------------------------- |
-| `useLogWorkSubmission`   | `hooks/use-log-work-submission.ts`| Submit entries by range, track status, retry failed |
-| `useMissingWorklogs`     | `hooks/use-missing-worklogs.ts`   | Find dates with missing worklogs for a project     |
-| `useTimesheetSettings`   | `hooks/use-timesheet-settings.ts` | Load/save Jira credentials from localStorage       |
+| Hook                   | File                               | Purpose                                             |
+| ---------------------- | ---------------------------------- | --------------------------------------------------- |
+| `useLogWorkSubmission` | `hooks/use-log-work-submission.ts` | Submit entries by range, track status, retry failed |
+| `useMissingWorklogs`   | `hooks/use-missing-worklogs.ts`    | Find dates with missing worklogs for a project      |
+| `useTimesheetSettings` | `hooks/use-timesheet-settings.ts`  | Load/save Jira credentials from localStorage        |
 
 ### API Routes (`src/app/api/timesheet/`)
 
-| Route                           | Purpose                                               |
-| ------------------------------- | ----------------------------------------------------- |
-| `POST /api/timesheet/logwork`   | Proxy to backend; forwards worklog with date range    |
-| `POST /api/timesheet/worklogs-warning` | Find dates with missing worklogs for a project |
-| `GET  /api/timesheet/projects`  | List Jira projects                                    |
-| `GET  /api/timesheet/issues`    | List issues for a project                             |
+| Route                                  | Purpose                                            |
+| -------------------------------------- | -------------------------------------------------- |
+| `POST /api/timesheet/logwork`          | Proxy to backend; forwards worklog with date range |
+| `POST /api/timesheet/worklogs-warning` | Find dates with missing worklogs for a project     |
+| `GET  /api/timesheet/projects`         | List Jira projects                                 |
+| `GET  /api/timesheet/issues`           | List issues for a project                          |
 
 ### Logwork API Payload
 
@@ -692,7 +736,8 @@ interface LogWorkResult {
 }
 ```
 
-When `startDate === endDate`, logs for a single day. When they differ, the backend logs for every calendar day in the range.
+When `startDate === endDate`, logs for a single day. When they differ, the backend logs for every
+calendar day in the range.
 
 ## Performance Considerations
 
