@@ -495,7 +495,7 @@ export default function LogWorkPage() {
                 className="w-full sm:w-auto"
                 leftIcon={<Plus />}
               >
-                Add Entry
+                Add Row
               </ActionButton>
               <ActionButton
                 onClick={handleSubmitClick}
@@ -510,7 +510,7 @@ export default function LogWorkPage() {
                     : undefined
                 }
               >
-                Submit Work Logs
+                Submit
               </ActionButton>
             </div>
           </div>

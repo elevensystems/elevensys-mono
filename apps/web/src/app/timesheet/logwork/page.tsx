@@ -495,7 +495,7 @@ export default function LogWorkPage() {
                 className="w-full sm:w-auto"
                 leftIcon={<Plus />}
               >
-                Add Entry
+                Add
               </ActionButton>
               <ActionButton
                 onClick={handleSubmitClick}
