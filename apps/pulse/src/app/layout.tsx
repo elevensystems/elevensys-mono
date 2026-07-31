@@ -19,7 +19,7 @@ const ubuntuMono = Ubuntu_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Pulse',
+  title: 'Jirassic World',
   description: 'Jira timesheet and worklog management',
   icons: [
     {

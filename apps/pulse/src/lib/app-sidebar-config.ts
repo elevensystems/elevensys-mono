@@ -25,7 +25,7 @@ export const appSidebarData: {
   appName: string;
   navMain: NavItem[];
 } = {
-  appName: 'Pulse',
+  appName: 'Jirassic World',
   navMain: [
     { title: 'Home', url: '/', icon: Home },
     { title: 'Log Work', url: '/logwork', icon: PenLine },

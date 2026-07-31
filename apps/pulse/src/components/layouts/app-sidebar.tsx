@@ -13,7 +13,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@workspace/ui/components/sidebar';
-import { Clock } from 'lucide-react';
+import SolidDinosaurIcon from '@workspace/ui/components/solid-dinosaur-icon';
 
 import { NavMain } from '@/components/layouts/nav-main';
 import { NavSecondary } from '@/components/layouts/nav-secondary';
@@ -28,14 +28,14 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton size="lg" asChild>
               <Link href="/">
                 <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-sm">
-                  <Clock className="size-4" />
+                  <SolidDinosaurIcon className="size-4 fill-current" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">
                     {appSidebarData.appName}
                   </span>
                   <span className="truncate text-xs text-muted-foreground">
-                    Timesheet
+                    Version 1.0.2
                   </span>
                 </div>
               </Link>
