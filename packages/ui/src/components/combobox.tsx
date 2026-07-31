@@ -12,6 +12,7 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from '@workspace/ui/components/input-group';
+import { Spinner } from '@workspace/ui/components/spinner';
 import { cn } from '@workspace/ui/lib/utils';
 
 const Combobox = ComboboxPrimitive.Root;
@@ -59,10 +60,12 @@ function ComboboxInput({
   disabled = false,
   showTrigger = true,
   showClear = false,
+  loading = false,
   ...props
 }: ComboboxPrimitive.Input.Props & {
   showTrigger?: boolean;
   showClear?: boolean;
+  loading?: boolean;
 }) {
   return (
     <InputGroup className={cn('w-auto', className)}>
@@ -71,19 +74,25 @@ function ComboboxInput({
         {...props}
       />
       <InputGroupAddon align="inline-end">
-        {showTrigger && (
-          <InputGroupButton
-            size="icon-xs"
-            variant="ghost"
-            asChild
-            data-slot="input-group-button"
-            className="group-has-data-[slot=combobox-clear]/input-group:hidden data-pressed:bg-transparent"
-            disabled={disabled}
-          >
-            <ComboboxTrigger />
-          </InputGroupButton>
+        {loading ? (
+          <Spinner data-slot="combobox-loading-icon" className="mr-1" />
+        ) : (
+          <>
+            {showTrigger && (
+              <InputGroupButton
+                size="icon-xs"
+                variant="ghost"
+                asChild
+                data-slot="input-group-button"
+                className="group-has-data-[slot=combobox-clear]/input-group:hidden data-pressed:bg-transparent"
+                disabled={disabled}
+              >
+                <ComboboxTrigger />
+              </InputGroupButton>
+            )}
+            {showClear && <ComboboxClear disabled={disabled} />}
+          </>
         )}
-        {showClear && <ComboboxClear disabled={disabled} />}
       </InputGroupAddon>
       {children}
     </InputGroup>

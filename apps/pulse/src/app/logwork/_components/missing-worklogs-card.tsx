@@ -199,6 +199,7 @@ export function MissingWorklogsCard({
                 }
                 className="w-full"
                 disabled={isLoadingProjects}
+                loading={isLoadingProjects}
                 showClear
               />
               <ComboboxContent>

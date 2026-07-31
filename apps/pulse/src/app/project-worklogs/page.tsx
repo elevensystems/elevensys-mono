@@ -180,6 +180,7 @@ export default function ProjectWorklogsPage() {
                       }
                       className="w-full"
                       disabled={!isConfigured || projectsLoading}
+                      loading={projectsLoading}
                       showClear
                     />
                     <ComboboxContent>
