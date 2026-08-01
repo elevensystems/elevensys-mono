@@ -81,12 +81,13 @@ function DateRangePicker({
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
-            initialFocus
+            autoFocus
             mode="range"
             defaultMonth={selected?.from}
             selected={selected}
             onSelect={handleSelect}
             numberOfMonths={2}
+            showOutsideDays={false}
           />
         </PopoverContent>
       </Popover>
