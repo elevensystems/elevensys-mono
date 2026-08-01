@@ -2,7 +2,6 @@
 
 import { memo, useCallback } from 'react';
 
-import { ActionButton } from '@workspace/ui/components/action-button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,6 +14,7 @@ import {
   AlertDialogTrigger,
 } from '@workspace/ui/components/alert-dialog';
 import { Badge } from '@workspace/ui/components/badge';
+import { Button } from '@workspace/ui/components/button';
 import { Checkbox } from '@workspace/ui/components/checkbox';
 import { Spinner } from '@workspace/ui/components/spinner';
 import {
@@ -127,15 +127,15 @@ export const MyWorklogRow = memo(function MyWorklogRow({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <ActionButton
+                  <Button
                     variant="ghost"
                     size="icon"
-                    className="size-8"
                     disabled={!isEditable}
                     onClick={handleEdit}
-                    leftIcon={<SquarePenIcon />}
                     aria-label="Edit"
-                  />
+                  >
+                    <SquarePenIcon />
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent>Edit</TooltipContent>
               </Tooltip>
@@ -145,14 +145,15 @@ export const MyWorklogRow = memo(function MyWorklogRow({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <AlertDialogTrigger asChild>
-                      <ActionButton
+                      <Button
                         variant="ghost"
                         size="icon"
-                        className="size-8 text-destructive hover:text-destructive"
+                        className="text-destructive hover:text-destructive"
                         disabled={!isEditable}
-                        leftIcon={<Trash2Icon />}
                         aria-label="Delete"
-                      />
+                      >
+                        <Trash2Icon />
+                      </Button>
                     </AlertDialogTrigger>
                   </TooltipTrigger>
                   <TooltipContent>Delete</TooltipContent>

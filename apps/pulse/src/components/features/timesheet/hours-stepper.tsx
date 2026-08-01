@@ -136,7 +136,7 @@ export function HoursStepper({
       tabIndex={isEditing ? -1 : 0}
       onKeyDown={handleContainerKeyDown}
       className={cn(
-        'inline-flex h-8 items-center gap-1 rounded-md',
+        'inline-flex h-9 items-center gap-1 rounded-md',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         disabled && 'opacity-50 pointer-events-none'
       )}
@@ -145,7 +145,7 @@ export function HoursStepper({
         type="button"
         variant="outline"
         size="icon"
-        className="h-7 w-7 shrink-0"
+        className="shrink-0"
         disabled={disabled || !canDecrement}
         onClick={handleDecrement}
         aria-label="Decrease hours"
@@ -181,7 +181,7 @@ export function HoursStepper({
         type="button"
         variant="outline"
         size="icon"
-        className="h-7 w-7 shrink-0"
+        className="shrink-0"
         disabled={disabled || !canIncrement}
         onClick={handleIncrement}
         aria-label="Increase hours"

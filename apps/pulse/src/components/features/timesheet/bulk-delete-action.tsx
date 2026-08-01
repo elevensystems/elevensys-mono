@@ -1,6 +1,5 @@
 'use client';
 
-import { ActionButton } from '@workspace/ui/components/action-button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,7 +11,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@workspace/ui/components/alert-dialog';
+import { Button } from '@workspace/ui/components/button';
 import { CardAction } from '@workspace/ui/components/card';
+import { Spinner } from '@workspace/ui/components/spinner';
 import { EraserIcon, Trash2 } from 'lucide-react';
 
 import { ProgressDialog } from '@/components/progress-dialog';
@@ -45,15 +46,10 @@ export function BulkDeleteAction({
           </span>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <ActionButton
-                variant="destructive"
-                size="sm"
-                leftIcon={<Trash2 />}
-                isLoading={isBulkDeleting}
-                loadingText="Deleting..."
-              >
-                Delete
-              </ActionButton>
+              <Button variant="destructive" size="sm" disabled={isBulkDeleting}>
+                {isBulkDeleting ? <Spinner /> : <Trash2 />}
+                {isBulkDeleting ? 'Deleting...' : 'Delete'}
+              </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -78,14 +74,10 @@ export function BulkDeleteAction({
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-          <ActionButton
-            variant="ghost"
-            size="sm"
-            onClick={onClearSelection}
-            leftIcon={<EraserIcon />}
-          >
+          <Button variant="ghost" size="sm" onClick={onClearSelection}>
+            <EraserIcon />
             Clear
-          </ActionButton>
+          </Button>
         </div>
       </CardAction>
 

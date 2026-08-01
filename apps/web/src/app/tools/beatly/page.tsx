@@ -2,6 +2,25 @@
 
 import { useCallback, useState } from 'react';
 
+import { Badge } from '@workspace/ui/components/badge';
+import { Button } from '@workspace/ui/components/button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@workspace/ui/components/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@workspace/ui/components/dialog';
+import { Label } from '@workspace/ui/components/label';
+import { RainbowButton } from '@workspace/ui/components/rainbow-button';
+import { Separator } from '@workspace/ui/components/separator';
+import { Textarea } from '@workspace/ui/components/textarea';
 import {
   ChevronDown,
   ExternalLink,
@@ -18,23 +37,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { ActionButton } from '@workspace/ui/components/action-button';
 import MainLayout from '@/components/layouts/main-layout';
 import { ToolPageHeader } from '@/components/layouts/tool-page-header';
-import { Badge } from '@workspace/ui/components/badge';
-import { Button } from '@workspace/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@workspace/ui/components/dialog';
-import { Label } from '@workspace/ui/components/label';
-import { RainbowButton } from '@workspace/ui/components/rainbow-button';
-import { Separator } from '@workspace/ui/components/separator';
-import { Textarea } from '@workspace/ui/components/textarea';
 import { GENRES, RANDOM_MOODS } from '@/lib/beatly-data';
 import type { Song } from '@/types/beatly';
 
@@ -332,24 +336,24 @@ export default function BeatlyPage() {
                   </RainbowButton>
 
                   <div className="grid grid-cols-2 gap-2">
-                    <ActionButton
+                    <Button
                       onClick={handleRandomMood}
                       variant="secondary"
                       size="sm"
                       disabled={isLoading}
-                      leftIcon={<Shuffle />}
                     >
+                      <Shuffle />
                       Random
-                    </ActionButton>
-                    <ActionButton
+                    </Button>
+                    <Button
                       onClick={handleReset}
                       variant="secondary"
                       size="sm"
                       disabled={isLoading}
-                      leftIcon={<RefreshCw />}
                     >
+                      <RefreshCw />
                       Reset
-                    </ActionButton>
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -401,7 +405,7 @@ export default function BeatlyPage() {
                               </p>
                             </div>
                             <div className="flex gap-1.5 flex-shrink-0">
-                              <ActionButton
+                              <Button
                                 variant="ghost"
                                 size="sm"
                                 className="h-8 px-3"
@@ -415,13 +419,13 @@ export default function BeatlyPage() {
                                   );
                                 }}
                                 title="Search on YouTube"
-                                leftIcon={<ExternalLink />}
                               >
+                                <ExternalLink />
                                 <span className="hidden sm:inline">
                                   YouTube
                                 </span>
-                              </ActionButton>
-                              <ActionButton
+                              </Button>
+                              <Button
                                 variant="ghost"
                                 size="sm"
                                 className="h-8 px-3"
@@ -435,12 +439,12 @@ export default function BeatlyPage() {
                                   );
                                 }}
                                 title="Search on Spotify"
-                                leftIcon={<ExternalLink />}
                               >
+                                <ExternalLink />
                                 <span className="hidden sm:inline">
                                   Spotify
                                 </span>
-                              </ActionButton>
+                              </Button>
                             </div>
                           </div>
                         </CardContent>
@@ -448,24 +452,22 @@ export default function BeatlyPage() {
                     ))}
                   </div>
 
-                  <ActionButton
+                  <Button
                     onClick={handleMoreSongs}
                     disabled={isLoading}
                     variant="outline"
                     className="w-full"
                     size="lg"
-                    leftIcon={
-                      isLoading ? (
-                        <RefreshCw className="animate-spin" />
-                      ) : (
-                        <Plus />
-                      )
-                    }
                   >
+                    {isLoading ? (
+                      <RefreshCw className="animate-spin" />
+                    ) : (
+                      <Plus />
+                    )}
                     {isLoading
                       ? 'Finding more songs...'
                       : 'Generate More Songs'}
-                  </ActionButton>
+                  </Button>
                 </div>
               ) : (
                 <Card className="h-full min-h-[500px] flex items-center justify-center">

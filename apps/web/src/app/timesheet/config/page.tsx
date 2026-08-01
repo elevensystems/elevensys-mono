@@ -4,6 +4,10 @@ import { useCallback, useEffect, useState } from 'react';
 
 import Link from 'next/link';
 
+import { Button } from '@workspace/ui/components/button';
+import { Input } from '@workspace/ui/components/input';
+import { NativeSelect } from '@workspace/ui/components/native-select';
+import { Spinner } from '@workspace/ui/components/spinner';
 import {
   ArrowLeft,
   Check,
@@ -18,14 +22,9 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { ActionButton } from '@workspace/ui/components/action-button';
 import MainLayout from '@/components/layouts/main-layout';
-import { Button } from '@workspace/ui/components/button';
-import { Input } from '@workspace/ui/components/input';
-import { NativeSelect } from '@workspace/ui/components/native-select';
-import { Spinner } from '@workspace/ui/components/spinner';
-import { DEFAULT_JIRA_INSTANCE } from '@/lib/constants';
 import { useTimesheetSettings } from '@/hooks/use-timesheet-settings';
+import { DEFAULT_JIRA_INSTANCE } from '@/lib/constants';
 
 export default function TimesheetConfigPage() {
   const { settings, saveSettings, isConfigured, isLoaded } =
@@ -33,7 +32,9 @@ export default function TimesheetConfigPage() {
 
   const [username, setUsername] = useState('');
   const [token, setToken] = useState('');
-  const [jiraInstance, setJiraInstance] = useState<string>(DEFAULT_JIRA_INSTANCE);
+  const [jiraInstance, setJiraInstance] = useState<string>(
+    DEFAULT_JIRA_INSTANCE
+  );
   const [showToken, setShowToken] = useState(false);
 
   const [initialized, setInitialized] = useState(false);
@@ -69,11 +70,14 @@ export default function TimesheetConfigPage() {
     setIsSaving(true);
     try {
       const params = new URLSearchParams({ jiraInstance });
-      const response = await fetch(`/api/jira/auth/check?${params.toString()}`, {
-        headers: {
-          Authorization: `Bearer ${token.trim()}`,
-        },
-      });
+      const response = await fetch(
+        `/api/jira/auth/check?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token.trim()}`,
+          },
+        }
+      );
 
       if (!response.ok) {
         toast.error('Token is not valid or not correct');
@@ -100,7 +104,11 @@ export default function TimesheetConfigPage() {
     setUsername('');
     setToken('');
     setJiraInstance(DEFAULT_JIRA_INSTANCE);
-    saveSettings({ username: '', token: '', jiraInstance: DEFAULT_JIRA_INSTANCE });
+    saveSettings({
+      username: '',
+      token: '',
+      jiraInstance: DEFAULT_JIRA_INSTANCE,
+    });
     toast.success('Settings cleared');
   }, [saveSettings]);
 
@@ -120,10 +128,11 @@ export default function TimesheetConfigPage() {
     <MainLayout>
       <section className="container mx-auto px-4 py-12">
         <div className="max-w-5xl mx-auto space-y-6">
-
           {/* Page header */}
           <div className="flex items-center justify-between mb-8">
-            <h1 className="text-2xl font-bold tracking-tight">Configurations</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Configurations
+            </h1>
             {isConfigured ? (
               <span className="flex items-center gap-1.5 text-sm font-medium text-success">
                 <span className="h-2 w-2 rounded-full bg-success" />
@@ -139,12 +148,14 @@ export default function TimesheetConfigPage() {
 
           {/* Form rows */}
           <div className="border rounded-lg overflow-hidden divide-y">
-
             {/* Instance row */}
             <div className="flex items-start gap-4 px-5 py-4">
               <div className="flex items-center gap-2.5 w-36 shrink-0 pt-2 text-muted-foreground">
                 <Server className="h-4 w-4 shrink-0" />
-                <label htmlFor="jira-instance" className="text-sm font-medium cursor-pointer">
+                <label
+                  htmlFor="jira-instance"
+                  className="text-sm font-medium cursor-pointer"
+                >
                   Instance
                 </label>
               </div>
@@ -179,7 +190,10 @@ export default function TimesheetConfigPage() {
             <div className="flex items-start gap-4 px-5 py-4">
               <div className="flex items-center gap-2.5 w-36 shrink-0 pt-2 text-muted-foreground">
                 <User className="h-4 w-4 shrink-0" />
-                <label htmlFor="username" className="text-sm font-medium cursor-pointer">
+                <label
+                  htmlFor="username"
+                  className="text-sm font-medium cursor-pointer"
+                >
                   Username
                 </label>
               </div>
@@ -190,7 +204,9 @@ export default function TimesheetConfigPage() {
                   value={username}
                   onChange={e => setUsername(e.target.value)}
                 />
-                <p className="text-xs text-muted-foreground">Your FPT username account</p>
+                <p className="text-xs text-muted-foreground">
+                  Your FPT username account
+                </p>
               </div>
             </div>
 
@@ -198,7 +214,10 @@ export default function TimesheetConfigPage() {
             <div className="flex items-start gap-4 px-5 py-4">
               <div className="flex items-center gap-2.5 w-36 shrink-0 pt-2 text-muted-foreground">
                 <KeyRound className="h-4 w-4 shrink-0" />
-                <label htmlFor="token" className="text-sm font-medium cursor-pointer">
+                <label
+                  htmlFor="token"
+                  className="text-sm font-medium cursor-pointer"
+                >
                   Token
                 </label>
               </div>
@@ -212,26 +231,26 @@ export default function TimesheetConfigPage() {
                     onChange={e => setToken(e.target.value)}
                     className="pr-10"
                   />
-                  <ActionButton
+                  <Button
                     type="button"
                     variant="ghost"
                     size="icon-sm"
                     className="absolute right-1 top-1/2 -translate-y-1/2"
                     onClick={() => setShowToken(prev => !prev)}
                     aria-label={showToken ? 'Hide token' : 'Show token'}
-                    leftIcon={
-                      showToken ? (
-                        <EyeOff className="text-muted-foreground" />
-                      ) : (
-                        <Eye className="text-muted-foreground" />
-                      )
-                    }
-                  />
+                  >
+                    {showToken ? (
+                      <EyeOff className="text-muted-foreground" />
+                    ) : (
+                      <Eye className="text-muted-foreground" />
+                    )}
+                  </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">Personal access token for API authentication</p>
+                <p className="text-xs text-muted-foreground">
+                  Personal access token for API authentication
+                </p>
               </div>
             </div>
-
           </div>
 
           {/* Footer */}
@@ -255,26 +274,34 @@ export default function TimesheetConfigPage() {
               )}
             </div>
             <div className="flex items-center gap-2">
-              <ActionButton
+              <Button
                 variant="outline"
                 size="sm"
                 className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                 onClick={handleClear}
                 disabled={!isConfigured}
-                leftIcon={<Trash2 />}
               >
+                <Trash2 />
                 Clear
-              </ActionButton>
-              <ActionButton
+              </Button>
+              <Button
                 size="sm"
                 onClick={handleSave}
                 disabled={isSaving || (!hasChanges && isConfigured)}
-                leftIcon={isConfigured && !hasChanges ? <Check /> : <Save />}
-                isLoading={isSaving}
-                loadingText="Verifying..."
               >
-                {isConfigured && !hasChanges ? 'Saved' : 'Save'}
-              </ActionButton>
+                {isSaving ? (
+                  <Spinner />
+                ) : isConfigured && !hasChanges ? (
+                  <Check />
+                ) : (
+                  <Save />
+                )}
+                {isSaving
+                  ? 'Verifying...'
+                  : isConfigured && !hasChanges
+                    ? 'Saved'
+                    : 'Save'}
+              </Button>
             </div>
           </div>
 
@@ -283,7 +310,6 @@ export default function TimesheetConfigPage() {
             <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
             Credentials stored locally — passed directly to the Jira API.
           </p>
-
         </div>
       </section>
     </MainLayout>

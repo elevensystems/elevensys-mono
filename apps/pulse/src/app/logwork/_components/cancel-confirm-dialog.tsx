@@ -1,6 +1,6 @@
 'use client';
 
-import { ActionButton } from '@workspace/ui/components/action-button';
+import { Button } from '@workspace/ui/components/button';
 import {
   Dialog,
   DialogContent,
@@ -35,10 +35,10 @@ export function CancelConfirmDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2">
-          <ActionButton variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             Continue
-          </ActionButton>
-          <ActionButton
+          </Button>
+          <Button
             variant="destructive"
             onClick={() => {
               onConfirmCancel();
@@ -46,7 +46,7 @@ export function CancelConfirmDialog({
             }}
           >
             Cancel Submission
-          </ActionButton>
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

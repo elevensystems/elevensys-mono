@@ -3,22 +3,18 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import {
-  ArrowRightLeft,
-  ChevronDown,
-  Copy,
-  SlidersHorizontal,
-  Sparkles,
-  X,
-} from 'lucide-react';
-
-import { ActionButton } from '@workspace/ui/components/action-button';
-import GuestLoginAlert from '@/components/layouts/guest-login-alert';
-import MainLayout from '@/components/layouts/main-layout';
-import { ToolPageHeader } from '@/components/layouts/tool-page-header';
-import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert';
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from '@workspace/ui/components/alert';
 import { Badge } from '@workspace/ui/components/badge';
 import { Button } from '@workspace/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@workspace/ui/components/card';
 import {
   Dialog,
   DialogContent,
@@ -31,6 +27,19 @@ import { NativeSelect } from '@workspace/ui/components/native-select';
 import { RainbowButton } from '@workspace/ui/components/rainbow-button';
 import { Spinner } from '@workspace/ui/components/spinner';
 import { Textarea } from '@workspace/ui/components/textarea';
+import {
+  ArrowRightLeft,
+  Check,
+  ChevronDown,
+  Copy,
+  SlidersHorizontal,
+  Sparkles,
+  X,
+} from 'lucide-react';
+
+import GuestLoginAlert from '@/components/layouts/guest-login-alert';
+import MainLayout from '@/components/layouts/main-layout';
+import { ToolPageHeader } from '@/components/layouts/tool-page-header';
 import { useAuth } from '@/contexts/auth-context';
 import { useActionFeedback } from '@/hooks/use-action-feedback';
 import {
@@ -76,7 +85,9 @@ export default function TranslatelyPage() {
   const inputPlaceholder = isViToEn
     ? 'Enter Vietnamese text...'
     : 'Enter English text...';
-  const outputLabel = isViToEn ? 'English Translation' : 'Vietnamese Translation';
+  const outputLabel = isViToEn
+    ? 'English Translation'
+    : 'Vietnamese Translation';
 
   const persistPreferences = useCallback((next: Preferences) => {
     try {
@@ -403,15 +414,16 @@ export default function TranslatelyPage() {
             </Card>
 
             <div className="flex flex-col items-center justify-center gap-3 lg:pt-10">
-              <ActionButton
+              <Button
                 variant="outline"
                 size="icon"
                 onClick={handleSwap}
                 disabled={loading}
                 aria-label="Swap translation direction"
                 className="h-11 w-11 rounded-full shadow-sm"
-                leftIcon={<ArrowRightLeft />}
-              />
+              >
+                <ArrowRightLeft />
+              </Button>
               <span className="text-xs text-muted-foreground text-center max-w-[120px]">
                 Swap direction
               </span>
@@ -421,16 +433,19 @@ export default function TranslatelyPage() {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>{outputLabel}</span>
-                  <ActionButton
+                  <Button
                     variant="ghost"
                     size="sm"
                     onClick={handleCopy}
                     disabled={!outputText}
-                    leftIcon={<Copy />}
-                    feedbackActive={isActive('copy')}
                   >
+                    {isActive('copy') ? (
+                      <Check className="animate-bounce-in" />
+                    ) : (
+                      <Copy />
+                    )}
                     Copy
-                  </ActionButton>
+                  </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">

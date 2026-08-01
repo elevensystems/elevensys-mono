@@ -3,15 +3,15 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import Editor from '@monaco-editor/react';
-import { Copy, Eraser } from 'lucide-react';
+import { Button } from '@workspace/ui/components/button';
+import { Separator } from '@workspace/ui/components/separator';
+import { Tabs, TabsList, TabsTrigger } from '@workspace/ui/components/tabs';
+import { Check, Copy, Eraser } from 'lucide-react';
 import type * as Monaco from 'monaco-editor';
 import { useTheme } from 'next-themes';
 
-import { ActionButton } from '@workspace/ui/components/action-button';
 import { JsonToolToolbar } from '@/components/layouts/json-tool-toolbar';
 import MainLayout from '@/components/layouts/main-layout';
-import { Separator } from '@workspace/ui/components/separator';
-import { Tabs, TabsList, TabsTrigger } from '@workspace/ui/components/tabs';
 import { useActionFeedback } from '@/hooks/use-action-feedback';
 import { DEFAULT_JSON, generateJsCode } from '@/lib/json-objectify';
 import type { ConversionOptions } from '@/lib/json-objectify';
@@ -244,25 +244,27 @@ export default function JsonObjectifyPage() {
           options={optionsContent}
           actions={
             <>
-              <ActionButton
+              <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleCopy}
                 disabled={!jsOutput}
-                leftIcon={<Copy />}
-                feedbackActive={isActive('copy')}
               >
+                {isActive('copy') ? (
+                  <Check className="animate-bounce-in" />
+                ) : (
+                  <Copy />
+                )}
                 <span className="hidden md:inline">Copy</span>
-              </ActionButton>
-              <ActionButton
-                variant="ghost"
-                size="sm"
-                onClick={handleClear}
-                leftIcon={<Eraser />}
-                feedbackActive={isActive('clear')}
-              >
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleClear}>
+                {isActive('clear') ? (
+                  <Check className="animate-bounce-in" />
+                ) : (
+                  <Eraser />
+                )}
                 <span className="hidden md:inline">Clear</span>
-              </ActionButton>
+              </Button>
             </>
           }
         />

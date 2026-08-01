@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-import { ActionButton } from '@workspace/ui/components/action-button';
+import { Button } from '@workspace/ui/components/button';
 import {
   Combobox,
   ComboboxChip,
@@ -175,7 +175,7 @@ export default function ProjectWorklogsPage() {
                       id="project-select"
                       placeholder={
                         projectsLoading
-                          ? 'Loading projects…'
+                          ? 'Loading projects...'
                           : 'Search project...'
                       }
                       className="w-full"
@@ -294,16 +294,14 @@ export default function ProjectWorklogsPage() {
               </div>
 
               <div className="flex items-end">
-                <ActionButton
+                <Button
                   onClick={handleSearch}
-                  disabled={!isConfigured || !selectedProject}
+                  disabled={isLoading || !isConfigured || !selectedProject}
                   className="w-full"
-                  leftIcon={<Search />}
-                  isLoading={isLoading}
-                  loadingText="Searching…"
                 >
-                  Search
-                </ActionButton>
+                  {isLoading ? <Spinner /> : <Search />}
+                  {isLoading ? 'Searching…' : 'Search'}
+                </Button>
               </div>
             </div>
           </div>

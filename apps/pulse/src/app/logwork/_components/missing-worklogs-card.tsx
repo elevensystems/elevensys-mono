@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 
-import { ActionButton } from '@workspace/ui/components/action-button';
+import { Button } from '@workspace/ui/components/button';
 import { Calendar } from '@workspace/ui/components/calendar';
 import { Checkbox } from '@workspace/ui/components/checkbox';
 import {
@@ -20,6 +20,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@workspace/ui/components/popover';
+import { Spinner } from '@workspace/ui/components/spinner';
 import { Token } from '@workspace/ui/components/token';
 import { CalendarPlus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -233,18 +234,19 @@ export function MissingWorklogsCard({
               }}
               className="flex-1 w-full"
             />
-            <ActionButton
+            <Button
               onClick={handleSearchClick}
               disabled={
-                !selectedProjectId || !warningFromDate || !warningToDate
+                isSearchingWarnings ||
+                !selectedProjectId ||
+                !warningFromDate ||
+                !warningToDate
               }
               className="w-full sm:w-auto"
-              leftIcon={<Search />}
-              isLoading={isSearchingWarnings}
-              loadingText="Searching..."
             >
-              Find Dates
-            </ActionButton>
+              {isSearchingWarnings ? <Spinner /> : <Search />}
+              {isSearchingWarnings ? 'Searching' : 'Find Dates'}
+            </Button>
           </div>
         </div>
       </div>
@@ -268,27 +270,23 @@ export function MissingWorklogsCard({
 
           <div className="flex items-center gap-2 ml-auto">
             {/* Clear all */}
-            <ActionButton
-              variant="ghost"
-              size="sm"
+            <Button
+              variant="destructive"
+              size="xs"
               onClick={handleClearAll}
-              className={`h-7 text-xs text-destructive hover:bg-destructive hover:text-white dark:hover:bg-destructive dark:hover:text-white ${parsedDates.length > 0 ? 'visible' : 'invisible'}`}
-              leftIcon={<Trash2 />}
+              className={`${parsedDates.length > 0 ? 'visible' : 'invisible'}`}
             >
+              <Trash2 />
               Clear all
-            </ActionButton>
+            </Button>
 
             {/* Add dates manually — Popover trigger */}
             <Popover>
               <PopoverTrigger asChild>
-                <ActionButton
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-xs"
-                  leftIcon={<CalendarPlus />}
-                >
+                <Button variant="outline" size="xs">
+                  <CalendarPlus />
                   Add manually
-                </ActionButton>
+                </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="end" sideOffset={8}>
                 <div className="p-3 border-b">

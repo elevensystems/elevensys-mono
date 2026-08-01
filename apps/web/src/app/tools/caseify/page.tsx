@@ -2,12 +2,13 @@
 
 import { useDeferredValue, useMemo, useState } from 'react';
 
-import { CaseSensitive, Check, ChevronDown, Copy, Eraser } from 'lucide-react';
-
-import { ActionButton } from '@workspace/ui/components/action-button';
-import MainLayout from '@/components/layouts/main-layout';
-import { ToolPageHeader } from '@/components/layouts/tool-page-header';
-import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card';
+import { Button } from '@workspace/ui/components/button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@workspace/ui/components/card';
 import {
   Collapsible,
   CollapsibleContent,
@@ -19,6 +20,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@workspace/ui/components/tooltip';
+import { CaseSensitive, Check, ChevronDown, Copy, Eraser } from 'lucide-react';
+
+import MainLayout from '@/components/layouts/main-layout';
+import { ToolPageHeader } from '@/components/layouts/tool-page-header';
 import { useActionFeedback } from '@/hooks/use-action-feedback';
 import {
   COMMON_CASES,
@@ -189,15 +194,15 @@ export default function CaseifyPage() {
                 Source Text
               </CardTitle>
               <div className="flex items-center gap-2">
-                <ActionButton
+                <Button
                   variant="ghost"
                   size="sm"
                   disabled={!input}
                   onClick={() => setInput('')}
-                  leftIcon={<Eraser />}
                 >
+                  <Eraser />
                   Clear
-                </ActionButton>
+                </Button>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">

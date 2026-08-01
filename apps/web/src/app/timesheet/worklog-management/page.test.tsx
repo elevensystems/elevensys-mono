@@ -474,9 +474,7 @@ describe('WorklogManagementPage', () => {
 
   it('hides configuration warning when Jira is configured', () => {
     render(<WorklogManagementPage />);
-    expect(
-      screen.queryByText(/Token not configured/)
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Token not configured/)).not.toBeInTheDocument();
   });
 
   // --- Search card ---
@@ -544,7 +542,7 @@ describe('WorklogManagementPage', () => {
     expect(screen.getByRole('button', { name: /Searching/i })).toBeDisabled();
   });
 
-  it('renders "Searching..." text while loading', () => {
+  it('renders "Searching" text while loading', () => {
     mockUseWorklogs.mockReturnValue({
       ...defaultWorklogsReturn,
       isLoading: true,

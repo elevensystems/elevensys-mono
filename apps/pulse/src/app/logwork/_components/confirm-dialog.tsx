@@ -1,6 +1,6 @@
 'use client';
 
-import { ActionButton } from '@workspace/ui/components/action-button';
+import { Button } from '@workspace/ui/components/button';
 import { ScrollArea } from '@workspace/ui/components/scroll-area';
 import {
   Sheet,
@@ -127,9 +127,6 @@ export function ConfirmDialog({
         {/* Fixed header */}
         <SheetHeader className="px-6 pt-6 pb-4 border-b shrink-0">
           <SheetTitle>Confirm Submission</SheetTitle>
-          <SheetDescription>
-            Review the worklogs that will be created before confirming.
-          </SheetDescription>
 
           {/* Summary Banner */}
           <div className="mt-2 rounded-lg border overflow-hidden">
@@ -287,9 +284,10 @@ export function ConfirmDialog({
 
         {/* Fixed footer */}
         <SheetFooter className="px-6 py-4 border-t shrink-0 flex-row justify-start gap-2">
-          <ActionButton onClick={onConfirm} leftIcon={<CheckCheckIcon />}>
+          <Button onClick={onConfirm}>
+            <CheckCheckIcon />
             Confirm &amp; Submit
-          </ActionButton>
+          </Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>

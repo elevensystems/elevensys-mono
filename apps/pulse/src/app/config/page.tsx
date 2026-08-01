@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 
 import Link from 'next/link';
 
-import { ActionButton } from '@workspace/ui/components/action-button';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { NativeSelect } from '@workspace/ui/components/native-select';
@@ -232,21 +231,20 @@ export default function TimesheetConfigPage() {
                     onChange={e => setToken(e.target.value)}
                     className="pr-10"
                   />
-                  <ActionButton
+                  <Button
                     type="button"
                     variant="ghost"
                     size="icon-sm"
                     className="absolute right-1 top-1/2 -translate-y-1/2"
                     onClick={() => setShowToken(prev => !prev)}
                     aria-label={showToken ? 'Hide token' : 'Show token'}
-                    leftIcon={
-                      showToken ? (
-                        <EyeOff className="text-muted-foreground" />
-                      ) : (
-                        <Eye className="text-muted-foreground" />
-                      )
-                    }
-                  />
+                  >
+                    {showToken ? (
+                      <EyeOff className="text-muted-foreground" />
+                    ) : (
+                      <Eye className="text-muted-foreground" />
+                    )}
+                  </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Personal access token for API authentication
@@ -276,26 +274,34 @@ export default function TimesheetConfigPage() {
               )}
             </div>
             <div className="flex items-center gap-2">
-              <ActionButton
+              <Button
                 variant="outline"
                 size="sm"
                 className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                 onClick={handleClear}
                 disabled={!isConfigured}
-                leftIcon={<Trash2 />}
               >
+                <Trash2 />
                 Clear
-              </ActionButton>
-              <ActionButton
+              </Button>
+              <Button
                 size="sm"
                 onClick={handleSave}
                 disabled={isSaving || (!hasChanges && isConfigured)}
-                leftIcon={isConfigured && !hasChanges ? <Check /> : <Save />}
-                isLoading={isSaving}
-                loadingText="Verifying..."
               >
-                {isConfigured && !hasChanges ? 'Saved' : 'Save'}
-              </ActionButton>
+                {isSaving ? (
+                  <Spinner />
+                ) : isConfigured && !hasChanges ? (
+                  <Check />
+                ) : (
+                  <Save />
+                )}
+                {isSaving
+                  ? 'Verifying...'
+                  : isConfigured && !hasChanges
+                    ? 'Saved'
+                    : 'Save'}
+              </Button>
             </div>
           </div>
 

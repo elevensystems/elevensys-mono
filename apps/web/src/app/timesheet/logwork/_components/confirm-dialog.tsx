@@ -1,8 +1,6 @@
 'use client';
 
-import { CheckCheckIcon, LayoutList } from 'lucide-react';
-
-import { ActionButton } from '@workspace/ui/components/action-button';
+import { Button } from '@workspace/ui/components/button';
 import { ScrollArea } from '@workspace/ui/components/scroll-area';
 import {
   Sheet,
@@ -13,6 +11,8 @@ import {
   SheetTitle,
 } from '@workspace/ui/components/sheet';
 import { cn } from '@workspace/ui/lib/utils';
+import { CheckCheckIcon, LayoutList } from 'lucide-react';
+
 import {
   formatHours,
   getWorkTypeBadgeClass,
@@ -50,7 +50,10 @@ function formatRangeShort(range: DateRange): string {
   return `${startLabel} → ${endLabel}`;
 }
 
-function formatDaysSummary(parsedDates: string[], dateRanges: DateRange[]): string {
+function formatDaysSummary(
+  parsedDates: string[],
+  dateRanges: DateRange[]
+): string {
   const dayLabel = `${parsedDates.length} day${parsedDates.length !== 1 ? 's' : ''}`;
   if (parsedDates.length === 1) {
     const d = parseApiDate(parsedDates[0]);
@@ -163,7 +166,10 @@ export function ConfirmDialog({
                   {typeBreakdown.map(({ type, hours }) => (
                     <div
                       key={type}
-                      className={cn('h-full rounded-full', getWorkTypeDotClass(type))}
+                      className={cn(
+                        'h-full rounded-full',
+                        getWorkTypeDotClass(type)
+                      )}
                       style={{
                         width: `${(hours / totalHoursAll) * 100}%`,
                       }}
@@ -172,7 +178,10 @@ export function ConfirmDialog({
                 </div>
                 <div className="flex flex-wrap gap-x-4 gap-y-1.5">
                   {typeBreakdown.map(({ type, hours }) => (
-                    <span key={type} className="inline-flex items-center gap-1.5 text-xs">
+                    <span
+                      key={type}
+                      className="inline-flex items-center gap-1.5 text-xs"
+                    >
                       <span
                         className={cn(
                           'size-2 shrink-0 rounded-full',
@@ -180,7 +189,9 @@ export function ConfirmDialog({
                         )}
                       />
                       <span className="font-semibold">{type}</span>
-                      <span className="text-muted-foreground">{formatHours(hours)}h</span>
+                      <span className="text-muted-foreground">
+                        {formatHours(hours)}h
+                      </span>
                     </span>
                   ))}
                 </div>
@@ -219,7 +230,8 @@ export function ConfirmDialog({
                       {formatGroupHeader(range)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {validEntries.length} entr{validEntries.length !== 1 ? 'ies' : 'y'} ·{' '}
+                      {validEntries.length} entr
+                      {validEntries.length !== 1 ? 'ies' : 'y'} ·{' '}
                       {formatHours(hoursForRange)}h
                     </p>
                   </div>
@@ -275,9 +287,10 @@ export function ConfirmDialog({
 
         {/* Fixed footer */}
         <SheetFooter className="px-6 py-4 border-t shrink-0 flex-row justify-start gap-2">
-          <ActionButton onClick={onConfirm} leftIcon={<CheckCheckIcon />}>
+          <Button onClick={onConfirm}>
+            <CheckCheckIcon />
             Confirm &amp; Submit
-          </ActionButton>
+          </Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>

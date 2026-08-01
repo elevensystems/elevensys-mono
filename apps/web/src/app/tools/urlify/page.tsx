@@ -2,20 +2,19 @@
 
 import { useCallback, useState } from 'react';
 
-import { formatDistanceToNow } from 'date-fns';
-import { Copy, CornerDownLeft, Link2, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
-
-import { ActionButton } from '@workspace/ui/components/action-button';
 import { Button } from '@workspace/ui/components/button';
 import { Checkbox } from '@workspace/ui/components/checkbox';
 import { Input } from '@workspace/ui/components/input';
 import { ShineBorder } from '@workspace/ui/components/shine-border';
+import { Spinner } from '@workspace/ui/components/spinner';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@workspace/ui/components/tooltip';
+import { formatDistanceToNow } from 'date-fns';
+import { Check, Copy, CornerDownLeft, Link2, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import MainLayout from '@/components/layouts/main-layout';
 import { ToolPageHeader } from '@/components/layouts/tool-page-header';
@@ -70,7 +69,9 @@ export default function UrlifyPage() {
     }
 
     if (!isValidHttpUrl(trimmed)) {
-      setError('Please enter a valid URL (must start with http:// or https://).');
+      setError(
+        'Please enter a valid URL (must start with http:// or https://).'
+      );
       return;
     }
 
@@ -164,16 +165,18 @@ export default function UrlifyPage() {
               aria-describedby={error ? 'url-error' : undefined}
             />
             <div className="absolute top-1/2 right-2 -translate-y-1/2">
-              <ActionButton
+              <Button
                 onClick={handleShorten}
                 disabled={isSubmitting}
-                isLoading={isSubmitting}
-                loadingText="..."
                 size="default"
-                leftIcon={<Link2 className="h-4 w-4" />}
               >
-                <span className="hidden sm:inline">Shorten</span>
-              </ActionButton>
+                {isSubmitting ? <Spinner /> : <Link2 className="h-4 w-4" />}
+                {isSubmitting ? (
+                  '...'
+                ) : (
+                  <span className="hidden sm:inline">Shorten</span>
+                )}
+              </Button>
             </div>
           </div>
 
@@ -244,15 +247,18 @@ export default function UrlifyPage() {
                     )}
                   </Tooltip>
                 </div>
-                <ActionButton
+                <Button
                   variant="secondary"
                   onClick={() => handleCopy(result.shortUrl, 'result')}
-                  leftIcon={<Copy className="h-4 w-4" />}
-                  feedbackActive={isActive('result')}
                   aria-label="Copy shortened URL"
                 >
+                  {isActive('result') ? (
+                    <Check className="animate-bounce-in" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
                   Copy
-                </ActionButton>
+                </Button>
               </div>
             </div>
           )}
@@ -296,18 +302,20 @@ export default function UrlifyPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-1">
-                      <ActionButton
+                      <Button
                         variant="ghost"
                         size="icon"
                         onClick={() =>
                           handleCopy(item.shortUrl, `history-${item.shortCode}`)
                         }
                         aria-label="Copy URL"
-                        leftIcon={<Copy className="h-4 w-4" />}
-                        feedbackActive={isActive(
-                          `history-${item.shortCode}`
+                      >
+                        {isActive(`history-${item.shortCode}`) ? (
+                          <Check className="animate-bounce-in" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
                         )}
-                      />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"

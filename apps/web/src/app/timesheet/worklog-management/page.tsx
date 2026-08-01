@@ -1,11 +1,6 @@
 'use client';
 
-import { ClipboardList, Search } from 'lucide-react';
-
-import { ActionButton } from '@workspace/ui/components/action-button';
-import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
-import MainLayout from '@/components/layouts/main-layout';
-import { ToolPageHeader } from '@/components/layouts/tool-page-header';
+import { Button } from '@workspace/ui/components/button';
 import {
   Card,
   CardContent,
@@ -26,6 +21,11 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table';
+import { ClipboardList, Search } from 'lucide-react';
+
+import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
+import MainLayout from '@/components/layouts/main-layout';
+import { ToolPageHeader } from '@/components/layouts/tool-page-header';
 import { useTimesheetSettings } from '@/hooks/use-timesheet-settings';
 import { getWorklogKey, useWorklogs } from '@/hooks/use-worklogs';
 
@@ -135,7 +135,7 @@ export default function WorklogManagementPage() {
                   >
                     <option value="">
                       {projectsLoading
-                        ? 'Loading projects…'
+                        ? 'Loading projects...'
                         : 'Select a project'}
                     </option>
                     {projects.map(project => (
@@ -177,16 +177,14 @@ export default function WorklogManagementPage() {
                 </div>
 
                 <div className="flex items-end">
-                  <ActionButton
+                  <Button
                     onClick={handleSearch}
-                    disabled={!isConfigured || !selectedProject}
+                    disabled={isLoading || !isConfigured || !selectedProject}
                     className="w-full"
-                    leftIcon={<Search />}
-                    isLoading={isLoading}
-                    loadingText="Searching…"
                   >
-                    Search
-                  </ActionButton>
+                    {isLoading ? <Spinner /> : <Search />}
+                    {isLoading ? 'Searching…' : 'Search'}
+                  </Button>
                 </div>
               </div>
             </CardContent>

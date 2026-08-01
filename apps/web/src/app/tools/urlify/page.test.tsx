@@ -69,6 +69,7 @@ jest.mock('@/components/layouts/tool-page-header', () => ({
 // --- Mock icons ---
 
 jest.mock('lucide-react', () => ({
+  Check: () => <span data-testid="icon-check" />,
   Copy: () => <span data-testid="icon-copy" />,
   CornerDownLeft: () => <span data-testid="icon-corner-down-left" />,
   Link2: () => <span data-testid="icon-link2" />,
@@ -77,30 +78,8 @@ jest.mock('lucide-react', () => ({
 
 // --- Mock UI components ---
 
-jest.mock('@workspace/ui/components/action-button', () => ({
-  ActionButton: ({
-    children,
-    onClick,
-    disabled,
-    isLoading,
-    loadingText,
-    'aria-label': ariaLabel,
-  }: {
-    children?: React.ReactNode;
-    onClick?: () => void;
-    disabled?: boolean;
-    isLoading?: boolean;
-    loadingText?: string;
-    'aria-label'?: string;
-    leftIcon?: React.ReactNode;
-    feedbackActive?: boolean;
-    variant?: string;
-    size?: string;
-  }) => (
-    <button onClick={onClick} disabled={disabled} aria-label={ariaLabel}>
-      {isLoading ? loadingText : children}
-    </button>
-  ),
+jest.mock('@workspace/ui/components/spinner', () => ({
+  Spinner: () => <span data-testid="spinner" />,
 }));
 
 jest.mock('@workspace/ui/components/button', () => ({

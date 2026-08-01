@@ -2,26 +2,22 @@
 
 import { useEffect, useMemo } from 'react';
 
-import { Search } from 'lucide-react';
-
-import { ActionButton } from '@workspace/ui/components/action-button';
-import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
-import { TokenExpiredAlert } from '@/components/features/timesheet/token-expired-alert';
-import MainLayout from '@/components/layouts/main-layout';
+import { Button } from '@workspace/ui/components/button';
 import { Checkbox } from '@workspace/ui/components/checkbox';
 import { DateRangePicker } from '@workspace/ui/components/date-range-picker';
 import { Label } from '@workspace/ui/components/label';
 import { NativeSelect } from '@workspace/ui/components/native-select';
 import { Skeleton } from '@workspace/ui/components/skeleton';
 import { Spinner } from '@workspace/ui/components/spinner';
+import { Search } from 'lucide-react';
+
+import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
+import { TokenExpiredAlert } from '@/components/features/timesheet/token-expired-alert';
+import MainLayout from '@/components/layouts/main-layout';
 import { ToolPageHeader } from '@/components/layouts/tool-page-header';
 import { useMyWorklogs } from '@/hooks/use-my-worklogs';
 import { useTimesheetSettings } from '@/hooks/use-timesheet-settings';
-import {
-  formatDisplayDate,
-  formatHours,
-  parseApiDate,
-} from '@/lib/timesheet';
+import { formatDisplayDate, formatHours, parseApiDate } from '@/lib/timesheet';
 import type { MyWorklogsRow } from '@/types/timesheet';
 
 import { BulkDeleteAction } from '../worklog-management/_components/bulk-delete-action';
@@ -158,15 +154,13 @@ export default function MyWorklogsPage() {
               </NativeSelect>
             </div>
 
-            <ActionButton
+            <Button
               onClick={handleSearch}
-              disabled={!isConfigured}
-              leftIcon={<Search />}
-              isLoading={isLoading}
-              loadingText="Searching…"
+              disabled={isLoading || !isConfigured}
             >
-              Search
-            </ActionButton>
+              {isLoading ? <Spinner /> : <Search />}
+              {isLoading ? 'Searching…' : 'Search'}
+            </Button>
           </div>
 
           {/* Select-all + bulk delete bar */}
@@ -174,11 +168,15 @@ export default function MyWorklogsPage() {
             <div className="flex items-center justify-between h-8">
               <div className="flex items-center gap-2">
                 <Checkbox
-                  checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+                  checked={
+                    allSelected ? true : someSelected ? 'indeterminate' : false
+                  }
                   onCheckedChange={toggleSelectAll}
                   aria-label="Select all"
                 />
-                <span className="text-sm text-muted-foreground">Select all</span>
+                <span className="text-sm text-muted-foreground">
+                  Select all
+                </span>
               </div>
               <BulkDeleteAction
                 selectedCount={selectedIds.size}

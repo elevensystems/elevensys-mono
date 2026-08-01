@@ -3,18 +3,24 @@
 import { useCallback, useState } from 'react';
 
 import { useForm, useStore } from '@tanstack/react-form';
-import { Check, Copy, Key, Settings as SettingsIcon } from 'lucide-react';
-import { toast } from 'sonner';
-import { z } from 'zod';
-
-import { ActionButton } from '@workspace/ui/components/action-button';
-import MainLayout from '@/components/layouts/main-layout';
-import { ToolPageHeader } from '@/components/layouts/tool-page-header';
-import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card';
+import { Button } from '@workspace/ui/components/button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@workspace/ui/components/card';
 import { Checkbox } from '@workspace/ui/components/checkbox';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
 import { Slider } from '@workspace/ui/components/slider';
+import { Spinner } from '@workspace/ui/components/spinner';
+import { Check, Copy, Key, Settings as SettingsIcon } from 'lucide-react';
+import { toast } from 'sonner';
+import { z } from 'zod';
+
+import MainLayout from '@/components/layouts/main-layout';
+import { ToolPageHeader } from '@/components/layouts/tool-page-header';
 import { useActionFeedback } from '@/hooks/use-action-feedback';
 import {
   PASSWORD_DEFAULT_LENGTH,
@@ -235,17 +241,17 @@ export default function PasslyPage() {
                 </div>
 
                 {/* Generate Button */}
-                <ActionButton
+                <Button
                   onClick={() => form.handleSubmit()}
                   disabled={!hasAtLeastOneOption || form.state.isSubmitting}
                   className="w-full"
                   size="lg"
-                  leftIcon={<Key />}
-                  isLoading={form.state.isSubmitting}
-                  loadingText="Generating..."
                 >
-                  Generate Passwords
-                </ActionButton>
+                  {form.state.isSubmitting ? <Spinner /> : <Key />}
+                  {form.state.isSubmitting
+                    ? 'Generating...'
+                    : 'Generate Passwords'}
+                </Button>
               </CardContent>
             </Card>
 
@@ -291,16 +297,20 @@ export default function PasslyPage() {
                           <code className="flex-1 text-sm font-mono break-all select-all">
                             {password.value}
                           </code>
-                          <ActionButton
+                          <Button
                             size="sm"
                             variant="ghost"
                             onClick={() =>
                               handleCopy(password.value, password.id)
                             }
                             aria-label="Copy to clipboard"
-                            leftIcon={<Copy aria-hidden="true" />}
-                            feedbackActive={isActive(password.id)}
-                          />
+                          >
+                            {isActive(password.id) ? (
+                              <Check className="animate-bounce-in" />
+                            ) : (
+                              <Copy aria-hidden="true" />
+                            )}
+                          </Button>
                         </div>
                       </div>
                     );

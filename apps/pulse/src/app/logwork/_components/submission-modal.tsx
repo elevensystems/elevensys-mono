@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 
-import { ActionButton } from '@workspace/ui/components/action-button';
+import { Button } from '@workspace/ui/components/button';
 import {
   Dialog,
   DialogContent,
@@ -132,14 +132,14 @@ export function SubmissionModal({
           <DialogHeader>
             <div className="flex items-center justify-between gap-4">
               <SubmissionStatusHeader status={status} counts={counts} />
-              <ActionButton
+              <Button
                 variant="outline"
                 size="icon-sm"
                 aria-label="Close"
                 onClick={handleCloseButtonClick}
               >
                 <X className="size-4" />
-              </ActionButton>
+              </Button>
             </div>
           </DialogHeader>
 
@@ -183,19 +183,19 @@ export function SubmissionModal({
             {isDone && (
               <DialogFooter className="border-t pt-3 gap-2">
                 {hasFailedResults && (
-                  <ActionButton
+                  <Button
                     variant="outline"
                     size="default"
                     onClick={onRetryFailed}
-                    leftIcon={<RefreshCw />}
                     className="gap-1.5"
                   >
+                    <RefreshCw />
                     Retry Failed
-                  </ActionButton>
+                  </Button>
                 )}
-                <ActionButton size="default" onClick={onClose}>
+                <Button size="default" onClick={onClose}>
                   Close
-                </ActionButton>
+                </Button>
               </DialogFooter>
             )}
           </div>

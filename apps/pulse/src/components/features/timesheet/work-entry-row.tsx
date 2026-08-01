@@ -2,7 +2,7 @@
 
 import { memo, useCallback } from 'react';
 
-import { ActionButton } from '@workspace/ui/components/action-button';
+import { Button } from '@workspace/ui/components/button';
 import {
   Combobox,
   ComboboxContent,
@@ -67,7 +67,6 @@ export const WorkEntryRow = memo(function WorkEntryRow({
   onClearError,
   errors,
   disabled = false,
-  isLastRow = false,
 }: WorkEntryRowProps) {
   const handleIssueInputChange = useCallback(
     (value: string, eventDetails: { reason: string }) => {
@@ -121,7 +120,7 @@ export const WorkEntryRow = memo(function WorkEntryRow({
 
   return (
     <div className="grid grid-cols-[40px_230px_1fr_150px_140px_50px] items-start gap-2 border-t px-3 py-2">
-      <div className="flex h-8 items-center text-sm text-muted-foreground">
+      <div className="flex h-9 items-center text-sm text-muted-foreground">
         {index + 1}
       </div>
       <div>
@@ -136,11 +135,12 @@ export const WorkEntryRow = memo(function WorkEntryRow({
           <ComboboxInput
             placeholder={isLoadingIssues ? 'Loading...' : 'Select ticket'}
             className={cn(
-              'h-8',
+              'h-9',
               errors?.issueKey && 'border-destructive ring-1 ring-destructive'
             )}
             disabled={isLoadingIssues || disabled}
             aria-invalid={!!errors?.issueKey}
+            loading={isLoadingIssues}
             showClear
           />
           <ComboboxContent>
@@ -197,7 +197,7 @@ export const WorkEntryRow = memo(function WorkEntryRow({
           onChange={handleDescriptionChange}
           maxLength={500}
           className={cn(
-            'h-8',
+            'h-9',
             errors?.description && 'border-destructive ring-1 ring-destructive'
           )}
           aria-invalid={!!errors?.description}
@@ -210,7 +210,7 @@ export const WorkEntryRow = memo(function WorkEntryRow({
       </div>
       <div>
         <Select value={entry.typeOfWork} onValueChange={handleTypeChange}>
-          <SelectTrigger size="sm" className="w-full">
+          <SelectTrigger className="w-full">
             <SelectValue>
               <span className="flex items-center gap-2">
                 <span
@@ -248,15 +248,9 @@ export const WorkEntryRow = memo(function WorkEntryRow({
         />
       </div>
       <div className="flex justify-center">
-        <ActionButton
-          aria-label="Delete"
-          variant="ghost"
-          size="icon"
-          className="size-8 text-destructive hover:bg-destructive hover:text-white dark:hover:bg-destructive dark:hover:text-white"
-          onClick={handleRemove}
-          disabled={isLastRow}
-          leftIcon={<Trash2 />}
-        />
+        <Button variant="ghost" size="icon" onClick={handleRemove}>
+          <Trash2 />
+        </Button>
       </div>
     </div>
   );

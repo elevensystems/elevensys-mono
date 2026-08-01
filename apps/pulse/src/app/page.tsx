@@ -2,78 +2,29 @@
 
 import Link from 'next/link';
 
-import { Badge } from '@workspace/ui/components/badge';
 import { Banner } from '@workspace/ui/components/banner';
 import { Button } from '@workspace/ui/components/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@workspace/ui/components/card';
-import {
-  ArrowRight,
-  ClipboardList,
-  Clock,
-  FolderSearch,
-  PenLine,
-  Settings,
-} from 'lucide-react';
+import { Card, CardContent, CardHeader } from '@workspace/ui/components/card';
+import { ArrowRight, ClipboardList, FolderSearch, PenLine } from 'lucide-react';
 
 import MainLayout from '@/components/layouts/main-layout';
 import { ToolPageHeader } from '@/components/layouts/tool-page-header';
 import { useTimesheetSettings } from '@/hooks/use-timesheet-settings';
 
-const features = [
-  {
-    title: 'Log Work',
-    description:
-      'Submit your work entries to Jira. Add multiple entries with issue keys, type of work, hours, and descriptions — then log them all in bulk.',
-    href: '/logwork',
-    icon: PenLine,
-    highlights: [
-      'Bulk log multiple entries at once',
-      'Date range support for multi-day logging',
-      'Real-time progress tracking',
-    ],
-  },
+const secondaryFeatures = [
   {
     title: 'My Worklogs',
     description:
-      'View all your logged timesheets from Jira. Search by date range to see your work entries, track approval status and delete entries if needed.',
+      'Your logged hours and approval status, searchable by date range.',
     href: '/my-worklogs',
     icon: ClipboardList,
-    highlights: [
-      'Search by date range',
-      'Approval status tracking',
-      'Delete worklogs if needed',
-    ],
   },
   {
     title: 'Project Worklogs',
     description:
-      'View logged timesheets for a project. Filter by project, username, type of work, status, and date range.',
+      "A project's worklogs, filtered by person, type of work, and status.",
     href: '/project-worklogs',
     icon: FolderSearch,
-    highlights: [
-      'Filter by project & username',
-      'Type of work & status filters',
-      'Paginated results',
-    ],
-  },
-  {
-    title: 'Settings',
-    description:
-      'Configure your Jira credentials and connection. Your settings are stored securely in your browser.',
-    href: '/config',
-    icon: Settings,
-    highlights: [
-      'Jira username &  token',
-      'Jira instance selection',
-      'Stored locally in your browser',
-    ],
   },
 ] as const;
 
@@ -83,15 +34,11 @@ export default function TimesheetPage() {
   return (
     <MainLayout>
       <section className="container mx-auto px-4 py-12">
-        <div className="max-w-5xl mx-auto space-y-12">
-          <ToolPageHeader
-            title="Timesheet"
-            description="Manage your Jira timesheets. Log work entries and view your logged hours — all in one place."
-          />
+        <div className="max-w-5xl mx-auto space-y-8">
+          <ToolPageHeader title="Timesheet" />
 
           {isLoaded && !isConfigured && (
             <Banner
-              className="mb-6"
               state="warning"
               title="Getting started"
               message="Head to Settings to configure your Jira username, token, and instance before logging work."
@@ -99,53 +46,57 @@ export default function TimesheetPage() {
             />
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {features.map(feature => (
-              <Card key={feature.title} className="flex flex-col">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <feature.icon className="h-5 w-5" />
-                    </div>
-                    <CardTitle className="text-lg">{feature.title}</CardTitle>
-                  </div>
-                  <CardDescription className="mt-2">
-                    {feature.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex-1">
-                  <ul className="space-y-2">
-                    {feature.highlights.map(highlight => (
-                      <li
-                        key={highlight}
-                        className="flex items-center gap-2 text-sm text-muted-foreground"
-                      >
-                        <Clock className="h-3.5 w-3.5 shrink-0 text-primary" />
-                        {highlight}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-                <CardFooter>
-                  <Button asChild className="w-full">
-                    <Link href={feature.href}>
-                      {feature.title}
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <Card className="lg:col-span-3 h-full justify-between gap-8 border-0 bg-zinc-900 py-8 text-zinc-50 dark:bg-white dark:text-zinc-900">
+              <CardHeader className="px-8">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 dark:bg-zinc-900/10">
+                  <PenLine className="h-6 w-6" />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 px-8">
+                <h2 className="text-2xl font-bold">Log work</h2>
+                <p className="leading-relaxed text-zinc-300 dark:text-zinc-600">
+                  Add entries with issue keys, type of work, and hours — then
+                  submit a whole date range to Jira in one pass.
+                </p>
+                <Button
+                  asChild
+                  size="lg"
+                  className="mt-2 bg-white text-zinc-900 hover:bg-white/90 dark:bg-zinc-900 dark:text-white dark:hover:bg-zinc-900/90"
+                >
+                  <Link href="/logwork">
+                    Open Log Work
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
 
-          {isLoaded && isConfigured && (
-            <div className="mt-8 text-center">
-              <Badge variant="secondary" className="gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-color-3" />
-                Jira settings configured
-              </Badge>
+            <div className="flex flex-col gap-6 lg:col-span-2">
+              {secondaryFeatures.map(feature => (
+                <Link key={feature.title} href={feature.href} className="group">
+                  <Card className="h-full transition-colors group-hover:border-primary/50">
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                          <feature.icon className="h-5 w-5" />
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                      </div>
+                      <h3 className="mt-2 text-lg font-semibold">
+                        {feature.title}
+                      </h3>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        {feature.description}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
             </div>
-          )}
+          </div>
         </div>
       </section>
     </MainLayout>

@@ -542,7 +542,7 @@ describe('WorklogManagementPage', () => {
     expect(screen.getByRole('button', { name: /Searching/i })).toBeDisabled();
   });
 
-  it('renders "Searching..." text while loading', () => {
+  it('renders "Searching" text while loading', () => {
     mockUseWorklogs.mockReturnValue({
       ...defaultWorklogsReturn,
       isLoading: true,

@@ -2,12 +2,7 @@
 
 import * as React from 'react';
 
-import { Search } from 'lucide-react';
-
-import { ActionButton } from '@workspace/ui/components/action-button';
-import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
-import { TokenExpiredAlert } from '@/components/features/timesheet/token-expired-alert';
-import MainLayout from '@/components/layouts/main-layout';
+import { Button } from '@workspace/ui/components/button';
 import {
   Combobox,
   ComboboxChip,
@@ -34,10 +29,14 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table';
+import { Search } from 'lucide-react';
+
+import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
+import { TokenExpiredAlert } from '@/components/features/timesheet/token-expired-alert';
+import MainLayout from '@/components/layouts/main-layout';
 import { ToolPageHeader } from '@/components/layouts/tool-page-header';
 import { useProjectWorklogs } from '@/hooks/use-project-worklogs';
 import { useTimesheetSettings } from '@/hooks/use-timesheet-settings';
-
 import type { JiraProject } from '@/types/timesheet';
 
 import { TimesheetPagination } from '../_components/timesheet-pagination';
@@ -132,8 +131,8 @@ export default function ProjectWorklogsPage() {
               <>
                 {hasSearched && totalRecords > 0 && selectedProject && (
                   <p className="text-sm text-muted-foreground mt-1">
-                    {selectedProject.name} &middot;{' '}
-                    {totalRecords} record{totalRecords !== 1 ? 's' : ''}
+                    {selectedProject.name} &middot; {totalRecords} record
+                    {totalRecords !== 1 ? 's' : ''}
                     {uniqueContributors > 0 &&
                       ` · ${uniqueContributors} contributor${uniqueContributors !== 1 ? 's' : ''} on this page`}
                   </p>
@@ -161,14 +160,24 @@ export default function ProjectWorklogsPage() {
                   <Combobox
                     items={projects}
                     value={selectedProject}
-                    inputValue={selectedProject ? `${selectedProject.key} — ${selectedProject.name}` : projectSearch}
+                    inputValue={
+                      selectedProject
+                        ? `${selectedProject.key} — ${selectedProject.name}`
+                        : projectSearch
+                    }
                     onInputValueChange={handleProjectInputChange}
                     onValueChange={handleProjectSelect}
-                    itemToStringLabel={(project: JiraProject) => `${project.key} — ${project.name}`}
+                    itemToStringLabel={(project: JiraProject) =>
+                      `${project.key} — ${project.name}`
+                    }
                   >
                     <ComboboxInput
                       id="project-select"
-                      placeholder={projectsLoading ? 'Loading projects…' : 'Search project...'}
+                      placeholder={
+                        projectsLoading
+                          ? 'Loading projects...'
+                          : 'Search project...'
+                      }
                       className="w-full"
                       disabled={!isConfigured || projectsLoading}
                       showClear
@@ -177,8 +186,12 @@ export default function ProjectWorklogsPage() {
                       <ComboboxList>
                         {(project: JiraProject) => (
                           <ComboboxItem key={project.id} value={project}>
-                            <span className="font-medium shrink-0">{project.key}</span>
-                            <span className="text-muted-foreground truncate">— {project.name}</span>
+                            <span className="font-medium shrink-0">
+                              {project.key}
+                            </span>
+                            <span className="text-muted-foreground truncate">
+                              — {project.name}
+                            </span>
                           </ComboboxItem>
                         )}
                       </ComboboxList>
@@ -280,16 +293,14 @@ export default function ProjectWorklogsPage() {
               </div>
 
               <div className="flex items-end">
-                <ActionButton
+                <Button
                   onClick={handleSearch}
-                  disabled={!isConfigured || !selectedProject}
+                  disabled={isLoading || !isConfigured || !selectedProject}
                   className="w-full"
-                  leftIcon={<Search />}
-                  isLoading={isLoading}
-                  loadingText="Searching…"
                 >
-                  Search
-                </ActionButton>
+                  {isLoading ? <Spinner /> : <Search />}
+                  {isLoading ? 'Searching…' : 'Search'}
+                </Button>
               </div>
             </div>
           </div>
@@ -363,7 +374,9 @@ export default function ProjectWorklogsPage() {
                       <TableHead className="w-[130px]">User</TableHead>
                       <TableHead className="w-[156px]">Key</TableHead>
                       <TableHead>Description</TableHead>
-                      <TableHead className="w-[80px] text-right">Hours</TableHead>
+                      <TableHead className="w-[80px] text-right">
+                        Hours
+                      </TableHead>
                       <TableHead className="w-[120px]">Type</TableHead>
                       <TableHead className="w-[120px]">Date</TableHead>
                       <TableHead className="w-[110px]">Status</TableHead>

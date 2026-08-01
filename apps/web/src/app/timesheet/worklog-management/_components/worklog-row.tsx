@@ -2,9 +2,6 @@
 
 import { memo, useCallback } from 'react';
 
-import { SquarePenIcon, Trash2Icon } from 'lucide-react';
-
-import { ActionButton } from '@workspace/ui/components/action-button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,6 +14,7 @@ import {
   AlertDialogTrigger,
 } from '@workspace/ui/components/alert-dialog';
 import { Badge } from '@workspace/ui/components/badge';
+import { Button } from '@workspace/ui/components/button';
 import { Checkbox } from '@workspace/ui/components/checkbox';
 import { Spinner } from '@workspace/ui/components/spinner';
 import { TableCell, TableRow } from '@workspace/ui/components/table';
@@ -26,6 +24,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@workspace/ui/components/tooltip';
+import { SquarePenIcon, Trash2Icon } from 'lucide-react';
+
 import { getWorklogKey } from '@/hooks/use-worklogs';
 import {
   formatDisplayDate,
@@ -106,7 +106,9 @@ export const WorklogRow = memo(function WorklogRow({
       </TableCell>
       <TableCell>
         <span className="inline-flex items-center gap-1.5 text-sm">
-          <span className={`size-2 rounded-full shrink-0 ${getWorkTypeDotClass(worklog.typeOfWork)}`} />
+          <span
+            className={`size-2 rounded-full shrink-0 ${getWorkTypeDotClass(worklog.typeOfWork)}`}
+          />
           {worklog.typeOfWork}
         </span>
       </TableCell>
@@ -128,15 +130,15 @@ export const WorklogRow = memo(function WorklogRow({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <ActionButton
+                    <Button
                       variant="ghost"
                       size="icon"
-                      className="size-8"
                       disabled={!isEditable}
                       onClick={handleEdit}
-                      leftIcon={<SquarePenIcon />}
                       aria-label="Edit"
-                    />
+                    >
+                      <SquarePenIcon />
+                    </Button>
                   </TooltipTrigger>
                   <TooltipContent>Edit</TooltipContent>
                 </Tooltip>
@@ -146,14 +148,15 @@ export const WorklogRow = memo(function WorklogRow({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <AlertDialogTrigger asChild>
-                        <ActionButton
+                        <Button
                           variant="ghost"
                           size="icon"
-                          className="size-8 text-destructive hover:text-destructive"
+                          className="text-destructive hover:text-destructive"
                           disabled={!isEditable}
-                          leftIcon={<Trash2Icon />}
                           aria-label="Delete"
-                        />
+                        >
+                          <Trash2Icon />
+                        </Button>
                       </AlertDialogTrigger>
                     </TooltipTrigger>
                     <TooltipContent>Delete</TooltipContent>

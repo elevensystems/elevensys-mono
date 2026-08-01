@@ -2,14 +2,19 @@
 
 import { useCallback, useState } from 'react';
 
-import { Copy, Package } from 'lucide-react';
-
-import { ActionButton } from '@workspace/ui/components/action-button';
-import MainLayout from '@/components/layouts/main-layout';
-import { ToolPageHeader } from '@/components/layouts/tool-page-header';
-import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card';
+import { Button } from '@workspace/ui/components/button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@workspace/ui/components/card';
 import { Label } from '@workspace/ui/components/label';
 import { Textarea } from '@workspace/ui/components/textarea';
+import { Check, Copy, Package } from 'lucide-react';
+
+import MainLayout from '@/components/layouts/main-layout';
+import { ToolPageHeader } from '@/components/layouts/tool-page-header';
 import { useActionFeedback } from '@/hooks/use-action-feedback';
 
 /**
@@ -153,23 +158,19 @@ export default function NpmConverterPage() {
                 </div>
 
                 <div className="flex gap-2">
-                  <ActionButton
+                  <Button
                     onClick={handleConvert}
                     disabled={!input.trim()}
                     className="flex-1"
                     size="lg"
-                    leftIcon={<Package />}
                   >
+                    <Package />
                     Convert to NPM Install
-                  </ActionButton>
+                  </Button>
                   {(input || result) && (
-                    <ActionButton
-                      onClick={handleClear}
-                      variant="outline"
-                      size="lg"
-                    >
+                    <Button onClick={handleClear} variant="outline" size="lg">
                       Clear
-                    </ActionButton>
+                    </Button>
                   )}
                 </div>
               </CardContent>
@@ -211,15 +212,19 @@ export default function NpmConverterPage() {
                           readOnly
                           className="font-mono text-sm bg-muted pr-20"
                         />
-                        <ActionButton
+                        <Button
                           size="sm"
                           variant="ghost"
                           onClick={handleCopy}
                           className="absolute top-2 right-2"
                           aria-label="Copy to clipboard"
-                          leftIcon={<Copy aria-hidden="true" />}
-                          feedbackActive={isActive('copy')}
-                        />
+                        >
+                          {isActive('copy') ? (
+                            <Check className="animate-bounce-in" />
+                          ) : (
+                            <Copy aria-hidden="true" />
+                          )}
+                        </Button>
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Use this command to install all the published packages

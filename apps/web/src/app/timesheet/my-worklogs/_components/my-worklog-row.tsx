@@ -2,9 +2,6 @@
 
 import { memo, useCallback } from 'react';
 
-import { SquarePenIcon, Trash2Icon } from 'lucide-react';
-
-import { ActionButton } from '@workspace/ui/components/action-button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,6 +14,7 @@ import {
   AlertDialogTrigger,
 } from '@workspace/ui/components/alert-dialog';
 import { Badge } from '@workspace/ui/components/badge';
+import { Button } from '@workspace/ui/components/button';
 import { Checkbox } from '@workspace/ui/components/checkbox';
 import { Spinner } from '@workspace/ui/components/spinner';
 import {
@@ -25,6 +23,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@workspace/ui/components/tooltip';
+import { SquarePenIcon, Trash2Icon } from 'lucide-react';
+
 import { getWorklogKey } from '@/hooks/use-worklogs';
 import {
   formatDisplayDate,
@@ -61,7 +61,10 @@ export const MyWorklogRow = memo(function MyWorklogRow({
     ? formatDisplayDate(worklog.startDateEdit)
     : worklog.startDate;
 
-  const handleToggle = useCallback(() => onToggleSelect(key), [key, onToggleSelect]);
+  const handleToggle = useCallback(
+    () => onToggleSelect(key),
+    [key, onToggleSelect]
+  );
   const handleEdit = useCallback(() => onEdit(worklog), [worklog, onEdit]);
   const handleDelete = useCallback(
     () => onDelete(worklog.id, worklog.issueId),
@@ -124,15 +127,15 @@ export const MyWorklogRow = memo(function MyWorklogRow({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <ActionButton
+                  <Button
                     variant="ghost"
                     size="icon"
-                    className="size-8"
                     disabled={!isEditable}
                     onClick={handleEdit}
-                    leftIcon={<SquarePenIcon />}
                     aria-label="Edit"
-                  />
+                  >
+                    <SquarePenIcon />
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent>Edit</TooltipContent>
               </Tooltip>
@@ -142,14 +145,15 @@ export const MyWorklogRow = memo(function MyWorklogRow({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <AlertDialogTrigger asChild>
-                      <ActionButton
+                      <Button
                         variant="ghost"
                         size="icon"
-                        className="size-8 text-destructive hover:text-destructive"
+                        className="text-destructive hover:text-destructive"
                         disabled={!isEditable}
-                        leftIcon={<Trash2Icon />}
                         aria-label="Delete"
-                      />
+                      >
+                        <Trash2Icon />
+                      </Button>
                     </AlertDialogTrigger>
                   </TooltipTrigger>
                   <TooltipContent>Delete</TooltipContent>
@@ -160,14 +164,17 @@ export const MyWorklogRow = memo(function MyWorklogRow({
                   <AlertDialogTitle>Delete Worklog</AlertDialogTitle>
                   <AlertDialogDescription>
                     Are you sure you want to delete this worklog for{' '}
-                    <span className="font-semibold">{worklog.issueKey}</span>{' '}
-                    ({formatHours(Number(worklog.worked))}h on {displayDate})?
+                    <span className="font-semibold">{worklog.issueKey}</span> (
+                    {formatHours(Number(worklog.worked))}h on {displayDate})?
                     This action cannot be undone.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction variant="destructive" onClick={handleDelete}>
+                  <AlertDialogAction
+                    variant="destructive"
+                    onClick={handleDelete}
+                  >
                     Delete
                   </AlertDialogAction>
                 </AlertDialogFooter>

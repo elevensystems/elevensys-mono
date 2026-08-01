@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { ActionButton } from '@workspace/ui/components/action-button';
+import { Button } from '@workspace/ui/components/button';
 import { Spinner } from '@workspace/ui/components/spinner';
 import { Plus, Send } from 'lucide-react';
 import { toast } from 'sonner';
@@ -488,30 +488,28 @@ export default function LogWorkPage() {
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row sm:justify-between gap-3 border-t pt-6">
-              <ActionButton
+              <Button
                 variant="outline"
                 onClick={addEntry}
                 disabled={isSubmitting || !isConfigured}
                 className="w-full sm:w-auto"
-                leftIcon={<Plus />}
               >
+                <Plus />
                 Add Row
-              </ActionButton>
-              <ActionButton
+              </Button>
+              <Button
                 onClick={handleSubmitClick}
                 disabled={isSubmitting || !isConfigured}
                 className="w-full sm:w-auto"
-                leftIcon={<Send />}
-                isLoading={isSubmitting}
-                loadingText="Submitting..."
                 title={
                   parsedDates.length > 0 && validEntryCount > 0
                     ? `Will send ${validEntryCount * dateRanges.length} request${validEntryCount * dateRanges.length !== 1 ? 's' : ''} (${validEntryCount} entr${validEntryCount !== 1 ? 'ies' : 'y'} × ${dateRanges.length} range${dateRanges.length !== 1 ? 's' : ''}) covering ${parsedDates.length} date${parsedDates.length !== 1 ? 's' : ''}`
                     : undefined
                 }
               >
-                Submit
-              </ActionButton>
+                {isSubmitting ? <Spinner /> : <Send />}
+                {isSubmitting ? 'Submitting...' : 'Submit'}
+              </Button>
             </div>
           </div>
         </div>

@@ -1,11 +1,7 @@
 'use client';
 
 import { useForm } from '@tanstack/react-form';
-import { Check } from 'lucide-react';
-import { toast } from 'sonner';
-import { z } from 'zod';
-
-import { ActionButton } from '@workspace/ui/components/action-button';
+import { Button } from '@workspace/ui/components/button';
 import {
   Dialog,
   DialogContent,
@@ -15,7 +11,11 @@ import {
 } from '@workspace/ui/components/dialog';
 import { Field, FieldError, FieldLabel } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
+import { Spinner } from '@workspace/ui/components/spinner';
 import { Textarea } from '@workspace/ui/components/textarea';
+import { Check } from 'lucide-react';
+import { toast } from 'sonner';
+import { z } from 'zod';
 
 interface FeedbackModalProps {
   open: boolean;
@@ -159,21 +159,18 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
           />
 
           <div className="flex justify-end gap-3">
-            <ActionButton
+            <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={form.state.isSubmitting}
             >
               Cancel
-            </ActionButton>
-            <ActionButton
-              type="submit"
-              isLoading={form.state.isSubmitting}
-              loadingText="Submitting..."
-            >
-              Submit Feedback
-            </ActionButton>
+            </Button>
+            <Button type="submit" disabled={form.state.isSubmitting}>
+              {form.state.isSubmitting && <Spinner />}
+              {form.state.isSubmitting ? 'Submitting...' : 'Submit Feedback'}
+            </Button>
           </div>
         </form>
       </DialogContent>

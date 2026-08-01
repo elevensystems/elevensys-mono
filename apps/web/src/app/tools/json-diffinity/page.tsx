@@ -3,18 +3,19 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import Editor from '@monaco-editor/react';
+import { Badge } from '@workspace/ui/components/badge';
+import { Button } from '@workspace/ui/components/button';
+import { ScrollArea } from '@workspace/ui/components/scroll-area';
+import { Separator } from '@workspace/ui/components/separator';
+import { cn } from '@workspace/ui/lib/utils';
 import { findNodeAtLocation, parseTree } from 'jsonc-parser';
 import { Eraser, GitCompare, X } from 'lucide-react';
 import type * as Monaco from 'monaco-editor';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
 
-import { ActionButton } from '@workspace/ui/components/action-button';
 import { JsonToolToolbar } from '@/components/layouts/json-tool-toolbar';
 import MainLayout from '@/components/layouts/main-layout';
-import { Badge } from '@workspace/ui/components/badge';
-import { ScrollArea } from '@workspace/ui/components/scroll-area';
-import { Separator } from '@workspace/ui/components/separator';
 import {
   type DiffPaths,
   type JsonPath,
@@ -27,7 +28,6 @@ import {
   getEditorTheme,
   registerFormatOnPaste,
 } from '@/lib/monaco-config';
-import { cn } from '@workspace/ui/lib/utils';
 
 const DEFAULT_ORIGINAL = `{
   "service": "payments",
@@ -338,14 +338,14 @@ export default function JsonDiffinityPage() {
           title="JSON Diffinity"
           actions={
             <div className="flex items-center gap-1.5">
-              <ActionButton
+              <Button
                 size="sm"
                 onClick={handleCompare}
                 disabled={isCompareDisabled}
-                leftIcon={<GitCompare />}
               >
+                <GitCompare />
                 Compare
-              </ActionButton>
+              </Button>
 
               {diffPaths && (
                 <>
@@ -393,14 +393,10 @@ export default function JsonDiffinityPage() {
                 orientation="vertical"
                 className="data-[orientation=vertical]:h-4"
               />
-              <ActionButton
-                variant="ghost"
-                size="sm"
-                onClick={handleClearAll}
-                leftIcon={<Eraser />}
-              >
+              <Button variant="ghost" size="sm" onClick={handleClearAll}>
+                <Eraser />
                 <span className="hidden md:inline">Clear</span>
-              </ActionButton>
+              </Button>
             </div>
           }
         />
@@ -453,14 +449,15 @@ export default function JsonDiffinityPage() {
                   <GitCompare className="size-3.5" />
                   Diff Viewer
                 </span>
-                <ActionButton
+                <Button
                   variant="ghost"
                   size="sm"
                   className="h-6 w-6 p-0"
                   onClick={() => setDiffOpen(false)}
-                  leftIcon={<X />}
                   aria-label="Close diff viewer"
-                />
+                >
+                  <X />
+                </Button>
               </div>
               <ScrollArea className="h-[calc(250px-37px)]">
                 <div className="p-4">

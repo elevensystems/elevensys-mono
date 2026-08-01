@@ -4,19 +4,8 @@ import { useCallback, useMemo, useState, useTransition } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  ExternalLink,
-  RefreshCw,
-  Trash2,
-} from 'lucide-react';
-import { toast } from 'sonner';
-
 import { Badge } from '@workspace/ui/components/badge';
 import { Button } from '@workspace/ui/components/button';
-
-import { ActionButton } from '@workspace/ui/components/action-button';
 import { Checkbox } from '@workspace/ui/components/checkbox';
 import {
   Dialog,
@@ -33,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@workspace/ui/components/select';
+import { Spinner } from '@workspace/ui/components/spinner';
 import {
   Table,
   TableBody,
@@ -41,8 +31,16 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table';
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ExternalLink,
+  RefreshCw,
+  Trash2,
+} from 'lucide-react';
+import { toast } from 'sonner';
 
-import { getUrlStatus, type ShortenedUrl } from '@/types/urlify';
+import { type ShortenedUrl, getUrlStatus } from '@/types/urlify';
 
 const PAGE_SIZES = [5, 10, 20, 50] as const;
 
@@ -297,15 +295,20 @@ export function UrlifyTable({
                       {formatDate(url.createdAt)}
                     </TableCell>
                     <TableCell>
-                      <ActionButton
+                      <Button
                         variant="ghost"
                         size="icon"
-                        className="size-8 text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                        isLoading={deletingId === url.shortCode}
+                        className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                        disabled={deletingId === url.shortCode}
                         onClick={() => deleteOne(url.shortCode)}
                         aria-label="Delete"
-                        leftIcon={<Trash2 />}
-                      />
+                      >
+                        {deletingId === url.shortCode ? (
+                          <Spinner />
+                        ) : (
+                          <Trash2 />
+                        )}
+                      </Button>
                     </TableCell>
                   </TableRow>
                 );
@@ -353,10 +356,7 @@ export function UrlifyTable({
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setBulkDeleteOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setBulkDeleteOpen(false)}>
               Cancel
             </Button>
             <Button variant="destructive" onClick={confirmBulkDelete}>

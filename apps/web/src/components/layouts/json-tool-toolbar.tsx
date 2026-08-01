@@ -1,11 +1,10 @@
-import { Settings } from 'lucide-react';
-
-import { ActionButton } from '@workspace/ui/components/action-button';
+import { Button } from '@workspace/ui/components/button';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@workspace/ui/components/popover';
+import { Settings } from 'lucide-react';
 
 interface JsonToolToolbarProps {
   title: string;
@@ -34,9 +33,10 @@ export function JsonToolToolbar({
           <div className="lg:hidden">
             <Popover>
               <PopoverTrigger asChild>
-                <ActionButton variant="ghost" size="sm" leftIcon={<Settings />}>
+                <Button variant="ghost" size="sm">
+                  <Settings />
                   Settings
-                </ActionButton>
+                </Button>
               </PopoverTrigger>
               <PopoverContent className="w-72">
                 <div className="flex flex-col gap-3">{options}</div>

@@ -2,9 +2,7 @@
 
 import { memo, useCallback } from 'react';
 
-import { Trash2 } from 'lucide-react';
-
-import { ActionButton } from '@workspace/ui/components/action-button';
+import { Button } from '@workspace/ui/components/button';
 import {
   Combobox,
   ComboboxContent,
@@ -13,11 +11,6 @@ import {
   ComboboxItem,
   ComboboxList,
 } from '@workspace/ui/components/combobox';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@workspace/ui/components/tooltip';
 import { Input } from '@workspace/ui/components/input';
 import {
   Select,
@@ -26,7 +19,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@workspace/ui/components/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@workspace/ui/components/tooltip';
 import { cn } from '@workspace/ui/lib/utils';
+import { Trash2 } from 'lucide-react';
+
 import { getWorkTypeDotClass } from '@/lib/timesheet';
 import {
   type JiraIssue,
@@ -160,7 +160,11 @@ export const WorkEntryRow = memo(function WorkEntryRow({
                       )}
                     </ComboboxItem>
                   </TooltipTrigger>
-                  <TooltipContent side="right" sideOffset={8} className="max-w-xs">
+                  <TooltipContent
+                    side="right"
+                    sideOffset={8}
+                    className="max-w-xs"
+                  >
                     <p className="font-medium">{issue.summary}</p>
                     {issue.typeOfWork && (
                       <p className="mt-1 flex items-center gap-1.5">
@@ -244,15 +248,16 @@ export const WorkEntryRow = memo(function WorkEntryRow({
         />
       </div>
       <div className="flex justify-center">
-        <ActionButton
+        <Button
           aria-label="Delete"
           variant="ghost"
           size="icon"
-          className="size-8 text-destructive hover:bg-destructive hover:text-white dark:hover:bg-destructive dark:hover:text-white"
+          className="text-destructive hover:bg-destructive hover:text-white dark:hover:bg-destructive dark:hover:text-white"
           onClick={handleRemove}
           disabled={isLastRow}
-          leftIcon={<Trash2 />}
-        />
+        >
+          <Trash2 />
+        </Button>
       </div>
     </div>
   );

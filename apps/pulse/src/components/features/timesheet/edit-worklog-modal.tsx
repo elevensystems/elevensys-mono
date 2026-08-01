@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 
 import { useForm } from '@tanstack/react-form';
-import { ActionButton } from '@workspace/ui/components/action-button';
+import { Button } from '@workspace/ui/components/button';
 import { DatePicker } from '@workspace/ui/components/date-picker';
 import {
   Dialog,
@@ -16,6 +16,7 @@ import {
 import { Field, FieldError, FieldLabel } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
 import { NativeSelect } from '@workspace/ui/components/native-select';
+import { Spinner } from '@workspace/ui/components/spinner';
 import { Textarea } from '@workspace/ui/components/textarea';
 import { z } from 'zod';
 
@@ -220,20 +221,13 @@ export function EditWorklogModal({
           />
         </div>
         <DialogFooter>
-          <ActionButton
-            variant="outline"
-            onClick={onClose}
-            disabled={isEditing}
-          >
+          <Button variant="outline" onClick={onClose} disabled={isEditing}>
             Cancel
-          </ActionButton>
-          <ActionButton
-            onClick={() => form.handleSubmit()}
-            isLoading={isEditing}
-            loadingText="Saving…"
-          >
-            Save Changes
-          </ActionButton>
+          </Button>
+          <Button onClick={() => form.handleSubmit()} disabled={isEditing}>
+            {isEditing && <Spinner />}
+            {isEditing ? 'Saving…' : 'Save Changes'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

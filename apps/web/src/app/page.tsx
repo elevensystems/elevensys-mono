@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 
-import { ActionButton } from '@workspace/ui/components/action-button';
 import { Badge } from '@workspace/ui/components/badge';
 import { Banner } from '@workspace/ui/components/banner';
 import { Button } from '@workspace/ui/components/button';
@@ -163,13 +162,10 @@ export default function Home() {
                     </CardContent>
                     {action.primary && (
                       <CardFooter>
-                        <ActionButton
-                          className="w-full"
-                          size="sm"
-                          rightIcon={<ArrowRight />}
-                        >
+                        <Button className="w-full" size="sm">
                           Log timesheet
-                        </ActionButton>
+                          <ArrowRight />
+                        </Button>
                       </CardFooter>
                     )}
                   </Card>

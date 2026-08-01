@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo } from 'react';
 
-import { ActionButton } from '@workspace/ui/components/action-button';
+import { Button } from '@workspace/ui/components/button';
 import { Checkbox } from '@workspace/ui/components/checkbox';
 import { DateRangePicker } from '@workspace/ui/components/date-range-picker';
 import { Label } from '@workspace/ui/components/label';
@@ -154,15 +154,13 @@ export default function MyWorklogsPage() {
               </NativeSelect>
             </div>
 
-            <ActionButton
+            <Button
               onClick={handleSearch}
-              disabled={!isConfigured}
-              leftIcon={<Search />}
-              isLoading={isLoading}
-              loadingText="Searching…"
+              disabled={isLoading || !isConfigured}
             >
-              Search
-            </ActionButton>
+              {isLoading ? <Spinner /> : <Search />}
+              {isLoading ? 'Searching…' : 'Search'}
+            </Button>
           </div>
 
           {/* Select-all + bulk delete bar */}
