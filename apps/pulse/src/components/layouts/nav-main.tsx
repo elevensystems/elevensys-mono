@@ -26,7 +26,7 @@ import type { NavGroup } from '@/lib/app-sidebar-config';
 function NavBadge({ label }: { label: string }) {
   return (
     <Token
-      color="green"
+      color="blue"
       shape="pill"
       density="compact"
       className="ml-auto group-data-[collapsible=icon]:hidden"

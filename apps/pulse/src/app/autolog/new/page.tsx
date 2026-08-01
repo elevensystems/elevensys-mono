@@ -41,9 +41,12 @@ export default function NewAutologConfigPage() {
     <MainLayout>
       <section className="container mx-auto px-4 py-12">
         <div className="max-w-full mx-auto space-y-6">
-          <ToolPageHeader title="New Configuration" />
-
-          <NotConfiguredAlert isConfigured={isConfigured} />
+          {!isConfigured && (
+            <>
+              <ToolPageHeader title="New Configuration" />
+              <NotConfiguredAlert isConfigured={false} />
+            </>
+          )}
 
           {isConfigured && (
             <ConfigForm
@@ -52,6 +55,7 @@ export default function NewAutologConfigPage() {
               isLoadingProjects={isLoadingProjects}
               onSave={createConfig}
               onCancel={() => router.push('/autolog')}
+              header={<ToolPageHeader title="New Configuration" className="" />}
             />
           )}
         </div>

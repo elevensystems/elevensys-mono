@@ -6,12 +6,14 @@ import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
 import { NativeSelect } from '@workspace/ui/components/native-select';
-import { Plus } from 'lucide-react';
+import { Spinner } from '@workspace/ui/components/spinner';
+import { Token } from '@workspace/ui/components/token';
+import { Plus, PlusCircle, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { WorkEntryRow } from '@/components/features/timesheet/work-entry-row';
 import { useProjectIssues } from '@/hooks/use-project-issues';
-import { generateEntryId } from '@/lib/timesheet';
+import { STANDARD_HOURS, formatHours, generateEntryId } from '@/lib/timesheet';
 import type {
   AutologConfig,
   CreateAutologConfigPayload,
@@ -30,6 +32,11 @@ interface ConfigFormProps {
   editing?: AutologConfig;
   onSave: (payload: CreateAutologConfigPayload) => Promise<boolean>;
   onCancel: () => void;
+  /**
+   * Page title node. When provided, the form renders it in a row with the
+   * action buttons aligned to the top right instead of a bottom action bar.
+   */
+  header?: React.ReactNode;
 }
 
 // Autolog is still in development — saving is disabled until the backend is ready.
@@ -63,6 +70,7 @@ export function ConfigForm({
   editing,
   onSave,
   onCancel,
+  header,
 }: ConfigFormProps) {
   const [isSaving, setIsSaving] = useState(false);
 
@@ -138,6 +146,13 @@ export function ConfigForm({
     [entries]
   );
 
+  const hoursTokenColor =
+    totalHours === STANDARD_HOURS
+      ? 'green'
+      : totalHours > STANDARD_HOURS
+        ? 'orange'
+        : 'gray';
+
   const handleSubmit = async () => {
     if (!selectedProject) {
       toast.error('Please select a project');
@@ -182,8 +197,43 @@ export function ConfigForm({
     if (ok) onCancel();
   };
 
+  const actions = (
+    <div className="flex items-center gap-3">
+      {!SAVE_ENABLED && (
+        <p className="text-xs text-muted-foreground">
+          Autolog is still in development.
+        </p>
+      )}
+      <Button onClick={handleSubmit} disabled={isSaving || !SAVE_ENABLED}>
+        {isSaving ? (
+          <>
+            <Spinner />
+            Saving...
+          </>
+        ) : editing ? (
+          <>
+            <Save />
+            Save Changes
+          </>
+        ) : (
+          <>
+            <PlusCircle />
+            Create
+          </>
+        )}
+      </Button>
+    </div>
+  );
+
   return (
     <div className="space-y-8">
+      {header && (
+        <div className="flex items-start justify-between gap-4">
+          {header}
+          {actions}
+        </div>
+      )}
+
       {/* Project */}
       <div className="space-y-2">
         <Label className="text-sm font-medium">Project</Label>
@@ -196,9 +246,7 @@ export function ConfigForm({
           disabled={isLoadingProjects || !!editing}
         >
           <option value="">
-            {isLoadingProjects
-              ? 'Loading projects...'
-              : '-- Choose a project --'}
+            {isLoadingProjects ? 'Loading projects...' : 'Choose a project'}
           </option>
           {projects.map(p => (
             <option key={p.id} value={p.id}>
@@ -216,27 +264,45 @@ export function ConfigForm({
 
       {/* Tickets */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium">
-            Tickets
-            <span className="ml-2 text-xs font-normal text-muted-foreground">
-              {totalHours}h total
-            </span>
-          </Label>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Add tickets to log work for. Hours are logged per missing date.
-        </p>
-        <div className="overflow-hidden rounded-lg border">
-          <div className="grid grid-cols-[40px_230px_1fr_150px_140px_50px] gap-2 bg-muted/50 px-3 py-2 text-sm font-semibold text-muted-foreground">
-            <div>#</div>
-            <div>Key</div>
-            <div>Description</div>
-            <div>Type of Work</div>
-            <div>Hours</div>
-            <div />
+        <Label className="text-sm font-medium">Tickets</Label>
+        <div className="rounded-xl border bg-muted/40">
+          {/* Card header */}
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+            {/* Daily target */}
+            <div className="flex items-center gap-2.5">
+              <span className="text-sm font-semibold">Daily target</span>
+              <Token
+                color={hoursTokenColor}
+                density="compact"
+                className="tabular-nums"
+              >
+                {formatHours(totalHours)}h / {formatHours(STANDARD_HOURS)}h
+              </Token>
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={addEntry}
+              disabled={!selectedProject}
+            >
+              <Plus />
+              Add Row
+            </Button>
           </div>
-          <div>
+
+          {/* Entries table — sits flush inside the header shell */}
+          <div className="-mx-px -mb-px overflow-hidden rounded-xl border bg-card">
+            {/* Grid header */}
+            <div className="grid grid-cols-[40px_230px_1fr_150px_140px_50px] gap-2 px-3 py-2 text-sm font-semibold text-muted-foreground">
+              <span>#</span>
+              <span>Key</span>
+              <span>Description</span>
+              <span>Type of Work</span>
+              <span>Hours</span>
+              <span />
+            </div>
+            {/* Entry rows */}
             {entries.map((entry, index) => (
               <WorkEntryRow
                 key={entry.id}
@@ -253,15 +319,6 @@ export function ConfigForm({
             ))}
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={addEntry}
-          disabled={!selectedProject}
-        >
-          <Plus className="mr-1 h-4 w-4" />
-          Add Ticket
-        </Button>
       </div>
 
       {/* Schedule */}
@@ -344,21 +401,11 @@ export function ConfigForm({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center justify-between border-t pt-6">
-        <Button variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <div className="flex items-center gap-3">
-          {!SAVE_ENABLED && (
-            <p className="text-xs text-muted-foreground">
-              Autolog is still in development.
-            </p>
-          )}
-          <Button onClick={handleSubmit} disabled={isSaving || !SAVE_ENABLED}>
-            {isSaving ? 'Saving...' : editing ? 'Save Changes' : 'Create'}
-          </Button>
+      {!header && (
+        <div className="flex items-center justify-end border-t pt-6">
+          {actions}
         </div>
-      </div>
+      )}
     </div>
   );
 }
