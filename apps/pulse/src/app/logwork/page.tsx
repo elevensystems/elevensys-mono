@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@workspace/ui/components/button';
+import { FieldMessage } from '@workspace/ui/components/field-message';
 import { Spinner } from '@workspace/ui/components/spinner';
 import { Plus, Send } from 'lucide-react';
 import { toast } from 'sonner';
@@ -451,7 +452,12 @@ export default function LogWorkPage() {
               </span>
               Add work entries
             </div>
-            <div className="overflow-hidden rounded-lg border">
+            <FieldMessage
+              state="error"
+              message={errors.global.entries}
+              controlClassName="overflow-hidden"
+              showIcon
+            >
               {/* Grid header */}
               <div className="grid grid-cols-[40px_230px_1fr_150px_140px_50px] gap-2 bg-muted/50 px-3 py-2 text-sm font-semibold text-muted-foreground">
                 <span>#</span>
@@ -477,14 +483,7 @@ export default function LogWorkPage() {
                   isLastRow={entries.length === 1}
                 />
               ))}
-            </div>
-
-            {/* Global entries error */}
-            {errors.global.entries && (
-              <p className="text-sm text-destructive" role="alert">
-                {errors.global.entries}
-              </p>
-            )}
+            </FieldMessage>
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row sm:justify-between gap-3 border-t pt-6">

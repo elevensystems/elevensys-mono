@@ -14,6 +14,7 @@ import {
   ComboboxList,
 } from '@workspace/ui/components/combobox';
 import { DateRangePicker } from '@workspace/ui/components/date-range-picker';
+import { FieldMessage } from '@workspace/ui/components/field-message';
 import { Label } from '@workspace/ui/components/label';
 import {
   Popover,
@@ -314,18 +315,18 @@ export function MissingWorklogsCard({
         </div>
 
         {/* Chip list — bordered box always shown, min-height keeps it stable when empty */}
-        <div className="rounded-md border bg-card p-2 min-h-11">
+        <FieldMessage
+          state="error"
+          message={dateError}
+          controlClassName="p-2 min-h-11"
+          showIcon
+        >
           <DateChipList
             dates={selectedDates}
             manualDateKeys={manualDateKeys}
             onRemove={handleRemoveDate}
           />
-        </div>
-        {dateError && (
-          <p className="text-sm text-destructive" role="alert">
-            {dateError}
-          </p>
-        )}
+        </FieldMessage>
       </div>
     </div>
   );
