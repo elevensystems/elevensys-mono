@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@workspace/ui/components/button';
 import { FieldMessage } from '@workspace/ui/components/field-message';
 import { Spinner } from '@workspace/ui/components/spinner';
+import { Token } from '@workspace/ui/components/token';
 import { Plus, Send } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -365,17 +366,12 @@ export default function LogWorkPage() {
     );
   }
 
-  const hoursColor =
+  const hoursTokenColor =
     totalHours === STANDARD_HOURS
-      ? 'text-success'
+      ? 'green'
       : totalHours > STANDARD_HOURS
-        ? 'text-warning'
-        : 'text-foreground';
-
-  const progressBarColor =
-    totalHours > STANDARD_HOURS ? 'bg-warning' : 'bg-success';
-
-  const progressPercent = Math.min((totalHours / STANDARD_HOURS) * 100, 100);
+        ? 'orange'
+        : 'gray';
 
   const currentStep = ((): 1 | 2 | 3 | 4 => {
     if (isSubmitting) return 4;
@@ -427,75 +423,78 @@ export default function LogWorkPage() {
 
           {/* Work Entries */}
           <div className="space-y-6">
-            <div className="flex items-end justify-end">
-              <div className="flex w-48 flex-col gap-1.5 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground text-xs">
-                    Daily target
-                  </span>
-                  <span className={`font-semibold ${hoursColor}`}>
-                    {formatHours(totalHours)}h / {formatHours(STANDARD_HOURS)}h
-                  </span>
-                </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className={`h-full rounded-full transition-all duration-300 ${progressBarColor}`}
-                    style={{ width: `${progressPercent}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-            {/* Entries Table */}
-            <div className="flex mb-3 items-center gap-2 text-sm font-medium text-muted-foreground">
+            {/* Step 3 label */}
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
                 3
               </span>
               Add work entries
             </div>
-            <FieldMessage
-              state="error"
-              message={errors.global.entries}
-              controlClassName="overflow-hidden"
-              showIcon
-            >
-              {/* Grid header */}
-              <div className="grid grid-cols-[40px_230px_1fr_150px_140px_50px] gap-2 bg-muted/50 px-3 py-2 text-sm font-semibold text-muted-foreground">
-                <span>#</span>
-                <span>Key</span>
-                <span>Description</span>
-                <span>Type of Work</span>
-                <span>Hours</span>
-                <span />
+
+            <div className="rounded-xl border bg-muted/40">
+              {/* Card header */}
+              <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                {/* Daily target */}
+                <div className="flex items-center gap-2.5">
+                  <span className="text-sm font-semibold">Daily target</span>
+                  <Token
+                    color={hoursTokenColor}
+                    density="compact"
+                    className="tabular-nums"
+                  >
+                    {formatHours(totalHours)}h / {formatHours(STANDARD_HOURS)}h
+                  </Token>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={addEntry}
+                  disabled={isSubmitting || !isConfigured}
+                >
+                  <Plus />
+                  Add Row
+                </Button>
               </div>
-              {/* Entry rows */}
-              {entries.map((entry, index) => (
-                <WorkEntryRow
-                  key={entry.id}
-                  index={index}
-                  entry={entry}
-                  issues={issues}
-                  issuesByKey={issuesByKey}
-                  isLoadingIssues={isLoadingIssues}
-                  onUpdate={updateEntry}
-                  onRemove={removeEntry}
-                  onClearError={clearRowError}
-                  errors={errors.rows.get(entry.id)}
-                  isLastRow={entries.length === 1}
-                />
-              ))}
-            </FieldMessage>
+
+              {/* Entries table — sits flush inside the header shell */}
+              <FieldMessage
+                state="error"
+                message={errors.global.entries}
+                className="-mx-px -mb-px rounded-xl"
+                controlClassName="overflow-hidden rounded-xl"
+                showIcon
+              >
+                {/* Grid header */}
+                <div className="grid grid-cols-[40px_230px_1fr_150px_140px_50px] gap-2 px-3 py-2 text-sm font-semibold text-muted-foreground">
+                  <span>#</span>
+                  <span>Key</span>
+                  <span>Description</span>
+                  <span>Type of Work</span>
+                  <span>Hours</span>
+                  <span />
+                </div>
+                {/* Entry rows */}
+                {entries.map((entry, index) => (
+                  <WorkEntryRow
+                    key={entry.id}
+                    index={index}
+                    entry={entry}
+                    issues={issues}
+                    issuesByKey={issuesByKey}
+                    isLoadingIssues={isLoadingIssues}
+                    onUpdate={updateEntry}
+                    onRemove={removeEntry}
+                    onClearError={clearRowError}
+                    errors={errors.rows.get(entry.id)}
+                    isLastRow={entries.length === 1}
+                  />
+                ))}
+              </FieldMessage>
+            </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row sm:justify-between gap-3 border-t pt-6">
-              <Button
-                variant="outline"
-                onClick={addEntry}
-                disabled={isSubmitting || !isConfigured}
-                className="w-full sm:w-auto"
-              >
-                <Plus />
-                Add Row
-              </Button>
+            <div className="flex flex-col sm:flex-row sm:justify-end gap-3 border-t pt-6">
               <Button
                 onClick={handleSubmitClick}
                 disabled={isSubmitting || !isConfigured}

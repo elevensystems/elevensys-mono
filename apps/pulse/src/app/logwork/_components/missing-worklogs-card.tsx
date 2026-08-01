@@ -262,7 +262,7 @@ export function MissingWorklogsCard({
             </span>
             Select dates
             {parsedDates.length > 0 && (
-              <Token color="green" density="compact" className="ml-1">
+              <Token color="pink" density="compact" className="ml-1">
                 {parsedDates.length} date
                 {parsedDates.length !== 1 ? 's' : ''}
               </Token>
