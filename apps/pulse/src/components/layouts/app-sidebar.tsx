@@ -45,7 +45,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <Suspense fallback={null}>
-          <NavMain items={appSidebarData.navMain} />
+          <NavMain groups={appSidebarData.navGroups} />
         </Suspense>
       </SidebarContent>
       <NavSecondary className="relative before:pointer-events-none before:absolute before:inset-x-0 before:-top-6 before:h-6 before:bg-gradient-to-t before:from-sidebar before:to-transparent" />

@@ -275,9 +275,8 @@ export default function TimesheetConfigPage() {
             </div>
             <div className="flex items-center gap-2">
               <Button
-                variant="outline"
+                variant="destructive"
                 size="sm"
-                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                 onClick={handleClear}
                 disabled={!isConfigured}
               >
