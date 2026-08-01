@@ -98,6 +98,23 @@ jest.mock('@workspace/ui/components/alert', () => ({
   ),
 }));
 
+jest.mock('@workspace/ui/components/banner', () => ({
+  Banner: ({
+    state,
+    title,
+    message,
+  }: {
+    state?: string;
+    title?: string;
+    message: string;
+  }) => (
+    <div data-testid="banner" data-state={state}>
+      {title && <strong>{title}</strong>}
+      <span>{message}</span>
+    </div>
+  ),
+}));
+
 jest.mock('@workspace/ui/components/badge', () => ({
   Badge: ({
     children,
@@ -236,15 +253,19 @@ describe('TimesheetConfigPage', () => {
 
   // --- Connection status ---
 
-  it('renders "Connected" badge when configured', () => {
+  it('renders a success banner when configured', () => {
     render(<TimesheetConfigPage />);
-    expect(screen.getByText('Connected')).toBeInTheDocument();
+    const banner = screen.getByTestId('banner');
+    expect(banner).toHaveAttribute('data-state', 'success');
+    expect(screen.getByText('Token has been saved')).toBeInTheDocument();
   });
 
-  it('renders "Not configured" badge when not configured', () => {
+  it('renders a warning banner when not configured', () => {
     mockUseTimesheetSettings.mockReturnValue(emptySettings);
     render(<TimesheetConfigPage />);
-    expect(screen.getByText('Not configured')).toBeInTheDocument();
+    const banner = screen.getByTestId('banner');
+    expect(banner).toHaveAttribute('data-state', 'warning');
+    expect(screen.getByText('No token saved yet')).toBeInTheDocument();
   });
 
   // --- Form fields ---

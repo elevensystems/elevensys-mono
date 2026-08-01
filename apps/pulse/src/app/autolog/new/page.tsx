@@ -41,10 +41,7 @@ export default function NewAutologConfigPage() {
     <MainLayout>
       <section className="container mx-auto px-4 py-12">
         <div className="max-w-full mx-auto space-y-6">
-          <ToolPageHeader
-            title="New Configuration"
-            description="Create a new autolog configuration to automatically log work to Jira."
-          />
+          <ToolPageHeader title="New Configuration" />
 
           <NotConfiguredAlert isConfigured={isConfigured} />
 

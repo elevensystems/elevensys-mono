@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import Link from 'next/link';
 
+import { Banner } from '@workspace/ui/components/banner';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { NativeSelect } from '@workspace/ui/components/native-select';
@@ -129,22 +130,22 @@ export default function TimesheetConfigPage() {
       <section className="container mx-auto px-4 py-12">
         <div className="max-w-5xl mx-auto space-y-6">
           {/* Page header */}
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-2xl font-bold tracking-tight">
-              Configurations
-            </h1>
-            {isConfigured ? (
-              <span className="flex items-center gap-1.5 text-sm font-medium text-success">
-                <span className="h-2 w-2 rounded-full bg-success" />
-                Connected
-              </span>
-            ) : (
-              <span className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
-                <span className="h-2 w-2 rounded-full bg-muted-foreground/50" />
-                Not configured
-              </span>
-            )}
-          </div>
+          <h1 className="text-2xl font-bold tracking-tight">Configurations</h1>
+
+          {/* Token status */}
+          {isConfigured ? (
+            <Banner
+              state="success"
+              title="Token has been saved"
+              message="Your token is configured and ready to use with Jira."
+            />
+          ) : (
+            <Banner
+              state="warning"
+              title="No token saved yet"
+              message="Fill in the fields below and hit Save to connect to Jira."
+            />
+          )}
 
           {/* Form rows */}
           <div className="border rounded-lg overflow-hidden divide-y">

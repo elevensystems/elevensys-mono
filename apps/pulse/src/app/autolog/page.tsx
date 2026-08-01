@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { Banner } from '@workspace/ui/components/banner';
 import { Button } from '@workspace/ui/components/button';
 import { Card, CardContent, CardHeader } from '@workspace/ui/components/card';
 import { Skeleton } from '@workspace/ui/components/skeleton';
@@ -42,9 +43,31 @@ export default function AutologPage() {
     <MainLayout>
       <section className="container mx-auto px-4 py-12">
         <div className="max-w-full mx-auto space-y-6">
-          <ToolPageHeader
-            title="Autolog"
-            description="Automatically log work to Jira on a weekly or monthly schedule."
+          <div className="flex items-center justify-between gap-4">
+            <ToolPageHeader
+              title="Autolog"
+              description={
+                isLoaded && isConfigured
+                  ? `${configs.length} / 3 configurations`
+                  : undefined
+              }
+              className=""
+            />
+            {isLoaded && isConfigured && (
+              <Button
+                onClick={() => router.push('/autolog/new')}
+                disabled={!canAddMore}
+              >
+                <PlusCircle />
+                Add Config
+              </Button>
+            )}
+          </div>
+
+          <Banner
+            state="info"
+            title="Under development"
+            message="Autolog is still in development and will be released soon."
           />
 
           {isLoaded && !isConfigured && (
@@ -53,21 +76,6 @@ export default function AutologPage() {
 
           {isLoaded && isConfigured && (
             <div className="space-y-6 mt-6">
-              {/* Header row */}
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  {configs.length} / 3 configurations
-                </p>
-                <Button
-                  onClick={() => router.push('/autolog/new')}
-                  disabled={!canAddMore}
-                  size="sm"
-                >
-                  <PlusCircle className="mr-1.5 h-4 w-4" />
-                  Add Config
-                </Button>
-              </div>
-
               {/* Loading state */}
               {isLoading && (
                 <div className="space-y-3">

@@ -18,9 +18,23 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from '@workspace/ui/components/sidebar';
+import { Token } from '@workspace/ui/components/token';
 import { ChevronRight } from 'lucide-react';
 
 import type { NavGroup } from '@/lib/app-sidebar-config';
+
+function NavBadge({ label }: { label: string }) {
+  return (
+    <Token
+      color="green"
+      shape="pill"
+      density="compact"
+      className="ml-auto group-data-[collapsible=icon]:hidden"
+    >
+      {label}
+    </Token>
+  );
+}
 
 export function NavMain({ groups }: { groups: NavGroup[] }) {
   const pathname = usePathname();
@@ -56,7 +70,8 @@ export function NavMain({ groups }: { groups: NavGroup[] }) {
                         isActive={item.items.some(sub => isActive(sub.url))}
                       >
                         <item.icon />
-                        <span>{item.title}</span>
+                        <span className="truncate">{item.title}</span>
+                        {item.badge ? <NavBadge label={item.badge} /> : null}
                         <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                       </SidebarMenuButton>
                     </CollapsibleTrigger>
@@ -87,7 +102,8 @@ export function NavMain({ groups }: { groups: NavGroup[] }) {
                   >
                     <Link href={item.url ?? '#'}>
                       <item.icon />
-                      <span>{item.title}</span>
+                      <span className="truncate">{item.title}</span>
+                      {item.badge ? <NavBadge label={item.badge} /> : null}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

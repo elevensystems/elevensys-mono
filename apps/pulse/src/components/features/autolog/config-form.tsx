@@ -32,6 +32,9 @@ interface ConfigFormProps {
   onCancel: () => void;
 }
 
+// Autolog is still in development — saving is disabled until the backend is ready.
+const SAVE_ENABLED = false;
+
 function toWorkEntries(config?: AutologConfig): WorkEntry[] {
   if (!config?.tickets.length) {
     return [
@@ -341,13 +344,20 @@ export function ConfigForm({
       </div>
 
       {/* Actions */}
-      <div className="flex justify-between border-t pt-6">
+      <div className="flex items-center justify-between border-t pt-6">
         <Button variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button onClick={handleSubmit} disabled={isSaving}>
-          {isSaving ? 'Saving...' : editing ? 'Save Changes' : 'Create'}
-        </Button>
+        <div className="flex items-center gap-3">
+          {!SAVE_ENABLED && (
+            <p className="text-xs text-muted-foreground">
+              Autolog is still in development.
+            </p>
+          )}
+          <Button onClick={handleSubmit} disabled={isSaving || !SAVE_ENABLED}>
+            {isSaving ? 'Saving...' : editing ? 'Save Changes' : 'Create'}
+          </Button>
+        </div>
       </div>
     </div>
   );

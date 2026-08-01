@@ -11,6 +11,8 @@ export interface NavItem {
   /** Omitted for items that only group sub-items and have no page of their own. */
   url?: string;
   icon: LucideIcon;
+  /** Short label shown next to the title, e.g. "New" for a recently shipped feature. */
+  badge?: string;
   items?: NavSubItem[];
 }
 
@@ -41,7 +43,7 @@ export const appSidebarData: {
             { title: 'Project Worklogs', url: '/project-worklogs' },
           ],
         },
-        { title: 'Autolog', url: '/autolog', icon: RefreshCw },
+        { title: 'Autolog', url: '/autolog', icon: RefreshCw, badge: 'New' },
       ],
     },
     {
