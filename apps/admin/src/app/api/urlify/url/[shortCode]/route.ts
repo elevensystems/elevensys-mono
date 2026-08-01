@@ -15,10 +15,13 @@ export const DELETE = async (
   }
 
   try {
-    const result = await apiFetch(`/urlify/url/${encodeURIComponent(shortCode)}`, {
-      accessToken,
-      method: 'DELETE',
-    });
+    const result = await apiFetch(
+      `/urlify/url/${encodeURIComponent(shortCode)}`,
+      {
+        accessToken,
+        method: 'DELETE',
+      }
+    );
     return NextResponse.json(result ?? { success: true });
   } catch (err) {
     if (err instanceof ApiError) {

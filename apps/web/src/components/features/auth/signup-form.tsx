@@ -8,7 +8,11 @@ import {
   CardHeader,
   CardTitle,
 } from '@workspace/ui/components/card';
-import { Field, FieldDescription, FieldGroup } from '@workspace/ui/components/field';
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+} from '@workspace/ui/components/field';
 import { cn } from '@workspace/ui/lib/utils';
 
 export function SignupForm({

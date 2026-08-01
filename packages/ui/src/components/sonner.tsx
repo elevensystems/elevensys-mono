@@ -1,5 +1,6 @@
 'use client';
 
+import { Spinner } from '@workspace/ui/components/spinner';
 import {
   CircleCheckIcon,
   InfoIcon,
@@ -8,8 +9,6 @@ import {
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Toaster as Sonner, ToasterProps } from 'sonner';
-
-import { Spinner } from '@workspace/ui/components/spinner';
 
 // globals.css only defines `:root` (light) and `.dark` popover colors, so
 // there's no `.light` class to force a light subtree back off of `.dark`.

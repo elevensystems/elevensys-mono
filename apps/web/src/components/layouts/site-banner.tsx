@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from 'react';
 
 import { Banner } from '@workspace/ui/components/banner';
+
 import { useFlags } from '@/contexts/flags-context';
 import { parseAnnouncementBanner } from '@/lib/flags-utils';
 

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 
-import MainLayout from '@/components/layouts/main-layout';
 import { AuditChart } from '@/components/features/audit/audit-chart';
+import MainLayout from '@/components/layouts/main-layout';
 import { getUserFromSession } from '@/lib/auth';
 
 export default async function AuditStatsPage() {

@@ -1,7 +1,8 @@
 'use client';
 
-import { GitBranch } from 'lucide-react';
 import { useParams, useSearchParams } from 'next/navigation';
+
+import { GitBranch } from 'lucide-react';
 
 import { HBars } from '@/components/features/claude-watch/charts/h-bars';
 import { LineChart } from '@/components/features/claude-watch/charts/line-chart';
@@ -18,9 +19,9 @@ import {
 } from '@/components/features/claude-watch/states';
 import { UsageCard } from '@/components/features/claude-watch/usage-card';
 import {
+  usagePath,
   useClaudeWatch,
   useRangeParams,
-  usagePath,
 } from '@/hooks/use-claude-watch';
 import type { ProjectDetail } from '@/types/claude-watch';
 
@@ -84,7 +85,10 @@ export default function ProjectDetailPage() {
         backLabel="Projects"
         right={
           <>
-            <div className="font-mono text-2xl font-bold" style={{ color: COST }}>
+            <div
+              className="font-mono text-2xl font-bold"
+              style={{ color: COST }}
+            >
               {fc(totalCost)}
             </div>
             <div className="text-muted-foreground text-xs">
@@ -119,7 +123,10 @@ export default function ProjectDetailPage() {
                   key={b}
                   className="bg-muted border-border inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 font-mono text-xs"
                 >
-                  <GitBranch className="size-3" style={{ color: PALETTE.teal }} />
+                  <GitBranch
+                    className="size-3"
+                    style={{ color: PALETTE.teal }}
+                  />
                   {b}
                 </span>
               ))

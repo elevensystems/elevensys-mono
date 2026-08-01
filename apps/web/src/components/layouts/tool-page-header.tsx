@@ -21,11 +21,19 @@ export function ToolPageHeader({
     <>
       <div className={className ?? 'mb-8'}>
         <h1 className="text-2xl font-bold mb-2">{title}</h1>
-        {subtitle ?? (description && <p className="text-sm text-muted-foreground">{description}</p>)}
+        {subtitle ??
+          (description && (
+            <p className="text-sm text-muted-foreground">{description}</p>
+          ))}
       </div>
 
       {infoMessage && (
-        <Banner state="info" title="Info" message={infoMessage} className="mb-4" />
+        <Banner
+          state="info"
+          title="Info"
+          message={infoMessage}
+          className="mb-4"
+        />
       )}
 
       {error && (

@@ -2,9 +2,8 @@
 
 import { useEffect } from 'react';
 
-import { AlertTriangle } from 'lucide-react';
-
 import { Button } from '@workspace/ui/components/button';
+import { AlertTriangle } from 'lucide-react';
 
 export default function Error({
   error,

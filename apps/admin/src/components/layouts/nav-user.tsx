@@ -2,9 +2,6 @@
 
 import Link from 'next/link';
 
-import { ChevronsUpDown, LogOut, Monitor, Moon, Sun } from 'lucide-react';
-import { useTheme } from 'next-themes';
-
 import {
   Avatar,
   AvatarFallback,
@@ -26,6 +23,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@workspace/ui/components/sidebar';
+import { ChevronsUpDown, LogOut, Monitor, Moon, Sun } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 import type { AuthUser } from '@/types/auth';
 

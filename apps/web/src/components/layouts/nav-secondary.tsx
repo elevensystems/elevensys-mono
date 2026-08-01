@@ -2,10 +2,6 @@ import * as React from 'react';
 
 import Link from 'next/link';
 
-import { Monitor, Moon, Palette, Sun } from 'lucide-react';
-import { type LucideIcon } from 'lucide-react';
-import { useTheme } from 'next-themes';
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +16,9 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@workspace/ui/components/sidebar';
+import { Monitor, Moon, Palette, Sun } from 'lucide-react';
+import { type LucideIcon } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 const THEMES = [
   { label: 'Light', value: 'light', icon: Sun },

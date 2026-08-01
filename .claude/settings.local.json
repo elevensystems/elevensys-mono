@@ -45,12 +45,7 @@
       "Bash(git log *)"
     ]
   },
-  "enabledMcpjsonServers": [
-    "next-devtools",
-    "shadcn",
-    "sentry",
-    "context7"
-  ],
+  "enabledMcpjsonServers": ["next-devtools", "shadcn", "sentry", "context7"],
   "statusLine": {
     "type": "command",
     "command": "~/.claude/statusline.sh",

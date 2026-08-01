@@ -2,10 +2,6 @@
 
 import * as React from 'react';
 
-import { type VariantProps, cva } from 'class-variance-authority';
-import { PanelLeftIcon } from 'lucide-react';
-import { Slot as SlotPrimitive } from 'radix-ui';
-
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Separator } from '@workspace/ui/components/separator';
@@ -25,6 +21,9 @@ import {
 } from '@workspace/ui/components/tooltip';
 import { useIsMobile } from '@workspace/ui/hooks/use-mobile';
 import { cn } from '@workspace/ui/lib/utils';
+import { type VariantProps, cva } from 'class-variance-authority';
+import { PanelLeftIcon } from 'lucide-react';
+import { Slot as SlotPrimitive } from 'radix-ui';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state';
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;

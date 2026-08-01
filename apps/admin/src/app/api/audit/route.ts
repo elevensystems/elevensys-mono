@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { apiFetch, ApiError } from '@/lib/api-fetch';
+import { ApiError, apiFetch } from '@/lib/api-fetch';
 import { getAccessToken, getUserFromSession } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
@@ -13,13 +13,23 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
 
   try {
-    const data = await apiFetch('/audit/search', { accessToken, method: 'POST', body });
+    const data = await apiFetch('/audit/search', {
+      accessToken,
+      method: 'POST',
+      body,
+    });
     return NextResponse.json(data);
   } catch (error) {
     if (error instanceof ApiError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
     }
     console.error('audit proxy error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }

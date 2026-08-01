@@ -1,26 +1,34 @@
 'use client';
 
-import { Check } from 'lucide-react';
 import { useParams, useSearchParams } from 'next/navigation';
+
+import { Check } from 'lucide-react';
 
 import {
   COST,
-  evtColor,
   PALETTE,
+  evtColor,
   toolColor,
 } from '@/components/features/claude-watch/lib/colors';
-import { fc, fc6, fd, ft, rel, shortId } from '@/components/features/claude-watch/lib/format';
+import {
+  fc,
+  fc6,
+  fd,
+  ft,
+  rel,
+  shortId,
+} from '@/components/features/claude-watch/lib/format';
 import { SectionHeader } from '@/components/features/claude-watch/section-header';
 import {
   UsageError,
   UsageLoading,
 } from '@/components/features/claude-watch/states';
-import { UsageBadge, Chip } from '@/components/features/claude-watch/usage-badge';
-import { UsageCard } from '@/components/features/claude-watch/usage-card';
 import {
-  useClaudeWatch,
-  usagePath,
-} from '@/hooks/use-claude-watch';
+  Chip,
+  UsageBadge,
+} from '@/components/features/claude-watch/usage-badge';
+import { UsageCard } from '@/components/features/claude-watch/usage-card';
+import { usagePath, useClaudeWatch } from '@/hooks/use-claude-watch';
 import type { SessionDetail, UsageEvent } from '@/types/claude-watch';
 
 type Payload = Record<string, unknown>;
@@ -47,7 +55,8 @@ function EventDetail({ event }: { event: UsageEvent }) {
       return (
         <span className="text-muted-foreground font-mono text-[11.5px]">
           {str(p, 'model').replace('claude-', '')} · in{' '}
-          {ft(numv(usage, 'inputTokens'))} / out {ft(numv(usage, 'outputTokens'))} / cache{' '}
+          {ft(numv(usage, 'inputTokens'))} / out{' '}
+          {ft(numv(usage, 'outputTokens'))} / cache{' '}
           {ft(numv(usage, 'cacheReadTokens'))} ·{' '}
           <span style={{ color: COST }}>{fc6(numv(p, 'costUSD'))}</span>
         </span>
@@ -79,14 +88,19 @@ function EventDetail({ event }: { event: UsageEvent }) {
       );
     case 'PermissionDenied':
       return (
-        <span className="font-mono text-[11.5px]" style={{ color: PALETTE.orange }}>
+        <span
+          className="font-mono text-[11.5px]"
+          style={{ color: PALETTE.orange }}
+        >
           {str(p, 'tool')} → {str(p, 'target')} (denied)
         </span>
       );
     case 'PreCompact':
     case 'PostCompact':
       return (
-        <span className="text-muted-foreground text-[11.5px]">{str(p, 'note')}</span>
+        <span className="text-muted-foreground text-[11.5px]">
+          {str(p, 'note')}
+        </span>
       );
     case 'SessionStart':
       return (
@@ -96,7 +110,9 @@ function EventDetail({ event }: { event: UsageEvent }) {
       );
     case 'SessionEnd':
       return (
-        <span className="text-muted-foreground text-[11.5px]">session closed</span>
+        <span className="text-muted-foreground text-[11.5px]">
+          session closed
+        </span>
       );
     default:
       return null;
@@ -121,7 +137,11 @@ export default function SessionDetailPage() {
   const summaryChips: { label: string; value: string; color?: string }[] = sm
     ? [
         { label: 'Turns', value: `${sm.turns}` },
-        { label: 'Subagent Turns', value: `${sm.subagentTurns}`, color: PALETTE.purple },
+        {
+          label: 'Subagent Turns',
+          value: `${sm.subagentTurns}`,
+          color: PALETTE.purple,
+        },
         { label: 'Prompts', value: `${sm.prompts}`, color: PALETTE.blue },
         { label: 'Cost', value: fc(sm.costUSD), color: COST },
         { label: 'Tokens', value: ft(sm.tokens) },
@@ -155,7 +175,10 @@ export default function SessionDetailPage() {
             <div className="text-muted-foreground mb-1.5 text-[10.5px] uppercase tracking-wide">
               {c.label}
             </div>
-            <div className="font-mono text-lg font-bold" style={{ color: c.color }}>
+            <div
+              className="font-mono text-lg font-bold"
+              style={{ color: c.color }}
+            >
               {c.value}
             </div>
           </div>

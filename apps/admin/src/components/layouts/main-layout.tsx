@@ -14,12 +14,12 @@ import {
   BreadcrumbSeparator,
 } from '@workspace/ui/components/breadcrumb';
 import { Separator } from '@workspace/ui/components/separator';
-import { SidebarAutoCollapse } from '@workspace/ui/components/sidebar-auto-collapse';
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from '@workspace/ui/components/sidebar';
+import { SidebarAutoCollapse } from '@workspace/ui/components/sidebar-auto-collapse';
 
 import { AppSidebar } from '@/components/layouts/app-sidebar';
 import { useAuth } from '@/contexts/auth-context';

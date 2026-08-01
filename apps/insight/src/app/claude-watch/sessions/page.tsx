@@ -11,8 +11,18 @@ import {
   Column,
   DataTable,
 } from '@/components/features/claude-watch/data-table';
-import { COST, modelColor, PALETTE } from '@/components/features/claude-watch/lib/colors';
-import { fc, fd, ft, rel, shortId } from '@/components/features/claude-watch/lib/format';
+import {
+  COST,
+  PALETTE,
+  modelColor,
+} from '@/components/features/claude-watch/lib/colors';
+import {
+  fc,
+  fd,
+  ft,
+  rel,
+  shortId,
+} from '@/components/features/claude-watch/lib/format';
 import { SectionHeader } from '@/components/features/claude-watch/section-header';
 import {
   UsageError,
@@ -76,7 +86,11 @@ export default function SessionsPage() {
     {
       label: 'Dur',
       align: 'right',
-      render: r => <span className="text-muted-foreground font-mono">{fd(r.durationMs)}</span>,
+      render: r => (
+        <span className="text-muted-foreground font-mono">
+          {fd(r.durationMs)}
+        </span>
+      ),
     },
     {
       label: 'Turns',
@@ -109,7 +123,9 @@ export default function SessionsPage() {
     {
       label: 'Tokens',
       align: 'right',
-      render: r => <span className="text-muted-foreground font-mono">{ft(r.tokens)}</span>,
+      render: r => (
+        <span className="text-muted-foreground font-mono">{ft(r.tokens)}</span>
+      ),
     },
     {
       label: 'Models',

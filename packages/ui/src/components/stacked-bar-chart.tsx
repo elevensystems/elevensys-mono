@@ -2,14 +2,13 @@
 
 import type * as React from 'react';
 
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-
 import {
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '@workspace/ui/components/chart';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
 export interface StackedBarSeries {
   /** Data key present on each datum (e.g. "INFO"). */
@@ -61,7 +60,7 @@ export function StackedBarChart({
   }
 
   const config: ChartConfig = Object.fromEntries(
-    series.map(s => [s.key, { label: s.label, color: s.color }]),
+    series.map(s => [s.key, { label: s.label, color: s.color }])
   );
 
   const chartData = data.map(d => ({ ...d, _x: xLabelFormat(d.bucket) }));
@@ -70,7 +69,9 @@ export function StackedBarChart({
     data.length > 12 ? Math.floor(data.length / 8) : 'preserveStartEnd';
 
   // Derive the exact onClick type from recharts so it stays version-proof.
-  type BarChartClick = NonNullable<React.ComponentProps<typeof BarChart>['onClick']>;
+  type BarChartClick = NonNullable<
+    React.ComponentProps<typeof BarChart>['onClick']
+  >;
   const handleClick: BarChartClick | undefined = onBarClick
     ? state => {
         // recharts reports the clicked category via activeTooltipIndex.

@@ -1,7 +1,5 @@
 import Link from 'next/link';
 
-import { Link as LinkIcon } from 'lucide-react';
-
 import { Button } from '@workspace/ui/components/button';
 import {
   Card,
@@ -10,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@workspace/ui/components/card';
+import { Link as LinkIcon } from 'lucide-react';
 
 import MainLayout from '@/components/layouts/main-layout';
 import { getUserFromSession } from '@/lib/auth';

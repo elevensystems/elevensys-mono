@@ -10,7 +10,11 @@ import {
   Column,
   DataTable,
 } from '@/components/features/claude-watch/data-table';
-import { modelColor, toolColor, COST } from '@/components/features/claude-watch/lib/colors';
+import {
+  COST,
+  modelColor,
+  toolColor,
+} from '@/components/features/claude-watch/lib/colors';
 import { fc, fd, ft, rel } from '@/components/features/claude-watch/lib/format';
 import { SectionHeader } from '@/components/features/claude-watch/section-header';
 import {
@@ -19,9 +23,9 @@ import {
 } from '@/components/features/claude-watch/states';
 import { UsageBadge } from '@/components/features/claude-watch/usage-badge';
 import {
+  usagePath,
   useClaudeWatch,
   useRangeParams,
-  usagePath,
 } from '@/hooks/use-claude-watch';
 import type {
   DeveloperRow,
@@ -48,11 +52,15 @@ export default function DevelopersPage() {
   const columns: Column<DeveloperRow>[] = [
     {
       label: '#',
-      render: (_r, i) => <span className="text-muted-foreground font-mono">{i + 1}</span>,
+      render: (_r, i) => (
+        <span className="text-muted-foreground font-mono">{i + 1}</span>
+      ),
     },
     {
       label: 'Developer',
-      render: r => <span className="font-mono font-medium">{r.developerId}</span>,
+      render: r => (
+        <span className="font-mono font-medium">{r.developerId}</span>
+      ),
     },
     {
       label: 'Cost',

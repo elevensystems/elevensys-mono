@@ -14,12 +14,12 @@ import {
   BreadcrumbSeparator,
 } from '@workspace/ui/components/breadcrumb';
 import { Separator } from '@workspace/ui/components/separator';
-import { SidebarAutoCollapse } from '@workspace/ui/components/sidebar-auto-collapse';
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from '@workspace/ui/components/sidebar';
+import { SidebarAutoCollapse } from '@workspace/ui/components/sidebar-auto-collapse';
 
 import { AppSidebar } from '@/components/layouts/app-sidebar';
 import { useAuth } from '@/contexts/auth-context';
@@ -54,50 +54,49 @@ export default function MainLayout({
         <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b bg-background/50 backdrop-blur">
           <div className="flex flex-1 items-center gap-2 px-4">
             <div className="flex items-center gap-2">
-            <SidebarTrigger className="-ml-1" />
-            <Separator
-              orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4"
-            />
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink asChild>
-                    <Link href="/">Home</Link>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                {pathSegments.length > 0 && (
-                  <BreadcrumbSeparator className="hidden md:block" />
-                )}
-                {pathSegments.map((segment, index) => {
-                  const isLast = index === pathSegments.length - 1;
-                  const href = '/' + pathSegments.slice(0, index + 1).join('/');
+              <SidebarTrigger className="-ml-1" />
+              <Separator
+                orientation="vertical"
+                className="mr-2 data-[orientation=vertical]:h-4"
+              />
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem className="hidden md:block">
+                    <BreadcrumbLink asChild>
+                      <Link href="/">Home</Link>
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  {pathSegments.length > 0 && (
+                    <BreadcrumbSeparator className="hidden md:block" />
+                  )}
+                  {pathSegments.map((segment, index) => {
+                    const isLast = index === pathSegments.length - 1;
+                    const href =
+                      '/' + pathSegments.slice(0, index + 1).join('/');
 
-                  return (
-                    <div key={href} className="contents">
-                      <BreadcrumbItem>
-                        {isLast ? (
-                          <BreadcrumbPage>
-                            {formatSegment(segment)}
-                          </BreadcrumbPage>
-                        ) : (
-                          <BreadcrumbLink asChild className="hidden md:block">
-                            <Link href={href}>{formatSegment(segment)}</Link>
-                          </BreadcrumbLink>
+                    return (
+                      <div key={href} className="contents">
+                        <BreadcrumbItem>
+                          {isLast ? (
+                            <BreadcrumbPage>
+                              {formatSegment(segment)}
+                            </BreadcrumbPage>
+                          ) : (
+                            <BreadcrumbLink asChild className="hidden md:block">
+                              <Link href={href}>{formatSegment(segment)}</Link>
+                            </BreadcrumbLink>
+                          )}
+                        </BreadcrumbItem>
+                        {!isLast && (
+                          <BreadcrumbSeparator className="hidden md:block" />
                         )}
-                      </BreadcrumbItem>
-                      {!isLast && (
-                        <BreadcrumbSeparator className="hidden md:block" />
-                      )}
-                    </div>
-                  );
-                })}
-              </BreadcrumbList>
-            </Breadcrumb>
+                      </div>
+                    );
+                  })}
+                </BreadcrumbList>
+              </Breadcrumb>
             </div>
-            {headerRight && (
-              <div className="ml-auto pr-4">{headerRight}</div>
-            )}
+            {headerRight && <div className="ml-auto pr-4">{headerRight}</div>}
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-6">

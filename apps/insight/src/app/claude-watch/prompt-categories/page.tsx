@@ -5,19 +5,22 @@ import {
   Column,
   DataTable,
 } from '@/components/features/claude-watch/data-table';
-import { catColor, COST } from '@/components/features/claude-watch/lib/colors';
+import { COST, catColor } from '@/components/features/claude-watch/lib/colors';
 import { fc } from '@/components/features/claude-watch/lib/format';
 import { SectionHeader } from '@/components/features/claude-watch/section-header';
 import {
   UsageError,
   UsageLoading,
 } from '@/components/features/claude-watch/states';
-import { UsageBadge, TopUsers } from '@/components/features/claude-watch/usage-badge';
+import {
+  TopUsers,
+  UsageBadge,
+} from '@/components/features/claude-watch/usage-badge';
 import { UsageCard } from '@/components/features/claude-watch/usage-card';
 import {
+  usagePath,
   useClaudeWatch,
   useRangeParams,
-  usagePath,
 } from '@/hooks/use-claude-watch';
 import type {
   PromptCategoriesResponse,
@@ -48,7 +51,9 @@ export default function PromptCategoriesPage() {
     {
       label: 'Count',
       align: 'right',
-      render: r => <span className="font-mono">{r.count.toLocaleString()}</span>,
+      render: r => (
+        <span className="font-mono">{r.count.toLocaleString()}</span>
+      ),
     },
     {
       label: 'Cost',
@@ -66,7 +71,10 @@ export default function PromptCategoriesPage() {
           <div className="bg-muted h-1.5 flex-1 overflow-hidden rounded">
             <div
               className="h-full rounded"
-              style={{ width: `${r.pctOfCost}%`, background: catColor(r.category) }}
+              style={{
+                width: `${r.pctOfCost}%`,
+                background: catColor(r.category),
+              }}
             />
           </div>
           <span className="text-muted-foreground w-[50px] text-right font-mono">

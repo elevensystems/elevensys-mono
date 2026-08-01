@@ -14,9 +14,9 @@ import {
   UsageLoading,
 } from '@/components/features/claude-watch/states';
 import {
+  usagePath,
   useClaudeWatch,
   useRangeParams,
-  usagePath,
 } from '@/hooks/use-claude-watch';
 import type { ProjectRow, ProjectsResponse } from '@/types/claude-watch';
 
@@ -41,13 +41,19 @@ export default function ProjectsPage() {
       label: 'Cost',
       render: r => (
         <div className="flex min-w-[200px] items-center gap-3">
-          <span className="w-[62px] font-mono font-medium" style={{ color: COST }}>
+          <span
+            className="w-[62px] font-mono font-medium"
+            style={{ color: COST }}
+          >
             {fc(r.costUSD)}
           </span>
           <div className="bg-muted h-1.5 flex-1 overflow-hidden rounded">
             <div
               className="h-full rounded"
-              style={{ width: `${(r.costUSD / maxCost) * 100}%`, background: COST }}
+              style={{
+                width: `${(r.costUSD / maxCost) * 100}%`,
+                background: COST,
+              }}
             />
           </div>
         </div>
@@ -61,7 +67,9 @@ export default function ProjectsPage() {
     {
       label: 'Total Turns',
       align: 'right',
-      render: r => <span className="font-mono">{r.turns.toLocaleString()}</span>,
+      render: r => (
+        <span className="font-mono">{r.turns.toLocaleString()}</span>
+      ),
     },
     {
       label: 'Contributors',
@@ -102,7 +110,9 @@ export default function ProjectsPage() {
           columns={columns}
           rows={data?.projects ?? []}
           onRowClick={r =>
-            router.push(`/claude-watch/projects/${encodeURIComponent(r.repo)}${suffix}`)
+            router.push(
+              `/claude-watch/projects/${encodeURIComponent(r.repo)}${suffix}`
+            )
           }
         />
       )}

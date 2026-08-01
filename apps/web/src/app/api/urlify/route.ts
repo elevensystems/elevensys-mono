@@ -21,7 +21,10 @@ export async function POST(request: NextRequest) {
     try {
       parsedUrl = new URL(originalUrl.trim());
     } catch {
-      return NextResponse.json({ error: 'Invalid URL format' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid URL format' },
+        { status: 400 }
+      );
     }
     if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
       return NextResponse.json(

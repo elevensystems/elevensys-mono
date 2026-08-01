@@ -8,7 +8,9 @@ import AdminPage from './page';
 // Mock dependencies
 jest.mock('@/components/layouts/main-layout', () => ({
   __esModule: true,
-  default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  default: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
 }));
 
 jest.mock('@/lib/auth', () => ({
@@ -30,7 +32,9 @@ describe('AdminPage', () => {
     const component = await AdminPage();
     render(component);
 
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Welcome, John Doe');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Welcome, John Doe'
+    );
   });
 
   it('renders the welcome message for unauthenticated user', async () => {
@@ -39,7 +43,9 @@ describe('AdminPage', () => {
     const component = await AdminPage();
     render(component);
 
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Welcome');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Welcome'
+    );
   });
 
   it('renders the Urlify card', async () => {

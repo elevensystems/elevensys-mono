@@ -284,9 +284,6 @@ import { toast } from 'sonner';
 
 import MainLayout from '@/components/layouts/main-layout';
 import type { AuthUser } from '@/types/auth';
-
-// Always use 'use client' directive for client components
-
 // Always use 'use client' directive for client components
 
 // Define interfaces above component

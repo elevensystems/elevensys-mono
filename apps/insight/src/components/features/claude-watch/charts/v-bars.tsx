@@ -1,13 +1,12 @@
 'use client';
 
-import { Bar, BarChart, Cell, LabelList, XAxis } from 'recharts';
-
 import {
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '@workspace/ui/components/chart';
+import { Bar, BarChart, Cell, LabelList, XAxis } from 'recharts';
 
 interface VBarsProps<T> {
   items: T[];

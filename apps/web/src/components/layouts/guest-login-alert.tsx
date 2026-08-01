@@ -1,6 +1,10 @@
 import Link from 'next/link';
 
-import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert';
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from '@workspace/ui/components/alert';
 import { cn } from '@workspace/ui/lib/utils';
 
 interface GuestLoginAlertProps {

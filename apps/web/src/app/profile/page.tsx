@@ -2,14 +2,23 @@
 
 import Link from 'next/link';
 
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@workspace/ui/components/avatar';
+import { Badge } from '@workspace/ui/components/badge';
+import { Button } from '@workspace/ui/components/button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@workspace/ui/components/card';
+import { Separator } from '@workspace/ui/components/separator';
 import { BadgeCheck, KeyRound, Mail, Users } from 'lucide-react';
 
 import MainLayout from '@/components/layouts/main-layout';
-import { Avatar, AvatarFallback, AvatarImage } from '@workspace/ui/components/avatar';
-import { Badge } from '@workspace/ui/components/badge';
-import { Button } from '@workspace/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card';
-import { Separator } from '@workspace/ui/components/separator';
 import { useAuth } from '@/contexts/auth-context';
 
 function getUserInitials(name: string) {

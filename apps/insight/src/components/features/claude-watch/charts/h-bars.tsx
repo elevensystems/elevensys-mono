@@ -1,13 +1,12 @@
 'use client';
 
-import { Bar, BarChart, Cell, LabelList, XAxis, YAxis } from 'recharts';
-
 import {
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '@workspace/ui/components/chart';
+import { Bar, BarChart, Cell, LabelList, XAxis, YAxis } from 'recharts';
 
 interface HBarsProps<T> {
   items: T[];
@@ -91,9 +90,11 @@ export function HBars<T>({
           tickLine={false}
           axisLine={false}
           width={LABEL_WIDTH}
-          tick={(props: { x?: number | string; y?: number | string; payload?: { value: string } }) => (
-            <TruncatedTick {...props} monoLabel={monoLabel} />
-          )}
+          tick={(props: {
+            x?: number | string;
+            y?: number | string;
+            payload?: { value: string };
+          }) => <TruncatedTick {...props} monoLabel={monoLabel} />}
         />
         <ChartTooltip
           cursor={false}

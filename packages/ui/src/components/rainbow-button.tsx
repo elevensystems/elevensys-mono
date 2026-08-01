@@ -1,9 +1,8 @@
 import React from 'react';
 
+import { cn } from '@workspace/ui/lib/utils';
 import { VariantProps, cva } from 'class-variance-authority';
 import { Slot as SlotPrimitive } from 'radix-ui';
-
-import { cn } from '@workspace/ui/lib/utils';
 
 const rainbowButtonVariants = cva(
   cn(
@@ -37,7 +36,8 @@ const rainbowButtonVariants = cva(
 );
 
 interface RainbowButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+  extends
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof rainbowButtonVariants> {
   asChild?: boolean;
 }

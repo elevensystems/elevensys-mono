@@ -4,10 +4,7 @@
 export const fc = (v: number | null | undefined): string => {
   if (v == null) return '—';
   if (v >= 1) return `$${v.toFixed(2)}`;
-  const s = v
-    .toFixed(6)
-    .replace(/0+$/, '')
-    .replace(/\.$/, '');
+  const s = v.toFixed(6).replace(/0+$/, '').replace(/\.$/, '');
   return `$${s === '' ? '0' : s}`;
 };
 
@@ -16,8 +13,10 @@ export const fc6 = (v: number): string => `$${v.toFixed(6)}`;
 
 /** Token counts as compact K/M. */
 export const ft = (n: number): string => {
-  if (n >= 1e6) return `${(n / 1e6).toFixed(n >= 1e7 ? 0 : 1).replace(/\.0$/, '')}M`;
-  if (n >= 1e3) return `${(n / 1e3).toFixed(n >= 1e5 ? 0 : 1).replace(/\.0$/, '')}K`;
+  if (n >= 1e6)
+    return `${(n / 1e6).toFixed(n >= 1e7 ? 0 : 1).replace(/\.0$/, '')}M`;
+  if (n >= 1e3)
+    return `${(n / 1e3).toFixed(n >= 1e5 ? 0 : 1).replace(/\.0$/, '')}K`;
   return `${n}`;
 };
 

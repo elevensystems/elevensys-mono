@@ -1,13 +1,12 @@
 'use client';
 
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
-
 import {
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '@workspace/ui/components/chart';
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
 
 export interface TimeSeriesLineSeries {
   /** Data key present on each datum (e.g. "avg"). */
@@ -62,7 +61,7 @@ export function TimeSeriesLineChart({
   }
 
   const config: ChartConfig = Object.fromEntries(
-    series.map(s => [s.key, { label: s.label, color: s.color }]),
+    series.map(s => [s.key, { label: s.label, color: s.color }])
   );
 
   const chartData = data.map(d => ({ ...d, _x: xLabelFormat(d.bucket) }));
@@ -72,7 +71,10 @@ export function TimeSeriesLineChart({
 
   return (
     <ChartContainer config={config} className="aspect-auto" style={{ height }}>
-      <LineChart data={chartData} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
+      <LineChart
+        data={chartData}
+        margin={{ top: 8, right: 4, left: 4, bottom: 0 }}
+      >
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="_x"

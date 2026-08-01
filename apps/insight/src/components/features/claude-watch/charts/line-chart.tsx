@@ -1,13 +1,18 @@
 'use client';
 
-import { CartesianGrid, Line, LineChart as RLineChart, XAxis, YAxis } from 'recharts';
-
 import {
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '@workspace/ui/components/chart';
+import {
+  CartesianGrid,
+  Line,
+  LineChart as RLineChart,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
 import { COST, PALETTE } from '@/components/features/claude-watch/lib/colors';
 import { ft } from '@/components/features/claude-watch/lib/format';
@@ -70,7 +75,10 @@ export function LineChart<T extends { date: string }>({
       className="aspect-auto"
       style={{ height }}
     >
-      <RLineChart data={chartData} margin={{ top: 8, right: value2Key ? 8 : 4, left: 4, bottom: 0 }}>
+      <RLineChart
+        data={chartData}
+        margin={{ top: 8, right: value2Key ? 8 : 4, left: 4, bottom: 0 }}
+      >
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="_xLabel"

@@ -74,7 +74,7 @@ interface AuditQueryState<T> {
  */
 function useAuditStatsQuery<T>(
   type: AuditStatsType,
-  params: AuditStatsParams,
+  params: AuditStatsParams
 ): AuditQueryState<T> {
   const [state, setState] = useState<AuditQueryState<T>>({
     data: null,
@@ -87,7 +87,7 @@ function useAuditStatsQuery<T>(
   useEffect(() => {
     const t = setTimeout(
       () => setDebouncedSearch(params.search ?? ''),
-      SEARCH_DEBOUNCE_MS,
+      SEARCH_DEBOUNCE_MS
     );
     return () => clearTimeout(t);
   }, [params.search]);
@@ -121,7 +121,9 @@ function useAuditStatsQuery<T>(
         .then(async res => {
           const body = await res.json().catch(() => null);
           if (!res.ok) {
-            throw new Error(body?.error ?? `Request failed: HTTP ${res.status}`);
+            throw new Error(
+              body?.error ?? `Request failed: HTTP ${res.status}`
+            );
           }
           return body as T;
         })
@@ -161,7 +163,7 @@ interface AuditStatsState {
 export function useAuditStats(params: AuditStatsParams): AuditStatsState {
   const { data, loading, error } = useAuditStatsQuery<AuditStatsResponse>(
     'volume',
-    params,
+    params
   );
   return {
     buckets: data?.buckets ?? [],

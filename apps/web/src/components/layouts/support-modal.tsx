@@ -1,7 +1,5 @@
 'use client';
 
-import { Mail, Phone, User } from 'lucide-react';
-
 import {
   Dialog,
   DialogContent,
@@ -9,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@workspace/ui/components/dialog';
+import { Mail, Phone, User } from 'lucide-react';
 
 interface SupportModalProps {
   open: boolean;

@@ -1,8 +1,7 @@
 import * as React from 'react';
 
-import { Slot } from 'radix-ui';
-
 import { cn } from '@workspace/ui/lib/utils';
+import { Slot } from 'radix-ui';
 
 interface ShimmerProps extends React.ComponentProps<'span'> {
   /**

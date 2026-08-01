@@ -1,7 +1,12 @@
 import Link from 'next/link';
 
-import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert';
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from '@workspace/ui/components/alert';
 import { Button } from '@workspace/ui/components/button';
+
 import type { AuthUser } from '@/types/auth';
 
 import MainLayout from './main-layout';

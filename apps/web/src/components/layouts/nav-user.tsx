@@ -3,15 +3,10 @@
 import Link from 'next/link';
 
 import {
-  BadgeCheck,
-  ChevronsUpDown,
-  LogIn,
-  LogOut,
-  Sparkles,
-  UserPlus,
-} from 'lucide-react';
-
-import { Avatar, AvatarFallback, AvatarImage } from '@workspace/ui/components/avatar';
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@workspace/ui/components/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +21,15 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@workspace/ui/components/sidebar';
+import {
+  BadgeCheck,
+  ChevronsUpDown,
+  LogIn,
+  LogOut,
+  Sparkles,
+  UserPlus,
+} from 'lucide-react';
+
 import { AuthUser } from '@/types/auth';
 
 export function NavUser({ user }: { user?: AuthUser | null }) {

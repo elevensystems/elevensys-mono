@@ -86,7 +86,7 @@ function fillTimeAxis<B extends { bucket: string }, D>(
   interval: string,
   from: Date,
   to: Date,
-  make: (bucket: string, existing: B | undefined) => D,
+  make: (bucket: string, existing: B | undefined) => D
 ): D[] {
   const step = INTERVAL_MS[interval] ?? INTERVAL_MS['1h'];
   const startMs = Math.floor(from.getTime() / step) * step;
@@ -95,7 +95,11 @@ function fillTimeAxis<B extends { bucket: string }, D>(
 
   const filled: D[] = [];
   // Cap the loop so a bad interval/range can't spin (a month of hourly ≈ 744).
-  for (let t = startMs, guard = 0; t <= endMs && guard < 2000; t += step, guard++) {
+  for (
+    let t = startMs, guard = 0;
+    t <= endMs && guard < 2000;
+    t += step, guard++
+  ) {
     const existing = byMs.get(t);
     filled.push(make(existing?.bucket ?? new Date(t).toISOString(), existing));
   }
@@ -135,7 +139,7 @@ export function AuditChart() {
       setFrom(f < minDate ? new Date(minDate) : f);
       setTo(t);
     },
-    [minDate],
+    [minDate]
   );
 
   const volumeData = useMemo<StackedBarDatum[]>(
@@ -146,7 +150,7 @@ export function AuditChart() {
         WARN: b?.WARN ?? 0,
         ERROR: b?.ERROR ?? 0,
       })),
-    [volume.buckets, volume.interval, from, to],
+    [volume.buckets, volume.interval, from, to]
   );
 
   // Latency gaps stay `null`: an empty bucket means "no samples", not 0 ms.
@@ -175,7 +179,7 @@ export function AuditChart() {
   const eventsData = useMemo(
     () =>
       (events.data?.items ?? []).map(i => ({ label: i.event, value: i.count })),
-    [events.data],
+    [events.data]
   );
 
   // Headline stats for the KPI cards. Derived from the raw buckets (not the
@@ -220,8 +224,9 @@ export function AuditChart() {
   // `|| 0` guards the deploy window where the API doesn't return status
   // buckets yet (old backend) — without it the card renders NaN.
   const serverErrors = useMemo(
-    () => (status.data?.buckets ?? []).reduce((sum, b) => sum + (b.s5xx || 0), 0),
-    [status.data],
+    () =>
+      (status.data?.buckets ?? []).reduce((sum, b) => sum + (b.s5xx || 0), 0),
+    [status.data]
   );
 
   const xLabelFormat = useCallback(
@@ -229,7 +234,10 @@ export function AuditChart() {
       const interval = volume.interval;
       const d = new Date(bucket);
       if (interval === '1d') {
-        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        return d.toLocaleDateString(undefined, {
+          month: 'short',
+          day: 'numeric',
+        });
       }
       return d.toLocaleString(undefined, {
         month: 'short',
@@ -237,7 +245,7 @@ export function AuditChart() {
         hour: 'numeric',
       });
     },
-    [volume.interval],
+    [volume.interval]
   );
 
   const error = volume.error || latency.error || status.error || events.error;
@@ -399,7 +407,9 @@ function ChartCard({
         <h2 className="text-sm font-medium">{title}</h2>
         <div className="text-muted-foreground flex items-center gap-3.5 text-xs">
           {hint && <span>{hint}</span>}
-          {series?.map(s => <Legend key={s.key} color={s.color} label={s.label} />)}
+          {series?.map(s => (
+            <Legend key={s.key} color={s.color} label={s.label} />
+          ))}
         </div>
       </div>
       {loading ? (

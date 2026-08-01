@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import { Button, buttonVariants } from '@workspace/ui/components/button';
+import { cn } from '@workspace/ui/lib/utils';
 import {
   ChevronDownIcon,
   ChevronLeftIcon,
@@ -10,9 +12,6 @@ import {
   DayPicker,
   getDefaultClassNames,
 } from 'react-day-picker';
-
-import { Button, buttonVariants } from '@workspace/ui/components/button';
-import { cn } from '@workspace/ui/lib/utils';
 
 function Calendar({
   className,

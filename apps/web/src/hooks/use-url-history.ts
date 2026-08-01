@@ -56,7 +56,11 @@ function subscribe(listener: Listener) {
 }
 
 export function useUrlHistory() {
-  const items = useSyncExternalStore(subscribe, getStableSnapshot, getServerSnapshot);
+  const items = useSyncExternalStore(
+    subscribe,
+    getStableSnapshot,
+    getServerSnapshot
+  );
 
   const add = useCallback((item: UrlHistoryItem) => {
     const current = getSnapshot();

@@ -1,13 +1,12 @@
 import { redirect } from 'next/navigation';
 
-import { BarChart2 } from 'lucide-react';
-
 import {
   Card,
   CardDescription,
   CardHeader,
   CardTitle,
 } from '@workspace/ui/components/card';
+import { BarChart2 } from 'lucide-react';
 
 import MainLayout from '@/components/layouts/main-layout';
 import { getUserFromSession } from '@/lib/auth';

@@ -2,6 +2,14 @@
 
 import Link from 'next/link';
 
+import { Button } from '@workspace/ui/components/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@workspace/ui/components/card';
 import {
   Braces,
   Key,
@@ -14,14 +22,6 @@ import {
 } from 'lucide-react';
 
 import MainLayout from '@/components/layouts/main-layout';
-import { Button } from '@workspace/ui/components/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@workspace/ui/components/card';
 
 const tools = [
   {

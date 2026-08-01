@@ -45,10 +45,11 @@ export function useSystemLogs() {
         const body = await res.json().catch(() => null);
         throw new Error(body?.error ?? `Request failed: HTTP ${res.status}`);
       }
-      const data = await res.json() as { items: LogEntry[] };
+      const data = (await res.json()) as { items: LogEntry[] };
       setItems(data.items ?? []);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch audit logs';
+      const message =
+        err instanceof Error ? err.message : 'Failed to fetch audit logs';
       setError(message);
       setItems([]);
     } finally {

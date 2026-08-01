@@ -2,8 +2,6 @@
 
 import { useCallback } from 'react';
 
-import { Search } from 'lucide-react';
-
 import { Button } from '@workspace/ui/components/button';
 import { DateTimeRangePicker } from '@workspace/ui/components/date-time-range-picker';
 import { Input } from '@workspace/ui/components/input';
@@ -15,6 +13,7 @@ import {
   SelectValue,
 } from '@workspace/ui/components/select';
 import { cn } from '@workspace/ui/lib/utils';
+import { Search } from 'lucide-react';
 
 export const KNOWN_EVENTS = ['JIRA_PROXY', 'JIRA_PROXY_ERROR'];
 
@@ -68,7 +67,7 @@ export function AuditFilters({
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'Enter') onSearchSubmit?.();
     },
-    [onSearchSubmit],
+    [onSearchSubmit]
   );
 
   return (
@@ -108,7 +107,7 @@ export function AuditFilters({
                 'rounded-lg px-3 py-1.5 text-[13px] font-medium transition-colors',
                 active
                   ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground',
+                  : 'text-muted-foreground hover:text-foreground'
               )}
             >
               {seg.label}

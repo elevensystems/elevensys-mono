@@ -2,8 +2,6 @@
 
 import Link from 'next/link';
 
-import { MoreHorizontal } from 'lucide-react';
-
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -11,6 +9,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@workspace/ui/components/sidebar';
+import { MoreHorizontal } from 'lucide-react';
+
 import type { ToolConfig } from '@/lib/tools-config';
 
 interface NavToolsProps {

@@ -2,10 +2,6 @@
 
 import * as React from 'react';
 
-import { format, parseISO } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
-import { type DateRange } from 'react-day-picker';
-
 import { Button } from '@workspace/ui/components/button';
 import { Calendar } from '@workspace/ui/components/calendar';
 import {
@@ -14,6 +10,9 @@ import {
   PopoverTrigger,
 } from '@workspace/ui/components/popover';
 import { cn } from '@workspace/ui/lib/utils';
+import { format, parseISO } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
+import { type DateRange } from 'react-day-picker';
 
 interface DateRangePickerProps {
   /** ISO date string (YYYY-MM-DD) for range start */

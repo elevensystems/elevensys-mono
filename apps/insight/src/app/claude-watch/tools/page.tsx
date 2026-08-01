@@ -15,11 +15,14 @@ import {
   UsageError,
   UsageLoading,
 } from '@/components/features/claude-watch/states';
-import { UsageBadge, TopUsers } from '@/components/features/claude-watch/usage-badge';
 import {
+  TopUsers,
+  UsageBadge,
+} from '@/components/features/claude-watch/usage-badge';
+import {
+  usagePath,
   useClaudeWatch,
   useRangeParams,
-  usagePath,
 } from '@/hooks/use-claude-watch';
 import type { ToolRow, ToolsResponse } from '@/types/claude-watch';
 
@@ -58,7 +61,10 @@ export default function ToolsPage() {
           <div className="bg-muted h-1.5 flex-1 overflow-hidden rounded">
             <div
               className="h-full rounded"
-              style={{ width: `${(r.count / maxCount) * 100}%`, background: toolColor(r.tool) }}
+              style={{
+                width: `${(r.count / maxCount) * 100}%`,
+                background: toolColor(r.tool),
+              }}
             />
           </div>
         </div>

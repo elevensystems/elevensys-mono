@@ -35,7 +35,9 @@
 }
 
 @keyframes glow-rotate {
-  to { --glow-angle: 360deg; }
+  to {
+    --glow-angle: 360deg;
+  }
 }
 
 /* jsondiffpatch HTML formatter styling (shadcn/ui-friendly) */

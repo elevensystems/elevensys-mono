@@ -2,8 +2,6 @@
 
 import { useCallback, useState } from 'react';
 
-import { ChevronRight } from 'lucide-react';
-
 import {
   Sheet,
   SheetContent,
@@ -13,9 +11,10 @@ import {
 } from '@workspace/ui/components/sheet';
 import { Skeleton } from '@workspace/ui/components/skeleton';
 import { cn } from '@workspace/ui/lib/utils';
+import { ChevronRight } from 'lucide-react';
 
 import { AuditFilters } from '@/components/features/audit/audit-filters';
-import { useSystemLogs, type LogEntry } from '@/hooks/use-system-logs';
+import { type LogEntry, useSystemLogs } from '@/hooks/use-system-logs';
 
 function startOfToday() {
   const d = new Date();
@@ -35,9 +34,18 @@ const GRID_COLS =
 
 // Literal class strings so Tailwind's JIT compiler picks them up.
 const LEVEL_STYLES: Record<string, { badge: string; dot: string }> = {
-  INFO: { badge: 'bg-banner-info-bg text-banner-info-fg', dot: 'bg-banner-info-fg' },
-  WARN: { badge: 'bg-banner-warning-bg text-banner-warning-fg', dot: 'bg-banner-warning-fg' },
-  ERROR: { badge: 'bg-banner-error-bg text-banner-error-fg', dot: 'bg-banner-error-fg' },
+  INFO: {
+    badge: 'bg-banner-info-bg text-banner-info-fg',
+    dot: 'bg-banner-info-fg',
+  },
+  WARN: {
+    badge: 'bg-banner-warning-bg text-banner-warning-fg',
+    dot: 'bg-banner-warning-fg',
+  },
+  ERROR: {
+    badge: 'bg-banner-error-bg text-banner-error-fg',
+    dot: 'bg-banner-error-fg',
+  },
 };
 
 function levelStyle(level: string) {
@@ -109,7 +117,7 @@ function rawLog(row: LogEntry) {
       requestId: row.reqId ?? null,
     },
     null,
-    2,
+    2
   );
 }
 
@@ -119,7 +127,7 @@ function LevelBadge({ level }: { level: string }) {
     <span
       className={cn(
         'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full py-0.5 pl-2 pr-2.5 text-[11px] font-bold tracking-wide',
-        s.badge,
+        s.badge
       )}
     >
       <span className={cn('size-1.5 rounded-full', s.dot)} />
@@ -150,7 +158,7 @@ export function AuditTable() {
         search: search || undefined,
       });
     },
-    [from, to, level, event, search, fetchLogs],
+    [from, to, level, event, search, fetchLogs]
   );
 
   const handleLevelChange = useCallback(
@@ -158,7 +166,7 @@ export function AuditTable() {
       setLevel(next);
       runSearch({ level: next });
     },
-    [runSearch],
+    [runSearch]
   );
 
   const handleEventChange = useCallback(
@@ -166,7 +174,7 @@ export function AuditTable() {
       setEvent(next);
       runSearch({ event: next });
     },
-    [runSearch],
+    [runSearch]
   );
 
   return (
@@ -220,7 +228,7 @@ export function AuditTable() {
         <div
           className={cn(
             'bg-muted/40 text-muted-foreground grid gap-4 border-b px-4 py-3 text-[11px] font-semibold uppercase tracking-wide',
-            GRID_COLS,
+            GRID_COLS
           )}
         >
           <div>Time</div>
@@ -239,7 +247,10 @@ export function AuditTable() {
           Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
-              className={cn('grid items-center gap-4 border-b px-4 py-3.5', GRID_COLS)}
+              className={cn(
+                'grid items-center gap-4 border-b px-4 py-3.5',
+                GRID_COLS
+              )}
             >
               {Array.from({ length: 10 }).map((_, j) => (
                 <Skeleton key={j} className="h-4 w-full" />
@@ -260,7 +271,7 @@ export function AuditTable() {
               onClick={() => setSelected(row)}
               className={cn(
                 'group hover:bg-muted/40 grid w-full items-center gap-4 border-b px-4 py-3.5 text-left transition-colors',
-                GRID_COLS,
+                GRID_COLS
               )}
             >
               <div className="text-foreground/70 text-xs">
@@ -278,7 +289,10 @@ export function AuditTable() {
                 {row.operation ?? '—'}
               </div>
               <div
-                className={cn('font-mono text-[13px] font-bold', statusClass(row.status))}
+                className={cn(
+                  'font-mono text-[13px] font-bold',
+                  statusClass(row.status)
+                )}
               >
                 {row.status ?? '—'}
               </div>
@@ -286,7 +300,7 @@ export function AuditTable() {
                 <span
                   className={cn(
                     'inline-flex items-center whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-semibold',
-                    durationClass(row.duration),
+                    durationClass(row.duration)
                   )}
                 >
                   {row.duration != null ? `${row.duration}ms` : '—'}
@@ -313,7 +327,10 @@ export function AuditTable() {
       </div>
 
       {/* Detail drawer */}
-      <Sheet open={!!selected} onOpenChange={open => !open && setSelected(null)}>
+      <Sheet
+        open={!!selected}
+        onOpenChange={open => !open && setSelected(null)}
+      >
         <SheetContent
           side="right"
           className="w-[460px] gap-0 overflow-y-auto sm:max-w-[460px]"
@@ -325,7 +342,7 @@ export function AuditTable() {
                 <span
                   className={cn(
                     'font-mono text-[13px] font-bold',
-                    statusClass(selected.status),
+                    statusClass(selected.status)
                   )}
                 >
                   {selected.status ?? '—'}
@@ -340,15 +357,24 @@ export function AuditTable() {
               </SheetDescription>
 
               <dl className="mb-5 flex flex-col overflow-hidden rounded-xl border">
-                <DetailRow label="Timestamp" value={formatTimestamp(selected.timestamp)} />
+                <DetailRow
+                  label="Timestamp"
+                  value={formatTimestamp(selected.timestamp)}
+                />
                 <DetailRow label="Event" value={selected.event ?? '—'} />
                 <DetailRow label="Method" value={selected.method ?? '—'} />
                 <DetailRow
                   label="Duration"
-                  value={selected.duration != null ? `${selected.duration}ms` : '—'}
+                  value={
+                    selected.duration != null ? `${selected.duration}ms` : '—'
+                  }
                 />
                 <DetailRow label="Username" value={selected.username || '—'} />
-                <DetailRow label="Issue Key" value={selected.issueKey || '—'} last />
+                <DetailRow
+                  label="Issue Key"
+                  value={selected.issueKey || '—'}
+                  last
+                />
               </dl>
 
               <div className="text-muted-foreground mb-2 text-[11px] font-semibold uppercase tracking-wide">
@@ -387,7 +413,7 @@ function DetailRow({
     <div
       className={cn(
         'flex items-center justify-between gap-4 px-4 py-3',
-        !last && 'border-b',
+        !last && 'border-b'
       )}
     >
       <dt className="text-muted-foreground text-sm">{label}</dt>

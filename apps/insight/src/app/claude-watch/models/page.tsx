@@ -5,19 +5,25 @@ import {
   Column,
   DataTable,
 } from '@/components/features/claude-watch/data-table';
-import { COST, modelColor } from '@/components/features/claude-watch/lib/colors';
+import {
+  COST,
+  modelColor,
+} from '@/components/features/claude-watch/lib/colors';
 import { fc, ft, sum } from '@/components/features/claude-watch/lib/format';
 import { SectionHeader } from '@/components/features/claude-watch/section-header';
 import {
   UsageError,
   UsageLoading,
 } from '@/components/features/claude-watch/states';
-import { UsageBadge, TopUsers } from '@/components/features/claude-watch/usage-badge';
+import {
+  TopUsers,
+  UsageBadge,
+} from '@/components/features/claude-watch/usage-badge';
 import { UsageCard } from '@/components/features/claude-watch/usage-card';
 import {
+  usagePath,
   useClaudeWatch,
   useRangeParams,
-  usagePath,
 } from '@/hooks/use-claude-watch';
 import type { ModelRow, ModelsResponse } from '@/types/claude-watch';
 
@@ -64,7 +70,10 @@ export default function ModelsPage() {
           <div className="bg-muted h-1.5 flex-1 overflow-hidden rounded">
             <div
               className="h-full rounded"
-              style={{ width: `${r.pctOfTotal}%`, background: modelColor(r.model) }}
+              style={{
+                width: `${r.pctOfTotal}%`,
+                background: modelColor(r.model),
+              }}
             />
           </div>
           <span className="text-muted-foreground w-[50px] text-right font-mono">

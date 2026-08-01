@@ -34,9 +34,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${ubuntu.variable} ${ubuntuMono.variable} antialiased`}
-      >
+      <body className={`${ubuntu.variable} ${ubuntuMono.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

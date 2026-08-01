@@ -1,8 +1,7 @@
 'use client';
 
-import { AlertCircle } from 'lucide-react';
-
 import { Skeleton } from '@workspace/ui/components/skeleton';
+import { AlertCircle } from 'lucide-react';
 
 /** Generic loading skeleton for a usage view. */
 export function UsageLoading({ rows = 6 }: { rows?: number }) {
@@ -31,7 +30,9 @@ export function UsageError({ message }: { message: string }) {
       <AlertCircle className="mt-0.5 size-4 flex-none" />
       <div>
         <div className="font-medium">Couldn’t load usage data</div>
-        <div className="text-destructive/80 mt-1 font-mono text-xs">{message}</div>
+        <div className="text-destructive/80 mt-1 font-mono text-xs">
+          {message}
+        </div>
       </div>
     </div>
   );

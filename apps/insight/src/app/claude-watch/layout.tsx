@@ -1,7 +1,7 @@
 import { ReactNode, Suspense } from 'react';
 
-import MainLayout from '@/components/layouts/main-layout';
 import { DateRangeControl } from '@/components/features/claude-watch/date-range-control';
+import MainLayout from '@/components/layouts/main-layout';
 
 export default function ClauseUsageLayout({
   children,

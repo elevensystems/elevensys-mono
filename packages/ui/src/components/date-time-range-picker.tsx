@@ -2,10 +2,6 @@
 
 import * as React from 'react';
 
-import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
-import { type DateRange } from 'react-day-picker';
-
 import { Button } from '@workspace/ui/components/button';
 import { Calendar } from '@workspace/ui/components/calendar';
 import { Input } from '@workspace/ui/components/input';
@@ -16,6 +12,9 @@ import {
   PopoverTrigger,
 } from '@workspace/ui/components/popover';
 import { cn } from '@workspace/ui/lib/utils';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
+import { type DateRange } from 'react-day-picker';
 
 interface DateTimeRangePickerProps {
   from: Date;
@@ -34,7 +33,11 @@ function formatTime(date: Date) {
 
 function withTime(target: Date, timeSource: Date) {
   const next = new Date(target);
-  next.setHours(timeSource.getHours(), timeSource.getMinutes(), timeSource.getSeconds());
+  next.setHours(
+    timeSource.getHours(),
+    timeSource.getMinutes(),
+    timeSource.getSeconds()
+  );
   return next;
 }
 
@@ -108,7 +111,9 @@ function DateTimeRangePicker({
             />
             <div className="flex gap-4 border-t px-1 pt-3">
               <div className="flex flex-1 flex-col gap-2">
-                <Label htmlFor={id ? `${id}-start-time` : undefined}>Start Time</Label>
+                <Label htmlFor={id ? `${id}-start-time` : undefined}>
+                  Start Time
+                </Label>
                 <Input
                   type="time"
                   id={id ? `${id}-start-time` : undefined}
@@ -119,7 +124,9 @@ function DateTimeRangePicker({
                 />
               </div>
               <div className="flex flex-1 flex-col gap-2">
-                <Label htmlFor={id ? `${id}-end-time` : undefined}>End Time</Label>
+                <Label htmlFor={id ? `${id}-end-time` : undefined}>
+                  End Time
+                </Label>
                 <Input
                   type="time"
                   id={id ? `${id}-end-time` : undefined}

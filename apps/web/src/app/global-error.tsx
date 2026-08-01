@@ -49,14 +49,27 @@ export default function GlobalError({
             />
           </div>
           <div>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 600, margin: '0 0 0.5rem' }}>
+            <h2
+              style={{
+                fontSize: '1.5rem',
+                fontWeight: 600,
+                margin: '0 0 0.5rem',
+              }}
+            >
               Something went wrong
             </h2>
             <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: 0 }}>
-              {error.message || 'A critical error occurred. Please reload the page.'}
+              {error.message ||
+                'A critical error occurred. Please reload the page.'}
             </p>
             {error.digest && (
-              <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>
+              <p
+                style={{
+                  fontSize: '0.75rem',
+                  color: '#9ca3af',
+                  marginTop: '0.25rem',
+                }}
+              >
                 Error ID: {error.digest}
               </p>
             )}

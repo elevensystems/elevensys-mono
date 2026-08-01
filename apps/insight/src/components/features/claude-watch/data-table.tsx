@@ -22,7 +22,11 @@ interface DataTableProps<T> {
 }
 
 const alignClass = (align?: 'left' | 'right' | 'center') =>
-  align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left';
+  align === 'right'
+    ? 'text-right'
+    : align === 'center'
+      ? 'text-center'
+      : 'text-left';
 
 export function DataTable<T>({
   columns,
@@ -69,7 +73,8 @@ export function DataTable<T>({
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
                 className={cn(
                   ri < rows.length - 1 && 'border-b',
-                  onRowClick && 'hover:bg-muted/50 cursor-pointer transition-colors'
+                  onRowClick &&
+                    'hover:bg-muted/50 cursor-pointer transition-colors'
                 )}
               >
                 {columns.map((c, ci) => (

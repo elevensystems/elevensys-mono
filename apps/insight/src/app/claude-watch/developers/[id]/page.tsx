@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, useParams, useSearchParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 
 import { Donut } from '@/components/features/claude-watch/charts/donut';
 import { HBars } from '@/components/features/claude-watch/charts/h-bars';
@@ -10,26 +10,36 @@ import {
   DataTable,
 } from '@/components/features/claude-watch/data-table';
 import {
-  catColor,
   COST,
-  modelColor,
   PALETTE,
   SERIES_COLORS,
+  catColor,
+  modelColor,
   successColor,
   toolColor,
 } from '@/components/features/claude-watch/lib/colors';
-import { fc, fd, ft, rel, shortId, sum } from '@/components/features/claude-watch/lib/format';
+import {
+  fc,
+  fd,
+  ft,
+  rel,
+  shortId,
+  sum,
+} from '@/components/features/claude-watch/lib/format';
 import { SectionHeader } from '@/components/features/claude-watch/section-header';
 import {
   UsageError,
   UsageLoading,
 } from '@/components/features/claude-watch/states';
-import { UsageBadge, Chip } from '@/components/features/claude-watch/usage-badge';
+import {
+  Chip,
+  UsageBadge,
+} from '@/components/features/claude-watch/usage-badge';
 import { UsageCard } from '@/components/features/claude-watch/usage-card';
 import {
+  usagePath,
   useClaudeWatch,
   useRangeParams,
-  usagePath,
 } from '@/hooks/use-claude-watch';
 import type {
   DeveloperDetail,
@@ -60,7 +70,10 @@ export default function DeveloperDetailPage() {
   const row = leaderboard.data?.developers.find(d => d.developerId === id);
   const totalCost = row?.costUSD ?? sum(D.series.map(s => s.costUSD));
   const tokens = row
-    ? row.tokens.input + row.tokens.output + row.tokens.cacheRead + row.tokens.cacheWrite
+    ? row.tokens.input +
+      row.tokens.output +
+      row.tokens.cacheRead +
+      row.tokens.cacheWrite
     : sum(D.series.map(s => s.tokens));
 
   const chips: { label: string; value: string; color?: string }[] = [
@@ -68,9 +81,17 @@ export default function DeveloperDetailPage() {
     { label: 'Tokens', value: ft(tokens) },
     { label: 'Sessions', value: row ? `${row.sessions}` : '—' },
     { label: 'Turns', value: row ? `${row.turns}` : '—' },
-    { label: 'Compactions', value: `${D.compactionCount}`, color: PALETTE.yellow },
+    {
+      label: 'Compactions',
+      value: `${D.compactionCount}`,
+      color: PALETTE.yellow,
+    },
     { label: 'Errors', value: `${D.errorCount}`, color: PALETTE.red },
-    { label: 'Denied Tools', value: `${D.deniedToolCount}`, color: PALETTE.orange },
+    {
+      label: 'Denied Tools',
+      value: `${D.deniedToolCount}`,
+      color: PALETTE.orange,
+    },
   ];
 
   const sessionColumns: Column<SessionSummary>[] = [
@@ -86,7 +107,10 @@ export default function DeveloperDetailPage() {
       label: 'Project',
       render: r => <span className="font-mono">{r.project ?? '—'}</span>,
     },
-    { label: 'Branch', render: r => (r.branch ? <Chip>{r.branch}</Chip> : '—') },
+    {
+      label: 'Branch',
+      render: r => (r.branch ? <Chip>{r.branch}</Chip> : '—'),
+    },
     {
       label: 'Started',
       align: 'right',
@@ -99,7 +123,11 @@ export default function DeveloperDetailPage() {
     {
       label: 'Dur',
       align: 'right',
-      render: r => <span className="text-muted-foreground font-mono">{fd(r.durationMs)}</span>,
+      render: r => (
+        <span className="text-muted-foreground font-mono">
+          {fd(r.durationMs)}
+        </span>
+      ),
     },
     {
       label: 'Turns',
@@ -125,7 +153,10 @@ export default function DeveloperDetailPage() {
         backLabel="Developers"
         right={
           <>
-            <div className="font-mono text-2xl font-bold" style={{ color: COST }}>
+            <div
+              className="font-mono text-2xl font-bold"
+              style={{ color: COST }}
+            >
               {fc(totalCost)}
             </div>
             <div className="text-muted-foreground text-xs">
@@ -210,7 +241,10 @@ export default function DeveloperDetailPage() {
                 <div className="bg-muted h-[7px] overflow-hidden rounded">
                   <div
                     className="h-full rounded"
-                    style={{ width: `${t.pct}%`, background: toolColor(t.tool) }}
+                    style={{
+                      width: `${t.pct}%`,
+                      background: toolColor(t.tool),
+                    }}
                   />
                 </div>
               </div>
@@ -256,7 +290,9 @@ export default function DeveloperDetailPage() {
           columns={sessionColumns}
           rows={D.recentSessions}
           onRowClick={r =>
-            router.push(`/claude-watch/sessions/${encodeURIComponent(r.sessionId)}${suffix}`)
+            router.push(
+              `/claude-watch/sessions/${encodeURIComponent(r.sessionId)}${suffix}`
+            )
           }
         />
       </UsageCard>

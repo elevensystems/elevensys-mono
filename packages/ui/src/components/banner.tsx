@@ -1,9 +1,15 @@
 import * as React from 'react';
 
-import { type VariantProps, cva } from 'class-variance-authority';
-import { CircleCheckBig, CircleX, Info, TriangleAlert, X, type LucideIcon } from 'lucide-react';
-
 import { cn } from '@workspace/ui/lib/utils';
+import { type VariantProps, cva } from 'class-variance-authority';
+import {
+  CircleCheckBig,
+  CircleX,
+  Info,
+  type LucideIcon,
+  TriangleAlert,
+  X,
+} from 'lucide-react';
 
 const bannerVariants = cva('flex w-full gap-3 font-sans transition-colors', {
   variants: {
@@ -41,7 +47,8 @@ interface BannerAction {
 }
 
 interface BannerProps
-  extends Omit<React.ComponentProps<'div'>, 'title'>,
+  extends
+    Omit<React.ComponentProps<'div'>, 'title'>,
     VariantProps<typeof bannerVariants> {
   title?: string;
   message: string;
@@ -86,7 +93,10 @@ function Banner({
       <div className="min-w-0 flex-1">
         {title ? (
           <>
-            <div data-slot="banner-title" className="text-[15px] leading-[1.35] font-semibold">
+            <div
+              data-slot="banner-title"
+              className="text-[15px] leading-[1.35] font-semibold"
+            >
               {title}
             </div>
             <div
@@ -97,7 +107,10 @@ function Banner({
             </div>
           </>
         ) : (
-          <div data-slot="banner-title" className="text-[15px] leading-[1.35] font-semibold">
+          <div
+            data-slot="banner-title"
+            className="text-[15px] leading-[1.35] font-semibold"
+          >
             {message}
           </div>
         )}

@@ -1,8 +1,7 @@
 import * as React from 'react';
 
-import { ChevronDown } from 'lucide-react';
-
 import { cn } from '@workspace/ui/lib/utils';
+import { ChevronDown } from 'lucide-react';
 
 interface NativeSelectProps extends React.ComponentProps<'select'> {
   containerClassName?: string;

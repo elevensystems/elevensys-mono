@@ -3,8 +3,6 @@
 import * as React from 'react';
 
 import { Combobox as ComboboxPrimitive } from '@base-ui/react';
-import { CheckIcon, ChevronDownIcon, XIcon } from 'lucide-react';
-
 import { Button } from '@workspace/ui/components/button';
 import {
   InputGroup,
@@ -14,6 +12,7 @@ import {
 } from '@workspace/ui/components/input-group';
 import { Spinner } from '@workspace/ui/components/spinner';
 import { cn } from '@workspace/ui/lib/utils';
+import { CheckIcon, ChevronDownIcon, XIcon } from 'lucide-react';
 
 const Combobox = ComboboxPrimitive.Root;
 

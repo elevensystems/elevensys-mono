@@ -1,13 +1,19 @@
 'use client';
 
-import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from 'recharts';
-
 import {
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '@workspace/ui/components/chart';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  LabelList,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
 export interface RankedBarDatum {
   /** Category label (e.g. an event name). */
@@ -86,7 +92,9 @@ export function RankedBarChart({
             className="fill-muted-foreground"
             fontSize={10.5}
             formatter={(value: unknown) =>
-              typeof value === 'number' ? value.toLocaleString() : String(value ?? '')
+              typeof value === 'number'
+                ? value.toLocaleString()
+                : String(value ?? '')
             }
           />
         </Bar>

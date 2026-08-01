@@ -154,7 +154,9 @@ export function useSessions(
         setNextCursor(data.nextCursor);
         cursorRef.current = data.nextCursor;
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load sessions');
+        setError(
+          err instanceof Error ? err.message : 'Failed to load sessions'
+        );
       } finally {
         setLoading(false);
         setLoadingMore(false);

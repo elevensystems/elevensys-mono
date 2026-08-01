@@ -41,7 +41,9 @@ export function StatTile({ label, value, pct, foot, mono }: StatTileProps) {
             {Math.abs(pct!).toFixed(1)}%
           </div>
         ) : (
-          <div className="text-muted-foreground text-[11.5px]">{foot ?? ''}</div>
+          <div className="text-muted-foreground text-[11.5px]">
+            {foot ?? ''}
+          </div>
         )}
       </div>
     </div>

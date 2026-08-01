@@ -1,13 +1,12 @@
 'use client';
 
-import { Cell, Pie, PieChart } from 'recharts';
-
 import {
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '@workspace/ui/components/chart';
+import { Cell, Pie, PieChart } from 'recharts';
 
 interface DonutProps<T> {
   items: T[];
