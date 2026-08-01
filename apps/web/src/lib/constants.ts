@@ -2,6 +2,10 @@
  * Shared constants used across the application
  */
 
+// Application
+export const APP_NAME = 'Eleven Systems';
+export const APP_DESCRIPTION = 'Connecting Ideas, Building Solutions';
+
 // UI Constants
 export const ACTION_FEEDBACK_DURATION = 2000;
 
@@ -67,10 +71,6 @@ export const AI_MODELS = [
   { value: 'gpt-5-mini', label: 'gpt-5-mini' },
   { value: 'gpt-5-nano', label: 'gpt-5-nano' },
 ] as const;
-
-// Timesheet Constants
-export const DEFAULT_JIRA_INSTANCE = 'jiradc';
-export const MAX_AUTOLOG_CONFIGS = 3;
 
 // LocalStorage Keys
 export const STORAGE_KEYS = {

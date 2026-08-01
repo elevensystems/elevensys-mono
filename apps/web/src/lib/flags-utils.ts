@@ -1,4 +1,3 @@
-import type { TenantKey } from '@/lib/domain-config';
 import type {
   SiteAnnouncement,
   SiteAnnouncementState,
@@ -12,20 +11,16 @@ const ANNOUNCEMENT_STATES: SiteAnnouncementState[] = [
 ];
 
 /**
- * Parses the `sidebar-tools` flag value into an allowlist of tool URL paths
- * for the given tenant.
+ * Parses the `sidebar-tools` flag value into an allowlist of tool URL paths.
  *
- * Flag value must be a JSON object keyed by TenantKey:
- *   { "elevensys": ["/tools/passly"], "fhmhub": [] }
+ * Flag value must be a JSON array of tool URL paths:
+ *   ["/tools/passly", "/tools/urlify"]
  *
- * - Key absent or flag empty → `null` (show all tools for that tenant)
- * - Key maps to `[]`         → `[]`   (hide all tools)
- * - Key maps to `["/tools/passly", ...]` → show only those tools
+ * - Flag empty → `null` (show all tools)
+ * - `[]`       → `[]`   (hide all tools)
+ * - `["/tools/passly", ...]` → show only those tools
  */
-export function getVisibleToolPaths(
-  visibleTools: string,
-  tenant: TenantKey
-): string[] | null {
+export function getVisibleToolPaths(visibleTools: string): string[] | null {
   if (!visibleTools) return null;
 
   let parsed: unknown;
@@ -42,32 +37,18 @@ export function getVisibleToolPaths(
   // `""` is the Vercel "All tools" variant — treat as unset.
   if (parsed === '') return null;
 
-  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+  if (
+    !Array.isArray(parsed) ||
+    !parsed.every(item => typeof item === 'string')
+  ) {
     console.error(
-      '[flags] sidebar-tools: expected a JSON object keyed by tenant, got %s — showing all tools',
+      '[flags] sidebar-tools: expected a JSON array of tool paths, got %s — showing all tools',
       JSON.stringify(parsed)
     );
     return null;
   }
 
-  const tenantValue = (parsed as Record<string, unknown>)[tenant];
-
-  // Key absent → no restriction for this tenant.
-  if (tenantValue === undefined) return null;
-
-  if (
-    !Array.isArray(tenantValue) ||
-    !tenantValue.every(item => typeof item === 'string')
-  ) {
-    console.error(
-      '[flags] sidebar-tools: value for tenant "%s" must be a string array, got %s — showing all tools',
-      tenant,
-      JSON.stringify(tenantValue)
-    );
-    return null;
-  }
-
-  return tenantValue;
+  return parsed;
 }
 
 /**
@@ -80,7 +61,9 @@ export function getVisibleToolPaths(
  * - `state` missing or not a recognized value → defaults to `"info"`
  * - `actionLabel`/`actionHref` are only used as a pair; if either is missing, no action is shown
  */
-export function parseAnnouncementBanner(value: string): SiteAnnouncement | null {
+export function parseAnnouncementBanner(
+  value: string
+): SiteAnnouncement | null {
   if (!value) return null;
 
   let parsed: unknown;
@@ -102,13 +85,10 @@ export function parseAnnouncementBanner(value: string): SiteAnnouncement | null 
     return null;
   }
 
-  const {
-    state,
-    title,
-    message,
-    actionLabel,
-    actionHref,
-  } = parsed as Record<string, unknown>;
+  const { state, title, message, actionLabel, actionHref } = parsed as Record<
+    string,
+    unknown
+  >;
 
   if (typeof message !== 'string' || !message.trim()) {
     console.error(

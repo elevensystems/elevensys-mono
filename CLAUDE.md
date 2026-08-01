@@ -11,13 +11,13 @@ packages. It provides AI-powered productivity tools and an admin dashboard. Buil
 
 ### Monorepo Structure
 
-| Workspace      | Package Name        | Description                                  | Port |
-| -------------- | ------------------- | -------------------------------------------- | ---- |
-| `apps/web`     | `elevensys-web`     | Main web app with tools, auth, and timesheet | 3000 |
-| `apps/admin`   | `elevensys-admin`   | Admin dashboard (newly scaffolded)           | 3002 |
-| `apps/insight` | `elevensys-insight` | Usage analytics dashboard                    | 3003 |
-| `apps/pulse`   | `elevensys-pulse`   | Jira timesheet & worklog app                 | 3004 |
-| `packages/ui`  | `@workspace/ui`     | Shared UI components (shadcn/ui + Radix)     | —    |
+| Workspace      | Package Name        | Description                                | Port |
+| -------------- | ------------------- | ------------------------------------------ | ---- |
+| `apps/web`     | `elevensys-web`     | Main web app with developer tools and auth | 3000 |
+| `apps/admin`   | `elevensys-admin`   | Admin dashboard (newly scaffolded)         | 3002 |
+| `apps/insight` | `elevensys-insight` | Usage analytics dashboard                  | 3003 |
+| `apps/pulse`   | `elevensys-pulse`   | Jira timesheet & worklog app               | 3004 |
+| `packages/ui`  | `@workspace/ui`     | Shared UI components (shadcn/ui + Radix)   | —    |
 
 ### Quick Start
 
@@ -79,7 +79,6 @@ elevensys-mono/
 │   │   │   │   │   ├── passly/     # Password generator API
 │   │   │   │   │   ├── translately/# Translation API (Pro-only)
 │   │   │   │   │   ├── urlify/     # URL shortener create endpoint
-│   │   │   │   │   ├── timesheet/  # Timesheet feature (projects, issues, worklogs, logwork, auth)
 │   │   │   │   │   └── feedback/
 │   │   │   │   ├── tools/          # Tool pages (9 tools)
 │   │   │   │   │   ├── beatly/         # Song recommender
@@ -91,11 +90,6 @@ elevensys-mono/
 │   │   │   │   │   ├── passly/         # Password generator
 │   │   │   │   │   ├── translately/    # Translation tool
 │   │   │   │   │   └── urlify/         # URL shortener
-│   │   │   │   ├── timesheet/      # Timesheet feature pages
-│   │   │   │   │   ├── config/     # Timesheet settings
-│   │   │   │   │   ├── logwork/    # Log work page
-│   │   │   │   │   ├── project-worklogs/
-│   │   │   │   │   └── worklogs/   # My worklogs page
 │   │   │   │   ├── login/          # Login page
 │   │   │   │   ├── signup/         # Sign up page
 │   │   │   │   ├── forgot-password/
@@ -104,16 +98,13 @@ elevensys-mono/
 │   │   │   │   └── page.tsx        # Homepage
 │   │   │   ├── components/
 │   │   │   │   ├── layouts/        # Layout components (main-layout, app-sidebar, nav-*, etc.)
-│   │   │   │   ├── features/       # Feature-specific components (auth, autolog, timesheet)
-│   │   │   │   ├── action-button.tsx
-│   │   │   │   ├── delete-confirm-dialog.tsx
+│   │   │   │   ├── features/       # Feature-specific components (auth)
 │   │   │   │   ├── header.tsx
 │   │   │   │   └── theme-provider.tsx
 │   │   │   ├── contexts/
 │   │   │   │   ├── auth-context.tsx    # Auth state via React Context
-│   │   │   │   ├── domain-context.tsx  # Multi-tenant domain config
 │   │   │   │   └── flags-context.tsx   # Feature flags
-│   │   │   ├── hooks/              # 11 custom hooks (timesheet, worklogs, autolog, etc.)
+│   │   │   ├── hooks/              # Custom hooks (use-action-feedback, use-url-history)
 │   │   │   ├── lib/                # Utilities, configs, schemas
 │   │   │   ├── types/              # Shared type definitions
 │   │   │   └── styles/
@@ -296,6 +287,8 @@ import type { AuthUser } from '@/types/auth';
 
 // Always use 'use client' directive for client components
 
+// Always use 'use client' directive for client components
+
 // Define interfaces above component
 interface MyComponentProps {
   title: string;
@@ -386,13 +379,17 @@ export async function POST(request: NextRequest) {
 
 ### apps/web (elevensys-web)
 
-The main web application with tools, authentication, and timesheet management.
+The main web application with developer tools and authentication. Single-brand (Eleven Systems) —
+`APP_NAME` / `APP_DESCRIPTION` live in `src/lib/constants.ts`.
 
 - **Font**: Ubuntu (via `next/font/google`)
 - **Auth**: AWS Cognito OAuth2 (PKCE) with `AuthProvider` context
-- **Multi-tenant**: `DomainProvider` + `x-tenant` header for per-domain config
 - **Feature flags**: `FlagsProvider` wrapping `@flags-sdk/vercel`
-- **Providers chain**: `ThemeProvider` → `DomainProvider` → `AuthProvider` → `FlagsProvider`
+- **Providers chain**: `ThemeProvider` → `AuthProvider` → `FlagsProvider`
+- **Proxy**: `src/proxy.ts` refreshes Cognito tokens and forwards `x-pathname` to layouts
+
+> The Jira timesheet feature previously hosted here (`/timesheet/*`, `/api/jira/*`) now lives
+> entirely in `apps/pulse`.
 
 ### apps/admin (elevensys-admin)
 
@@ -611,6 +608,7 @@ pnpm turbo dev --filter=elevensys-web
 ```bash
 pnpm --filter elevensys-web test                # Run all tests in web app
 pnpm --filter elevensys-web test:coverage       # Run tests with coverage report
+pnpm --filter elevensys-pulse test              # Run all tests in pulse app
 ```
 
 ### Configuration
@@ -641,18 +639,21 @@ pnpm --filter elevensys-web test:coverage       # Run tests with coverage report
 - **next/link**: Mock as `<a>` tag
 - **lucide-react icons**: Mock as `<span>` with `data-testid`
 
-## Timesheet Feature (apps/web)
+## Timesheet Feature (apps/pulse)
 
-The timesheet feature (`src/app/timesheet/`) allows users to log, review, and manage Jira worklogs.
+The timesheet feature lets users log, review, and manage Jira worklogs. It lives entirely in
+`apps/pulse` at the app root — it is **not** part of `apps/web`.
 
 ### Pages
 
-| Route                         | Page             | Description                                         |
-| ----------------------------- | ---------------- | --------------------------------------------------- |
-| `/timesheet/logwork`          | Log Work         | Find missing dates and bulk-log entries to Jira     |
-| `/timesheet/worklogs`         | My Worklogs      | View personal worklogs grouped by date              |
-| `/timesheet/project-worklogs` | Project Worklogs | View all worklogs for a project with filters        |
-| `/timesheet/config`           | Configuration    | Save Jira instance, username, and API token locally |
+| Route                 | Page               | Description                                          |
+| --------------------- | ------------------ | ---------------------------------------------------- |
+| `/logwork`            | Log Work           | Find missing dates and bulk-log entries to Jira      |
+| `/my-worklogs`        | My Worklogs        | View personal worklogs grouped by date               |
+| `/project-worklogs`   | Project Worklogs   | View all worklogs for a project with filters         |
+| `/worklog-management` | Worklog Management | Bulk edit/delete worklogs (hidden — direct URL only) |
+| `/autolog`            | Autolog            | Manage recurring auto-log configurations             |
+| `/config`             | Configuration      | Save Jira instance, username, and API token locally  |
 
 ### Log Work — Bulk Date Range Submission
 
@@ -707,14 +708,20 @@ interface LogWorkResult {
 | `useMissingWorklogs`   | `hooks/use-missing-worklogs.ts`    | Find dates with missing worklogs for a project      |
 | `useTimesheetSettings` | `hooks/use-timesheet-settings.ts`  | Load/save Jira credentials from localStorage        |
 
-### API Routes (`src/app/api/timesheet/`)
+### API Routes (`src/app/api/jira/`)
 
-| Route                                  | Purpose                                            |
-| -------------------------------------- | -------------------------------------------------- |
-| `POST /api/timesheet/logwork`          | Proxy to backend; forwards worklog with date range |
-| `POST /api/timesheet/worklogs-warning` | Find dates with missing worklogs for a project     |
-| `GET  /api/timesheet/projects`         | List Jira projects                                 |
-| `GET  /api/timesheet/issues`           | List issues for a project                          |
+All routes proxy to `API_BASE_URL`, forwarding the caller's `Authorization: Bearer <PAT>` header.
+
+| Route                                     | Purpose                                            |
+| ----------------------------------------- | -------------------------------------------------- |
+| `POST /api/jira/worklogs/logwork`         | Proxy to backend; forwards worklog with date range |
+| `GET  /api/jira/worklogs`                 | List the current user's worklogs                   |
+| `GET  /api/jira/project-worklogs`         | List worklogs for a project                        |
+| `GET  /api/jira/project-worklogs/warning` | Find dates with missing worklogs for a project     |
+| `GET  /api/jira/projects`                 | List Jira projects                                 |
+| `GET  /api/jira/issues/search`            | Search issues for a project                        |
+| `GET  /api/jira/auth/check`               | Validate the stored Jira token                     |
+| `/api/jira/autolog/*`                     | CRUD + run for autolog configurations              |
 
 ### Logwork API Payload
 

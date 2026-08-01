@@ -3,10 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { env } from '@/env';
 import { AUTH_COOKIES, decodeJwt, isTokenExpired } from '@/lib/auth';
 import { authCookie, deletedCookie } from '@/lib/auth-cookies';
-import {
-  getTenantConfig,
-  resolveTenantFromHostname,
-} from '@/lib/domain-config';
 
 const AUTH_ROUTES = ['/login', '/signup', '/forgot-password'];
 
@@ -51,26 +47,11 @@ async function refreshTokens(refreshToken: string): Promise<{
 }
 
 export async function proxy(request: NextRequest) {
-  const hostname = request.headers.get('host') ?? '';
-  const tenant = resolveTenantFromHostname(hostname);
-  const config = getTenantConfig(tenant);
   const { pathname } = request.nextUrl;
 
-  // Block routes that are restricted for this tenant
-  const isBlocked = config.blockedRoutes.some(
-    route => pathname === route || pathname.startsWith(`${route}/`)
-  );
-
-  if (isBlocked) {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
-
-  // Forward tenant key and pathname to layouts via request headers.
-  // Both are deleted before being set to prevent spoofing from callers
-  // that can reach the origin directly.
+  // Forward the pathname to layouts via request headers. It is deleted before
+  // being set to prevent spoofing from callers that can reach the origin directly.
   const requestHeaders = new Headers(request.headers);
-  requestHeaders.delete('x-tenant');
-  requestHeaders.set('x-tenant', tenant);
   requestHeaders.delete('x-pathname');
   requestHeaders.set('x-pathname', pathname);
 
@@ -105,7 +86,7 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization)
      * - favicon.ico, assets (public files)
-     * - api routes (no tenant scoping needed)
+     * - api routes (no pathname header needed)
      */
     '/((?!_next/static|_next/image|favicon\\.ico|assets|api).*)',
   ],

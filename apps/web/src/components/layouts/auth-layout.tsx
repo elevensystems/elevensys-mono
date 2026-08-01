@@ -4,9 +4,9 @@ import { ReactNode } from 'react';
 
 import Link from 'next/link';
 
-import { useDomain } from '@/contexts/domain-context';
-
 import DiasporaIcon from '@workspace/ui/components/diaspora-icon';
+
+import { APP_NAME } from '@/lib/constants';
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -21,8 +21,6 @@ export default function AuthLayout({
   children,
   className = '',
 }: AuthLayoutProps) {
-  const { appName } = useDomain();
-
   return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
@@ -33,7 +31,7 @@ export default function AuthLayout({
           <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-lg">
             <DiasporaIcon className="size-4 fill-current" />
           </div>
-          {appName}
+          {APP_NAME}
         </Link>
         <div className={className}>{children}</div>
       </div>
