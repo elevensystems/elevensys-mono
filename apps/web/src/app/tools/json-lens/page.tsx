@@ -4,6 +4,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import Editor from '@monaco-editor/react';
 import { Button } from '@workspace/ui/components/button';
+import { ButtonGroup } from '@workspace/ui/components/button-group';
 import { Separator } from '@workspace/ui/components/separator';
 import { Tabs, TabsList, TabsTrigger } from '@workspace/ui/components/tabs';
 import { Check, Copy, Eraser, Minimize2, TextInitial } from 'lucide-react';
@@ -202,9 +203,9 @@ export default function JsonLensPage() {
           title="JSON Lens"
           options={optionsContent}
           actions={
-            <>
+            <ButtonGroup>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={handleFormat}
                 disabled={!jsonValidation.isValid}
@@ -217,7 +218,7 @@ export default function JsonLensPage() {
                 <span className="hidden md:inline">Format</span>
               </Button>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={handleMinify}
                 disabled={!jsonValidation.isValid}
@@ -230,7 +231,7 @@ export default function JsonLensPage() {
                 <span className="hidden md:inline">Minify</span>
               </Button>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={handleCopy}
                 disabled={!jsonText}
@@ -242,7 +243,7 @@ export default function JsonLensPage() {
                 )}
                 <span className="hidden md:inline">Copy</span>
               </Button>
-              <Button variant="ghost" size="sm" onClick={handleClear}>
+              <Button variant="outline" size="sm" onClick={handleClear}>
                 {isActive('clear') ? (
                   <Check className="animate-bounce-in" />
                 ) : (
@@ -250,7 +251,7 @@ export default function JsonLensPage() {
                 )}
                 <span className="hidden md:inline">Clear</span>
               </Button>
-            </>
+            </ButtonGroup>
           }
         />
 

@@ -5,8 +5,11 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { Badge } from '@workspace/ui/components/badge';
 import { Button } from '@workspace/ui/components/button';
+import {
+  ButtonGroup,
+  ButtonGroupText,
+} from '@workspace/ui/components/button-group';
 import { ScrollArea } from '@workspace/ui/components/scroll-area';
-import { Separator } from '@workspace/ui/components/separator';
 import { cn } from '@workspace/ui/lib/utils';
 import { findNodeAtLocation, parseTree } from 'jsonc-parser';
 import { Eraser, GitCompare, X } from 'lucide-react';
@@ -337,7 +340,7 @@ export default function JsonDiffinityPage() {
         <JsonToolToolbar
           title="JSON Diffinity"
           actions={
-            <div className="flex items-center gap-1.5">
+            <ButtonGroup>
               <Button
                 size="sm"
                 onClick={handleCompare}
@@ -348,56 +351,46 @@ export default function JsonDiffinityPage() {
               </Button>
 
               {diffPaths && (
-                <>
-                  <Separator
-                    orientation="vertical"
-                    className="data-[orientation=vertical]:h-4"
-                  />
-                  <div className="flex items-center gap-1">
-                    {diffPaths.added.length > 0 && (
-                      <Badge
-                        className={cn(
-                          'bg-success text-success-foreground font-mono text-[10px] px-1.5 py-0',
-                          isStale && 'line-through opacity-50'
-                        )}
-                      >
-                        +{diffPaths.added.length}
-                      </Badge>
-                    )}
-                    {diffPaths.removed.length > 0 && (
-                      <Badge
-                        variant="destructive"
-                        className={cn(
-                          'font-mono text-[10px] px-1.5 py-0',
-                          isStale && 'line-through opacity-50'
-                        )}
-                      >
-                        -{diffPaths.removed.length}
-                      </Badge>
-                    )}
-                    {diffPaths.modified.length > 0 && (
-                      <Badge
-                        className={cn(
-                          'bg-warning text-warning-foreground font-mono text-[10px] px-1.5 py-0',
-                          isStale && 'line-through opacity-50'
-                        )}
-                      >
-                        ~{diffPaths.modified.length}
-                      </Badge>
-                    )}
-                  </div>
-                </>
+                <ButtonGroupText className="gap-1 px-2">
+                  {diffPaths.added.length > 0 && (
+                    <Badge
+                      className={cn(
+                        'bg-success text-success-foreground font-mono text-[10px] px-1.5 py-0',
+                        isStale && 'line-through opacity-50'
+                      )}
+                    >
+                      +{diffPaths.added.length}
+                    </Badge>
+                  )}
+                  {diffPaths.removed.length > 0 && (
+                    <Badge
+                      variant="destructive"
+                      className={cn(
+                        'font-mono text-[10px] px-1.5 py-0',
+                        isStale && 'line-through opacity-50'
+                      )}
+                    >
+                      -{diffPaths.removed.length}
+                    </Badge>
+                  )}
+                  {diffPaths.modified.length > 0 && (
+                    <Badge
+                      className={cn(
+                        'bg-warning text-warning-foreground font-mono text-[10px] px-1.5 py-0',
+                        isStale && 'line-through opacity-50'
+                      )}
+                    >
+                      ~{diffPaths.modified.length}
+                    </Badge>
+                  )}
+                </ButtonGroupText>
               )}
 
-              <Separator
-                orientation="vertical"
-                className="data-[orientation=vertical]:h-4"
-              />
-              <Button variant="ghost" size="sm" onClick={handleClearAll}>
+              <Button variant="outline" size="sm" onClick={handleClearAll}>
                 <Eraser />
                 <span className="hidden md:inline">Clear</span>
               </Button>
-            </div>
+            </ButtonGroup>
           }
         />
 
