@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@workspace/ui/components/button';
+import { ButtonGroup } from '@workspace/ui/components/button-group';
 import { cn } from '@workspace/ui/lib/utils';
 import { Minus, Plus } from 'lucide-react';
 
@@ -129,15 +130,13 @@ export function HoursStepper({
   );
 
   return (
-    <div
+    <ButtonGroup
       ref={containerRef}
-      role="group"
       aria-label="Hours"
       tabIndex={isEditing ? -1 : 0}
       onKeyDown={handleContainerKeyDown}
       className={cn(
-        'inline-flex h-9 items-center gap-1 rounded-md',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'rounded-md focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
         disabled && 'opacity-50 pointer-events-none'
       )}
     >
@@ -145,13 +144,12 @@ export function HoursStepper({
         type="button"
         variant="outline"
         size="icon"
-        className="shrink-0"
         disabled={disabled || !canDecrement}
         onClick={handleDecrement}
         aria-label="Decrease hours"
         tabIndex={-1}
       >
-        <Minus className="h-3 w-3" />
+        <Minus />
       </Button>
 
       {isEditing ? (
@@ -164,31 +162,34 @@ export function HoursStepper({
           onChange={e => setEditValue(e.target.value)}
           onBlur={commitEdit}
           onKeyDown={handleInputKeyDown}
-          className="h-7 w-14 rounded-sm bg-transparent text-center text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          className="w-14 flex-none border bg-background px-2 text-center text-sm font-medium tabular-nums shadow-xs focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:border-input dark:bg-input/30"
         />
       ) : (
-        <span
-          role="status"
-          aria-live="polite"
+        <Button
+          type="button"
+          variant="outline"
           onClick={enterEditMode}
-          className="flex h-7 w-14 cursor-pointer select-none items-center justify-center rounded-sm text-sm font-medium hover:bg-accent"
+          aria-label="Edit hours"
+          tabIndex={-1}
+          className="w-14 px-2 tabular-nums select-none"
         >
-          {String(parseFloat(value.toFixed(2)))}h
-        </span>
+          <span role="status" aria-live="polite">
+            {String(parseFloat(value.toFixed(2)))}h
+          </span>
+        </Button>
       )}
 
       <Button
         type="button"
         variant="outline"
         size="icon"
-        className="shrink-0"
         disabled={disabled || !canIncrement}
         onClick={handleIncrement}
         aria-label="Increase hours"
         tabIndex={-1}
       >
-        <Plus className="h-3 w-3" />
+        <Plus />
       </Button>
-    </div>
+    </ButtonGroup>
   );
 }

@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { Button } from '@workspace/ui/components/button';
+import { ButtonGroup } from '@workspace/ui/components/button-group';
 import { Calendar } from '@workspace/ui/components/calendar';
 import { Checkbox } from '@workspace/ui/components/checkbox';
 import {
@@ -15,6 +16,7 @@ import {
 } from '@workspace/ui/components/combobox';
 import { DateRangePicker } from '@workspace/ui/components/date-range-picker';
 import { FieldMessage } from '@workspace/ui/components/field-message';
+import { Frame, FrameHeader, FramePanel } from '@workspace/ui/components/frame';
 import { Label } from '@workspace/ui/components/label';
 import {
   Popover,
@@ -23,6 +25,7 @@ import {
 } from '@workspace/ui/components/popover';
 import { Spinner } from '@workspace/ui/components/spinner';
 import { Token } from '@workspace/ui/components/token';
+import { cn } from '@workspace/ui/lib/utils';
 import { CalendarPlus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -163,171 +166,179 @@ export function MissingWorklogsCard({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Step 1 — Search Controls */}
-      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-          1
-        </span>
-        Select project &amp; date range
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
-        <div className="space-y-2">
-          <Label htmlFor="project-select">
-            Project <span className="text-destructive">*</span>
-          </Label>
-          <div className="relative">
-            <Combobox
-              items={projects}
-              value={selectedProject}
-              inputValue={
-                selectedProject
-                  ? `${selectedProject.key} — ${selectedProject.name}`
-                  : projectSearch
-              }
-              onInputValueChange={handleProjectInputChange}
-              onValueChange={handleProjectSelect}
-              itemToStringLabel={(project: JiraProject) =>
-                `${project.key} — ${project.name}`
-              }
-            >
-              <ComboboxInput
-                id="project-select"
-                placeholder={
-                  isLoadingProjects
-                    ? 'Loading projects...'
-                    : 'Search project...'
+    /* The frame is the validated control: the error ring stays on it
+       and the message sits in the tinted strip below. */
+    <FieldMessage
+      state="error"
+      message={dateError}
+      className="rounded-xl"
+      controlClassName="rounded-xl border-0 bg-background"
+      showIcon
+    >
+      <Frame dense className={cn(dateError && 'border-destructive')}>
+        <FrameHeader className="gap-3">
+          {/* Search controls — aligned from the top so Project and Date Range
+              share one row; the combobox trails an empty node that would push
+              a bottom-aligned column out of line. */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:items-start">
+            <div className="space-y-2">
+              <Label htmlFor="project-select">
+                Project <span className="text-destructive">*</span>
+              </Label>
+              <Combobox
+                items={projects}
+                value={selectedProject}
+                inputValue={
+                  selectedProject
+                    ? `${selectedProject.key} — ${selectedProject.name}`
+                    : projectSearch
                 }
-                className="w-full"
-                disabled={isLoadingProjects}
-                loading={isLoadingProjects}
-                showClear
-              />
-              <ComboboxContent>
-                <ComboboxList>
-                  {(project: JiraProject) => (
-                    <ComboboxItem key={project.id} value={project}>
-                      <span className="font-medium shrink-0">
-                        {project.key}
-                      </span>
-                      <span className="text-muted-foreground truncate">
-                        — {project.name}
-                      </span>
-                    </ComboboxItem>
-                  )}
-                </ComboboxList>
-                <ComboboxEmpty>No projects found</ComboboxEmpty>
-              </ComboboxContent>
-            </Combobox>
-          </div>
-        </div>
-        <div className="space-y-2 sm:col-span-2">
-          <Label>Date Range</Label>
-          <div className="flex flex-col sm:flex-row items-end gap-3">
-            <DateRangePicker
-              id="warning-date-range"
-              from={warningFromDate}
-              to={warningToDate}
-              onRangeChange={(from, to) => {
-                onWarningFromDateChange(from);
-                onWarningToDateChange(to);
-              }}
-              className="flex-1 w-full"
-            />
-            <Button
-              onClick={handleSearchClick}
-              disabled={
-                isSearchingWarnings ||
-                !selectedProjectId ||
-                !warningFromDate ||
-                !warningToDate
-              }
-              className="w-full sm:w-auto"
-            >
-              {isSearchingWarnings ? <Spinner /> : <Search />}
-              {isSearchingWarnings ? 'Searching' : 'Find Dates'}
-            </Button>
-          </div>
-        </div>
-      </div>
+                onInputValueChange={handleProjectInputChange}
+                onValueChange={handleProjectSelect}
+                itemToStringLabel={(project: JiraProject) =>
+                  `${project.key} — ${project.name}`
+                }
+              >
+                <ComboboxInput
+                  id="project-select"
+                  placeholder={
+                    isLoadingProjects
+                      ? 'Loading projects...'
+                      : 'Search project...'
+                  }
+                  className="h-8 w-full bg-background [&_input]:h-8"
+                  disabled={isLoadingProjects}
+                  loading={isLoadingProjects}
+                  showClear
+                />
+                <ComboboxContent>
+                  <ComboboxList>
+                    {(project: JiraProject) => (
+                      <ComboboxItem key={project.id} value={project}>
+                        <span className="font-medium shrink-0">
+                          {project.key}
+                        </span>
+                        <span className="text-muted-foreground truncate">
+                          — {project.name}
+                        </span>
+                      </ComboboxItem>
+                    )}
+                  </ComboboxList>
+                  <ComboboxEmpty>No projects found</ComboboxEmpty>
+                </ComboboxContent>
+              </Combobox>
+            </div>
 
-      {/* Step 2 — Date Selection */}
-      <div className="space-y-3">
-        {/* Header row */}
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-              2
-            </span>
-            Select dates
+            <div className="space-y-2 sm:col-span-2">
+              <Label>Date Range</Label>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <DateRangePicker
+                  id="warning-date-range"
+                  from={warningFromDate}
+                  to={warningToDate}
+                  onRangeChange={(from, to) => {
+                    onWarningFromDateChange(from);
+                    onWarningToDateChange(to);
+                  }}
+                  size="sm"
+                  className="flex-1 w-full"
+                />
+                {/* Find Dates and Add manually are two ways to fill the same
+                    list of selected dates, so they share one group */}
+                <ButtonGroup className="w-full sm:w-fit">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 sm:flex-none"
+                      >
+                        <CalendarPlus />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-auto p-0"
+                      align="end"
+                      sideOffset={8}
+                    >
+                      <div className="p-3 border-b">
+                        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+                          <Checkbox
+                            checked={includeWeekends}
+                            onCheckedChange={checked =>
+                              onIncludeWeekendsChange(checked === true)
+                            }
+                          />
+                          Include weekends
+                        </label>
+                      </div>
+                      <Calendar
+                        mode="multiple"
+                        selected={selectedDates}
+                        onSelect={handleCalendarSelect}
+                        disabled={includeWeekends ? undefined : isWeekend}
+                        numberOfMonths={3}
+                        showOutsideDays={false}
+                      />
+                    </PopoverContent>
+                  </Popover>
+
+                  <Button
+                    size="sm"
+                    onClick={handleSearchClick}
+                    disabled={
+                      isSearchingWarnings ||
+                      !selectedProjectId ||
+                      !warningFromDate ||
+                      !warningToDate
+                    }
+                    className="flex-1 sm:flex-none"
+                  >
+                    {isSearchingWarnings ? <Spinner /> : <Search />}
+                    {isSearchingWarnings ? 'Searching' : 'Find Dates'}
+                  </Button>
+                </ButtonGroup>
+              </div>
+            </div>
+          </div>
+        </FrameHeader>
+
+        {/* Selected dates — flush inside the frame, keeping its radius.
+              Clear all sits in the panel's own toolbar, directly above the
+              chips it acts on, rather than floating between the two blocks. */}
+        <FramePanel rounded className="gap-0 overflow-hidden p-0">
+          <div className="flex min-h-10 flex-wrap items-center justify-between gap-2 border-b px-3 py-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-muted-foreground">
+                Selected dates
+              </span>
+              {parsedDates.length > 0 && (
+                <Token color="default" density="compact">
+                  {parsedDates.length} date
+                  {parsedDates.length !== 1 ? 's' : ''}
+                </Token>
+              )}
+            </div>
+
+            {/* Clear all — only offered when there is something to clear */}
             {parsedDates.length > 0 && (
-              <Token color="pink" density="compact" className="ml-1">
-                {parsedDates.length} date
-                {parsedDates.length !== 1 ? 's' : ''}
-              </Token>
+              <Button variant="destructive" size="xs" onClick={handleClearAll}>
+                <Trash2 />
+                Clear all
+              </Button>
             )}
           </div>
 
-          <div className="flex items-center gap-2 ml-auto">
-            {/* Clear all */}
-            <Button
-              variant="destructive"
-              size="xs"
-              onClick={handleClearAll}
-              className={`${parsedDates.length > 0 ? 'visible' : 'invisible'}`}
-            >
-              <Trash2 />
-              Clear all
-            </Button>
-
-            {/* Add dates manually — Popover trigger */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="xs">
-                  <CalendarPlus />
-                  Add manually
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end" sideOffset={8}>
-                <div className="p-3 border-b">
-                  <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
-                    <Checkbox
-                      checked={includeWeekends}
-                      onCheckedChange={checked =>
-                        onIncludeWeekendsChange(checked === true)
-                      }
-                    />
-                    Include weekends
-                  </label>
-                </div>
-                <Calendar
-                  mode="multiple"
-                  selected={selectedDates}
-                  onSelect={handleCalendarSelect}
-                  disabled={includeWeekends ? undefined : isWeekend}
-                  numberOfMonths={3}
-                  showOutsideDays={false}
-                />
-              </PopoverContent>
-            </Popover>
+          {/* DateChipList reserves one chip row's height when empty */}
+          <div className="p-3">
+            <DateChipList
+              dates={selectedDates}
+              manualDateKeys={manualDateKeys}
+              onRemove={handleRemoveDate}
+            />
           </div>
-        </div>
-
-        {/* Chip list — bordered box always shown, min-height keeps it stable when empty */}
-        <FieldMessage
-          state="error"
-          message={dateError}
-          controlClassName="p-2 min-h-11"
-          showIcon
-        >
-          <DateChipList
-            dates={selectedDates}
-            manualDateKeys={manualDateKeys}
-            onRemove={handleRemoveDate}
-          />
-        </FieldMessage>
-      </div>
-    </div>
+        </FramePanel>
+      </Frame>
+    </FieldMessage>
   );
 }

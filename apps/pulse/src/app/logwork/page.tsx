@@ -38,7 +38,7 @@ import type {
 } from '@/types/timesheet';
 
 import { ConfirmDialog } from './_components/confirm-dialog';
-import { LogworkStepper } from './_components/logwork-stepper';
+import { LogworkStep, LogworkStepper } from './_components/logwork-stepper';
 import { MissingWorklogsCard } from './_components/missing-worklogs-card';
 import { SubmissionModal } from './_components/submission-modal';
 
@@ -375,142 +375,31 @@ export default function LogWorkPage() {
         ? 'orange'
         : 'gray';
 
-  const currentStep = ((): 1 | 2 | 3 | 4 => {
-    if (isSubmitting) return 4;
+  // 3 marks both steps complete — there is no third step to land on
+  const currentStep = ((): 1 | 2 | 3 => {
+    if (isSubmitting) return 3;
     if (selectedDates.length > 0 && entries.some(e => e.issueKey.trim()))
       return 3;
     if (selectedDates.length > 0) return 2;
     return 1;
   })();
 
+  const requestCount = validEntryCount * dateRanges.length;
+  const isReadyToSubmit = parsedDates.length > 0 && validEntryCount > 0;
+
   return (
     <MainLayout>
       <section className="container mx-auto px-4 py-12">
         <div className="max-w-full mx-auto space-y-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-2xl font-bold whitespace-nowrap">Log Work</h1>
-            <LogworkStepper currentStep={currentStep} />
-          </div>
-
-          <NotConfiguredAlert isConfigured={isConfigured} />
-
-          {isConfigured && <TokenExpiredAlert authError={authError} />}
-
-          <MissingWorklogsCard
-            projects={projects}
-            selectedProjectId={selectedProjectId}
-            onProjectChange={handleProjectChange}
-            isLoadingProjects={isLoadingProjects}
-            warningFromDate={warningFromDate}
-            warningToDate={warningToDate}
-            onWarningFromDateChange={setWarningFromDate}
-            onWarningToDateChange={setWarningToDate}
-            isSearchingWarnings={isSearchingWarnings}
-            onSearchWarnings={handleSearchWarnings}
-            selectedDates={selectedDates}
-            onSelectedDatesChange={dates => {
-              setSelectedDates(dates);
-              setErrors(prev =>
-                prev.global.dates
-                  ? { ...prev, global: { ...prev.global, dates: undefined } }
-                  : prev
-              );
-            }}
-            parsedDates={parsedDates}
-            onClearAllDates={clearAllDates}
-            includeWeekends={includeWeekends}
-            onIncludeWeekendsChange={setIncludeWeekends}
-            dateError={errors.global.dates}
-          />
-
-          {/* Work Entries */}
-          <div className="space-y-6">
-            {/* Step 3 label */}
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                3
-              </span>
-              Add work entries
-            </div>
-
-            {/* The frame is the validated control: the error ring stays on it
-                and the message sits in the tinted strip below. */}
-            <FieldMessage
-              state="error"
-              message={errors.global.entries}
-              className="rounded-xl"
-              controlClassName="rounded-xl border-0 bg-background"
-              showIcon
-            >
-              <Frame
-                dense
-                className={cn(errors.global.entries && 'border-destructive')}
-              >
-                <FrameHeader className="flex-row flex-wrap items-center justify-between gap-3">
-                  {/* Daily target */}
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-sm font-semibold">Daily target</span>
-                    <Token
-                      color={hoursTokenColor}
-                      density="compact"
-                      className="tabular-nums"
-                    >
-                      {formatHours(totalHours)}h / {formatHours(STANDARD_HOURS)}
-                      h
-                    </Token>
-                  </div>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={addEntry}
-                    disabled={isSubmitting || !isConfigured}
-                  >
-                    <Plus />
-                    Add Row
-                  </Button>
-                </FrameHeader>
-
-                {/* Entries table — flush inside the frame, keeping its radius */}
-                <FramePanel rounded className="gap-0 overflow-hidden p-0">
-                  {/* Grid header */}
-                  <div className="grid grid-cols-[40px_230px_1fr_150px_140px_50px] gap-2 px-3 py-2 text-sm font-semibold text-muted-foreground">
-                    <span>#</span>
-                    <span>Key</span>
-                    <span>Description</span>
-                    <span>Type of Work</span>
-                    <span>Hours</span>
-                    <span />
-                  </div>
-                  {/* Entry rows */}
-                  {entries.map((entry, index) => (
-                    <WorkEntryRow
-                      key={entry.id}
-                      index={index}
-                      entry={entry}
-                      issues={issues}
-                      issuesByKey={issuesByKey}
-                      isLoadingIssues={isLoadingIssues}
-                      onUpdate={updateEntry}
-                      onRemove={removeEntry}
-                      onClearError={clearRowError}
-                      errors={errors.rows.get(entry.id)}
-                      isLastRow={entries.length === 1}
-                    />
-                  ))}
-                </FramePanel>
-              </Frame>
-            </FieldMessage>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row sm:justify-end gap-3 border-t pt-6">
+            <div className="flex items-center gap-3">
               <Button
                 onClick={handleSubmitClick}
                 disabled={isSubmitting || !isConfigured}
-                className="w-full sm:w-auto"
                 title={
-                  parsedDates.length > 0 && validEntryCount > 0
-                    ? `Will send ${validEntryCount * dateRanges.length} request${validEntryCount * dateRanges.length !== 1 ? 's' : ''} (${validEntryCount} entr${validEntryCount !== 1 ? 'ies' : 'y'} × ${dateRanges.length} range${dateRanges.length !== 1 ? 's' : ''}) covering ${parsedDates.length} date${parsedDates.length !== 1 ? 's' : ''}`
+                  isReadyToSubmit
+                    ? `Will send ${requestCount} request${requestCount !== 1 ? 's' : ''} (${validEntryCount} entr${validEntryCount !== 1 ? 'ies' : 'y'} × ${dateRanges.length} range${dateRanges.length !== 1 ? 's' : ''}) covering ${parsedDates.length} date${parsedDates.length !== 1 ? 's' : ''}`
                     : undefined
                 }
               >
@@ -519,6 +408,117 @@ export default function LogWorkPage() {
               </Button>
             </div>
           </div>
+
+          <NotConfiguredAlert isConfigured={isConfigured} />
+
+          {isConfigured && <TokenExpiredAlert authError={authError} />}
+
+          <LogworkStepper currentStep={currentStep}>
+            <LogworkStep step={1} title="Select project & dates">
+              <MissingWorklogsCard
+                projects={projects}
+                selectedProjectId={selectedProjectId}
+                onProjectChange={handleProjectChange}
+                isLoadingProjects={isLoadingProjects}
+                warningFromDate={warningFromDate}
+                warningToDate={warningToDate}
+                onWarningFromDateChange={setWarningFromDate}
+                onWarningToDateChange={setWarningToDate}
+                isSearchingWarnings={isSearchingWarnings}
+                onSearchWarnings={handleSearchWarnings}
+                selectedDates={selectedDates}
+                onSelectedDatesChange={dates => {
+                  setSelectedDates(dates);
+                  setErrors(prev =>
+                    prev.global.dates
+                      ? {
+                          ...prev,
+                          global: { ...prev.global, dates: undefined },
+                        }
+                      : prev
+                  );
+                }}
+                parsedDates={parsedDates}
+                onClearAllDates={clearAllDates}
+                includeWeekends={includeWeekends}
+                onIncludeWeekendsChange={setIncludeWeekends}
+                dateError={errors.global.dates}
+              />
+            </LogworkStep>
+
+            <LogworkStep step={2} title="Add worklogs" isLast>
+              {/* The frame is the validated control: the error ring stays on it
+                and the message sits in the tinted strip below. */}
+              <FieldMessage
+                state="error"
+                message={errors.global.entries}
+                className="rounded-xl"
+                controlClassName="rounded-xl border-0 bg-background"
+                showIcon
+              >
+                <Frame
+                  dense
+                  className={cn(errors.global.entries && 'border-destructive')}
+                >
+                  <FrameHeader className="flex-row flex-wrap items-center justify-between gap-3">
+                    {/* Daily target */}
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-sm font-semibold">
+                        Daily target
+                      </span>
+                      <Token
+                        color={hoursTokenColor}
+                        density="compact"
+                        className="tabular-nums"
+                      >
+                        {formatHours(totalHours)}h /{' '}
+                        {formatHours(STANDARD_HOURS)}h
+                      </Token>
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={addEntry}
+                      disabled={isSubmitting || !isConfigured}
+                    >
+                      <Plus />
+                      Add Row
+                    </Button>
+                  </FrameHeader>
+
+                  {/* Entries table — flush inside the frame, keeping its radius */}
+                  <FramePanel rounded className="gap-0 overflow-hidden p-0">
+                    {/* Grid header */}
+                    <div className="grid grid-cols-[40px_230px_1fr_150px_140px_50px] gap-2 px-3 py-2 text-sm font-semibold text-muted-foreground">
+                      <span>#</span>
+                      <span>Key</span>
+                      <span>Description</span>
+                      <span>Type of Work</span>
+                      <span>Hours</span>
+                      <span />
+                    </div>
+                    {/* Entry rows */}
+                    {entries.map((entry, index) => (
+                      <WorkEntryRow
+                        key={entry.id}
+                        index={index}
+                        entry={entry}
+                        issues={issues}
+                        issuesByKey={issuesByKey}
+                        isLoadingIssues={isLoadingIssues}
+                        onUpdate={updateEntry}
+                        onRemove={removeEntry}
+                        onClearError={clearRowError}
+                        errors={errors.rows.get(entry.id)}
+                        isLastRow={entries.length === 1}
+                      />
+                    ))}
+                  </FramePanel>
+                </Frame>
+              </FieldMessage>
+            </LogworkStep>
+          </LogworkStepper>
         </div>
 
         <SubmissionModal

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-import { Button } from '@workspace/ui/components/button';
+import { Button, buttonVariants } from '@workspace/ui/components/button';
 import { Calendar } from '@workspace/ui/components/calendar';
 import {
   Popover,
@@ -10,6 +10,7 @@ import {
   PopoverTrigger,
 } from '@workspace/ui/components/popover';
 import { cn } from '@workspace/ui/lib/utils';
+import { type VariantProps } from 'class-variance-authority';
 import { format, parseISO } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { type DateRange } from 'react-day-picker';
@@ -24,6 +25,8 @@ interface DateRangePickerProps {
   id?: string;
   className?: string;
   placeholder?: string;
+  /** Height of the trigger button — matches Button sizes */
+  size?: VariantProps<typeof buttonVariants>['size'];
 }
 
 function DateRangePicker({
@@ -33,6 +36,7 @@ function DateRangePicker({
   id,
   className,
   placeholder = 'Pick a date range',
+  size = 'default',
 }: DateRangePickerProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -59,6 +63,7 @@ function DateRangePicker({
           <Button
             id={id}
             variant="outline"
+            size={size}
             className={cn(
               'w-full justify-start text-left font-normal',
               !from && !to && 'text-muted-foreground'

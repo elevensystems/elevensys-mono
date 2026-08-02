@@ -53,9 +53,12 @@ export function DateChipList({
 
   if (dates.length === 0) {
     return (
-      <span className="text-xs text-muted-foreground italic">
-        No dates selected. Use &quot;Find Dates&quot; or add manually below.
-      </span>
+      <div className="flex h-[26px] items-center p-0.5">
+        <span className="text-xs text-muted-foreground italic">
+          No dates selected. Use &quot;Find Dates&quot; or &quot;Add
+          manually&quot;.
+        </span>
+      </div>
     );
   }
 
