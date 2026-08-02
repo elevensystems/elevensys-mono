@@ -6,8 +6,10 @@ import { useRouter } from 'next/navigation';
 
 import { Button } from '@workspace/ui/components/button';
 import { FieldMessage } from '@workspace/ui/components/field-message';
+import { Frame, FrameHeader, FramePanel } from '@workspace/ui/components/frame';
 import { Spinner } from '@workspace/ui/components/spinner';
 import { Token } from '@workspace/ui/components/token';
+import { cn } from '@workspace/ui/lib/utils';
 import { Plus, Send } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -431,67 +433,74 @@ export default function LogWorkPage() {
               Add work entries
             </div>
 
-            <div className="rounded-xl border bg-muted/40">
-              {/* Card header */}
-              <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-                {/* Daily target */}
-                <div className="flex items-center gap-2.5">
-                  <span className="text-sm font-semibold">Daily target</span>
-                  <Token
-                    color={hoursTokenColor}
-                    density="compact"
-                    className="tabular-nums"
-                  >
-                    {formatHours(totalHours)}h / {formatHours(STANDARD_HOURS)}h
-                  </Token>
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={addEntry}
-                  disabled={isSubmitting || !isConfigured}
-                >
-                  <Plus />
-                  Add Row
-                </Button>
-              </div>
-
-              {/* Entries table — sits flush inside the header shell */}
-              <FieldMessage
-                state="error"
-                message={errors.global.entries}
-                className="-mx-px -mb-px rounded-xl"
-                controlClassName="overflow-hidden rounded-xl"
-                showIcon
+            {/* The frame is the validated control: the error ring stays on it
+                and the message sits in the tinted strip below. */}
+            <FieldMessage
+              state="error"
+              message={errors.global.entries}
+              className="rounded-xl"
+              controlClassName="rounded-xl border-0 bg-background"
+              showIcon
+            >
+              <Frame
+                dense
+                className={cn(errors.global.entries && 'border-destructive')}
               >
-                {/* Grid header */}
-                <div className="grid grid-cols-[40px_230px_1fr_150px_140px_50px] gap-2 px-3 py-2 text-sm font-semibold text-muted-foreground">
-                  <span>#</span>
-                  <span>Key</span>
-                  <span>Description</span>
-                  <span>Type of Work</span>
-                  <span>Hours</span>
-                  <span />
-                </div>
-                {/* Entry rows */}
-                {entries.map((entry, index) => (
-                  <WorkEntryRow
-                    key={entry.id}
-                    index={index}
-                    entry={entry}
-                    issues={issues}
-                    issuesByKey={issuesByKey}
-                    isLoadingIssues={isLoadingIssues}
-                    onUpdate={updateEntry}
-                    onRemove={removeEntry}
-                    onClearError={clearRowError}
-                    errors={errors.rows.get(entry.id)}
-                    isLastRow={entries.length === 1}
-                  />
-                ))}
-              </FieldMessage>
-            </div>
+                <FrameHeader className="flex-row flex-wrap items-center justify-between gap-3">
+                  {/* Daily target */}
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-sm font-semibold">Daily target</span>
+                    <Token
+                      color={hoursTokenColor}
+                      density="compact"
+                      className="tabular-nums"
+                    >
+                      {formatHours(totalHours)}h / {formatHours(STANDARD_HOURS)}
+                      h
+                    </Token>
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={addEntry}
+                    disabled={isSubmitting || !isConfigured}
+                  >
+                    <Plus />
+                    Add Row
+                  </Button>
+                </FrameHeader>
+
+                {/* Entries table — flush inside the frame, keeping its radius */}
+                <FramePanel rounded className="gap-0 overflow-hidden p-0">
+                  {/* Grid header */}
+                  <div className="grid grid-cols-[40px_230px_1fr_150px_140px_50px] gap-2 px-3 py-2 text-sm font-semibold text-muted-foreground">
+                    <span>#</span>
+                    <span>Key</span>
+                    <span>Description</span>
+                    <span>Type of Work</span>
+                    <span>Hours</span>
+                    <span />
+                  </div>
+                  {/* Entry rows */}
+                  {entries.map((entry, index) => (
+                    <WorkEntryRow
+                      key={entry.id}
+                      index={index}
+                      entry={entry}
+                      issues={issues}
+                      issuesByKey={issuesByKey}
+                      isLoadingIssues={isLoadingIssues}
+                      onUpdate={updateEntry}
+                      onRemove={removeEntry}
+                      onClearError={clearRowError}
+                      errors={errors.rows.get(entry.id)}
+                      isLastRow={entries.length === 1}
+                    />
+                  ))}
+                </FramePanel>
+              </Frame>
+            </FieldMessage>
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row sm:justify-end gap-3 border-t pt-6">
