@@ -1,4 +1,4 @@
-import type { DateRange } from '@/types/timesheet';
+import type { DateRange, WorkEntry } from '@/types/timesheet';
 
 const MONTH_ABBRS = [
   'Jan',
@@ -80,6 +80,76 @@ export function getCurrentTime(): string {
 
 export function generateEntryId(): string {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+/** A single empty work entry with a fresh id, used as the default row. */
+export function createDefaultEntry(): WorkEntry {
+  return {
+    id: generateEntryId(),
+    issueKey: '',
+    typeOfWork: 'Create',
+    description: '',
+    hours: DEFAULT_HOURS,
+  };
+}
+
+const SAVED_ENTRIES_KEY = 'timesheet_saved_entries';
+
+/**
+ * localStorage key for saved work entries. Scoped per project so each project
+ * remembers its own set of tickets; the un-scoped key is the legacy fallback.
+ */
+function getSavedEntriesKey(projectId?: string): string {
+  return projectId
+    ? `${SAVED_ENTRIES_KEY}::project::${projectId}`
+    : SAVED_ENTRIES_KEY;
+}
+
+/**
+ * Load the work entries previously saved for a project from localStorage.
+ * Falls back to a single default entry when nothing is stored or data is
+ * corrupt. Each loaded entry gets a fresh id so React keys stay stable.
+ */
+export function loadSavedEntries(projectId?: string): WorkEntry[] {
+  if (typeof window === 'undefined') return [createDefaultEntry()];
+  try {
+    const saved = localStorage.getItem(getSavedEntriesKey(projectId));
+    if (saved) {
+      const parsed = JSON.parse(saved) as Omit<WorkEntry, 'id'>[];
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map(entry => ({
+          ...entry,
+          id: generateEntryId(),
+        }));
+      }
+    }
+  } catch {
+    // Ignore corrupted data
+  }
+  return [createDefaultEntry()];
+}
+
+/**
+ * Persist work entries (those with an issue key) for a project to localStorage.
+ * Ids are stripped before saving since they are regenerated on load.
+ */
+export function saveEntriesToStorage(
+  entries: WorkEntry[],
+  projectId?: string
+): void {
+  try {
+    const toSave = entries
+      .filter(e => e.issueKey.trim())
+      .map(({ id: _id, ...rest }) => rest);
+    if (toSave.length > 0) {
+      localStorage.setItem(
+        getSavedEntriesKey(projectId),
+        JSON.stringify(toSave)
+      );
+    }
+  } catch {
+    // Ignore storage errors
+  }
 }
 
 /**

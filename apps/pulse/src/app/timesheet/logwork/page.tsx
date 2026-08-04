@@ -6,28 +6,26 @@ import { useRouter } from 'next/navigation';
 
 import { Button } from '@workspace/ui/components/button';
 import { FieldMessage } from '@workspace/ui/components/field-message';
-import { Frame, FrameHeader, FramePanel } from '@workspace/ui/components/frame';
 import { Spinner } from '@workspace/ui/components/spinner';
-import { Token } from '@workspace/ui/components/token';
 import { cn } from '@workspace/ui/lib/utils';
-import { Plus, Send } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
 import { TokenExpiredAlert } from '@/components/features/timesheet/token-expired-alert';
-import { WorkEntryRow } from '@/components/features/timesheet/work-entry-row';
+import { WorkEntriesFrame } from '@/components/features/timesheet/work-entries-frame';
 import MainLayout from '@/components/layouts/main-layout';
 import { useLogWorkSubmission } from '@/hooks/use-log-work-submission';
 import { useMissingWorklogs } from '@/hooks/use-missing-worklogs';
 import { useTimesheetSettings } from '@/hooks/use-timesheet-settings';
 import { showAuthErrorToast } from '@/lib/auth-toast';
 import {
-  STANDARD_HOURS,
+  createDefaultEntry,
   formatDateForApi,
-  formatHours,
-  generateEntryId,
   groupDatesIntoRanges,
   isValidIssueKey,
+  loadSavedEntries,
+  saveEntriesToStorage,
 } from '@/lib/timesheet';
 import type {
   DateRange,
@@ -41,57 +39,6 @@ import { ConfirmDialog } from './_components/confirm-dialog';
 import { LogworkStep, LogworkStepper } from './_components/logwork-stepper';
 import { MissingWorklogsCard } from './_components/missing-worklogs-card';
 import { SubmissionModal } from './_components/submission-modal';
-
-const SAVED_ENTRIES_KEY = 'timesheet_saved_entries';
-
-const createDefaultEntry = (): WorkEntry => ({
-  id: generateEntryId(),
-  issueKey: '',
-  typeOfWork: 'Create',
-  description: '',
-  hours: 1,
-});
-
-function getSavedEntriesKey(projectId?: string): string {
-  return projectId
-    ? `${SAVED_ENTRIES_KEY}::project::${projectId}`
-    : SAVED_ENTRIES_KEY;
-}
-
-function loadSavedEntries(projectId?: string): WorkEntry[] {
-  if (typeof window === 'undefined') return [createDefaultEntry()];
-  try {
-    const saved = localStorage.getItem(getSavedEntriesKey(projectId));
-    if (saved) {
-      const parsed = JSON.parse(saved) as Omit<WorkEntry, 'id'>[];
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.map(entry => ({
-          ...entry,
-          id: generateEntryId(),
-        }));
-      }
-    }
-  } catch {
-    // Ignore corrupted data
-  }
-  return [createDefaultEntry()];
-}
-
-function saveEntriesToStorage(entries: WorkEntry[], projectId?: string): void {
-  try {
-    const toSave = entries
-      .filter(e => e.issueKey.trim())
-      .map(({ id: _id, ...rest }) => rest);
-    if (toSave.length > 0) {
-      localStorage.setItem(
-        getSavedEntriesKey(projectId),
-        JSON.stringify(toSave)
-      );
-    }
-  } catch {
-    // Ignore storage errors
-  }
-}
 
 /** Convert a Date to DD/Mon/YY API format */
 function dateToApiFormat(date: Date): string {
@@ -368,13 +315,6 @@ export default function LogWorkPage() {
     );
   }
 
-  const hoursTokenColor =
-    totalHours === STANDARD_HOURS
-      ? 'green'
-      : totalHours > STANDARD_HOURS
-        ? 'orange'
-        : 'gray';
-
   // 3 marks both steps complete — there is no third step to land on
   const currentStep = ((): 1 | 2 | 3 => {
     if (isSubmitting) return 3;
@@ -456,66 +396,19 @@ export default function LogWorkPage() {
                 controlClassName="rounded-xl border-0 bg-background"
                 showIcon
               >
-                <Frame
-                  dense
+                <WorkEntriesFrame
+                  entries={entries}
+                  issues={issues}
+                  issuesByKey={issuesByKey}
+                  isLoadingIssues={isLoadingIssues}
+                  onUpdate={updateEntry}
+                  onRemove={removeEntry}
+                  onAdd={addEntry}
+                  addDisabled={isSubmitting || !isConfigured}
+                  rowErrors={errors.rows}
+                  onClearRowError={clearRowError}
                   className={cn(errors.global.entries && 'border-destructive')}
-                >
-                  <FrameHeader className="flex-row flex-wrap items-center justify-between gap-3">
-                    {/* Daily target */}
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-sm font-semibold">
-                        Daily target
-                      </span>
-                      <Token
-                        color={hoursTokenColor}
-                        density="compact"
-                        className="tabular-nums"
-                      >
-                        {formatHours(totalHours)}h /{' '}
-                        {formatHours(STANDARD_HOURS)}h
-                      </Token>
-                    </div>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={addEntry}
-                      disabled={isSubmitting || !isConfigured}
-                    >
-                      <Plus />
-                      Add Row
-                    </Button>
-                  </FrameHeader>
-
-                  {/* Entries table — flush inside the frame, keeping its radius */}
-                  <FramePanel rounded className="gap-0 overflow-hidden p-0">
-                    {/* Grid header */}
-                    <div className="grid grid-cols-[40px_230px_1fr_150px_140px_50px] gap-2 px-3 py-2 text-sm font-semibold text-muted-foreground">
-                      <span>#</span>
-                      <span>Key</span>
-                      <span>Description</span>
-                      <span>Type of Work</span>
-                      <span>Hours</span>
-                      <span />
-                    </div>
-                    {/* Entry rows */}
-                    {entries.map((entry, index) => (
-                      <WorkEntryRow
-                        key={entry.id}
-                        index={index}
-                        entry={entry}
-                        issues={issues}
-                        issuesByKey={issuesByKey}
-                        isLoadingIssues={isLoadingIssues}
-                        onUpdate={updateEntry}
-                        onRemove={removeEntry}
-                        onClearError={clearRowError}
-                        errors={errors.rows.get(entry.id)}
-                        isLastRow={entries.length === 1}
-                      />
-                    ))}
-                  </FramePanel>
-                </Frame>
+                />
               </FieldMessage>
             </LogworkStep>
           </LogworkStepper>

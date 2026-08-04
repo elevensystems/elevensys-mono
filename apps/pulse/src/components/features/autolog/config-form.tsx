@@ -1,19 +1,22 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
 import { NativeSelect } from '@workspace/ui/components/native-select';
 import { Spinner } from '@workspace/ui/components/spinner';
-import { Token } from '@workspace/ui/components/token';
-import { Plus, PlusCircle, Save } from 'lucide-react';
+import { PlusCircle, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { WorkEntryRow } from '@/components/features/timesheet/work-entry-row';
+import { WorkEntriesFrame } from '@/components/features/timesheet/work-entries-frame';
 import { useProjectIssues } from '@/hooks/use-project-issues';
-import { STANDARD_HOURS, formatHours, generateEntryId } from '@/lib/timesheet';
+import {
+  createDefaultEntry,
+  generateEntryId,
+  loadSavedEntries,
+} from '@/lib/timesheet';
 import type {
   AutologConfig,
   CreateAutologConfigPayload,
@@ -44,15 +47,7 @@ const SAVE_ENABLED = false;
 
 function toWorkEntries(config?: AutologConfig): WorkEntry[] {
   if (!config?.tickets.length) {
-    return [
-      {
-        id: generateEntryId(),
-        issueKey: '',
-        typeOfWork: 'Create',
-        description: '',
-        hours: 1,
-      },
-    ];
+    return [createDefaultEntry()];
   }
   return config.tickets.map(t => ({
     id: generateEntryId(),
@@ -129,29 +124,8 @@ export function ConfigForm({
   }, []);
 
   const addEntry = useCallback(() => {
-    setEntries(prev => [
-      ...prev,
-      {
-        id: generateEntryId(),
-        issueKey: '',
-        typeOfWork: 'Create',
-        description: '',
-        hours: 1,
-      },
-    ]);
+    setEntries(prev => [...prev, createDefaultEntry()]);
   }, []);
-
-  const totalHours = useMemo(
-    () => entries.reduce((sum, e) => sum + (e.hours || 0), 0),
-    [entries]
-  );
-
-  const hoursTokenColor =
-    totalHours === STANDARD_HOURS
-      ? 'green'
-      : totalHours > STANDARD_HOURS
-        ? 'orange'
-        : 'gray';
 
   const handleSubmit = async () => {
     if (!selectedProject) {
@@ -242,6 +216,7 @@ export function ConfigForm({
           onChange={e => {
             const p = projects.find(x => x.id === e.target.value);
             setSelectedProject(p ?? null);
+            setEntries(p ? loadSavedEntries(p.id) : [createDefaultEntry()]);
           }}
           disabled={isLoadingProjects || !!editing}
         >
@@ -265,60 +240,17 @@ export function ConfigForm({
       {/* Tickets */}
       <div className="space-y-3">
         <Label className="text-sm font-medium">Tickets</Label>
-        <div className="rounded-xl border bg-muted/40">
-          {/* Card header */}
-          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-            {/* Daily target */}
-            <div className="flex items-center gap-2.5">
-              <span className="text-sm font-semibold">Daily target</span>
-              <Token
-                color={hoursTokenColor}
-                density="compact"
-                className="tabular-nums"
-              >
-                {formatHours(totalHours)}h / {formatHours(STANDARD_HOURS)}h
-              </Token>
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={addEntry}
-              disabled={!selectedProject}
-            >
-              <Plus />
-              Add Row
-            </Button>
-          </div>
-
-          {/* Entries table — sits flush inside the header shell */}
-          <div className="-mx-px -mb-px overflow-hidden rounded-xl border bg-card">
-            {/* Grid header */}
-            <div className="grid grid-cols-[40px_230px_1fr_150px_140px_50px] gap-2 px-3 py-2 text-sm font-semibold text-muted-foreground">
-              <span>#</span>
-              <span>Key</span>
-              <span>Description</span>
-              <span>Type of Work</span>
-              <span>Hours</span>
-              <span />
-            </div>
-            {/* Entry rows */}
-            {entries.map((entry, index) => (
-              <WorkEntryRow
-                key={entry.id}
-                index={index}
-                entry={entry}
-                issues={issues}
-                issuesByKey={issuesByKey}
-                isLoadingIssues={isLoadingIssues}
-                onUpdate={updateEntry}
-                onRemove={removeEntry}
-                disabled={!selectedProject}
-                isLastRow={entries.length === 1}
-              />
-            ))}
-          </div>
-        </div>
+        <WorkEntriesFrame
+          entries={entries}
+          issues={issues}
+          issuesByKey={issuesByKey}
+          isLoadingIssues={isLoadingIssues}
+          onUpdate={updateEntry}
+          onRemove={removeEntry}
+          onAdd={addEntry}
+          addDisabled={!selectedProject}
+          rowsDisabled={!selectedProject}
+        />
       </div>
 
       {/* Schedule */}

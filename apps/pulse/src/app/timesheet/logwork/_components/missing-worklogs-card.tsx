@@ -206,7 +206,7 @@ export function MissingWorklogsCard({
                       ? 'Loading projects...'
                       : 'Search project...'
                   }
-                  className="h-8 w-full bg-background [&_input]:h-8"
+                  className="h-9 w-full bg-background [&_input]:h-9"
                   disabled={isLoadingProjects}
                   loading={isLoadingProjects}
                   showClear
@@ -240,7 +240,6 @@ export function MissingWorklogsCard({
                     onWarningFromDateChange(from);
                     onWarningToDateChange(to);
                   }}
-                  size="sm"
                   className="flex-1 w-full"
                 />
                 {/* Find Dates and Add manually are two ways to fill the same
@@ -248,11 +247,7 @@ export function MissingWorklogsCard({
                 <ButtonGroup className="w-full sm:w-fit">
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 sm:flex-none"
-                      >
+                      <Button variant="outline" className="flex-1 sm:flex-none">
                         <CalendarPlus />
                       </Button>
                     </PopoverTrigger>
@@ -284,7 +279,6 @@ export function MissingWorklogsCard({
                   </Popover>
 
                   <Button
-                    size="sm"
                     onClick={handleSearchClick}
                     disabled={
                       isSearchingWarnings ||
