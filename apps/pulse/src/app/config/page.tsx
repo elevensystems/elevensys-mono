@@ -260,13 +260,13 @@ export default function TimesheetConfigPage() {
               {isConfigured && (
                 <>
                   <Button variant="outline" size="sm" asChild>
-                    <Link href="/logwork">
+                    <Link href="/timesheet/logwork">
                       <ArrowLeft className="h-3.5 w-3.5" />
                       Log Work
                     </Link>
                   </Button>
                   <Button variant="outline" size="sm" asChild>
-                    <Link href="/my-worklogs">
+                    <Link href="/timesheet/my-worklogs">
                       <ArrowLeft className="h-3.5 w-3.5" />
                       My Worklogs
                     </Link>

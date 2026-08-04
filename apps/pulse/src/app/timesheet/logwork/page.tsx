@@ -292,7 +292,7 @@ export default function LogWorkPage() {
         toast.success(`All ${successCount} entries logged successfully!`, {
           action: {
             label: 'View Worklogs',
-            onClick: () => router.push('/my-worklogs'),
+            onClick: () => router.push('/timesheet/my-worklogs'),
           },
           duration: 10000,
         });

@@ -15,13 +15,13 @@ Turborepo.
 
 A Jira timesheet management app (`apps/pulse`) for logging and reviewing work entries.
 
-| Page                 | Route               | Description                                          |
-| -------------------- | ------------------- | ---------------------------------------------------- |
-| **Log Work**         | `/logwork`          | Find missing dates and bulk-log work entries to Jira |
-| **My Worklogs**      | `/my-worklogs`      | View and manage your own worklogs grouped by date    |
-| **Project Worklogs** | `/project-worklogs` | View all worklogs for a project with filtering       |
-| **Autolog**          | `/autolog`          | Configure automatic worklog schedules                |
-| **Configuration**    | `/config`           | Set Jira instance, username, and API token           |
+| Page                 | Route                         | Description                                          |
+| -------------------- | ----------------------------- | ---------------------------------------------------- |
+| **Log Work**         | `/timesheet/logwork`          | Find missing dates and bulk-log work entries to Jira |
+| **My Worklogs**      | `/timesheet/my-worklogs`      | View and manage your own worklogs grouped by date    |
+| **Project Worklogs** | `/timesheet/project-worklogs` | View all worklogs for a project with filtering       |
+| **Autolog**          | `/autolog`                    | Configure automatic worklog schedules                |
+| **Configuration**    | `/config`                     | Set Jira instance, username, and API token           |
 
 ### Log Work — Bulk Date Range Submission
 

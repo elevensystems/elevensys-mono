@@ -137,9 +137,8 @@ elevensys-mono/
 │       │   │   ├── api/jira/       # Proxy routes to backend Jira API (12 routes)
 │       │   │   ├── page.tsx        # Landing page (feature cards)
 │       │   │   ├── config/         # Jira credentials settings
-│       │   │   ├── logwork/        # Log work page (+ page-local _components)
-│       │   │   ├── my-worklogs/    # Personal worklogs grouped by date
-│       │   │   ├── project-worklogs/
+│       │   │   ├── timesheet/      # logwork, my-worklogs, project-worklogs
+│       │   │   │                   #   (each with page-local _components)
 │       │   │   ├── worklog-management/  # Hidden page (direct URL only)
 │       │   │   └── autolog/        # Autolog configs (list, new, edit)
 │       │   ├── components/
@@ -284,6 +283,9 @@ import { toast } from 'sonner';
 
 import MainLayout from '@/components/layouts/main-layout';
 import type { AuthUser } from '@/types/auth';
+
+// Always use 'use client' directive for client components
+
 // Always use 'use client' directive for client components
 
 // Define interfaces above component
@@ -399,8 +401,8 @@ The admin dashboard application. Currently a minimal scaffold sharing `@workspac
 ### apps/pulse (elevensys-pulse)
 
 The dedicated Jira timesheet app. Contains the timesheet feature migrated from `apps/web` (routes
-moved to the app root: `/`, `/logwork`, `/my-worklogs`, `/project-worklogs`, `/worklog-management`
-(hidden), `/autolog`, `/config`).
+moved to the app root: `/`, `/timesheet/logwork`, `/timesheet/my-worklogs`,
+`/timesheet/project-worklogs`, `/worklog-management` (hidden), `/autolog`, `/config`).
 
 - **Font**: Ubuntu (via `next/font/google`)
 - **Port**: 3004 (`next dev -p 3004`)
@@ -643,14 +645,14 @@ The timesheet feature lets users log, review, and manage Jira worklogs. It lives
 
 ### Pages
 
-| Route                 | Page               | Description                                          |
-| --------------------- | ------------------ | ---------------------------------------------------- |
-| `/logwork`            | Log Work           | Find missing dates and bulk-log entries to Jira      |
-| `/my-worklogs`        | My Worklogs        | View personal worklogs grouped by date               |
-| `/project-worklogs`   | Project Worklogs   | View all worklogs for a project with filters         |
-| `/worklog-management` | Worklog Management | Bulk edit/delete worklogs (hidden — direct URL only) |
-| `/autolog`            | Autolog            | Manage recurring auto-log configurations             |
-| `/config`             | Configuration      | Save Jira instance, username, and API token locally  |
+| Route                         | Page               | Description                                          |
+| ----------------------------- | ------------------ | ---------------------------------------------------- |
+| `/timesheet/logwork`          | Log Work           | Find missing dates and bulk-log entries to Jira      |
+| `/timesheet/my-worklogs`      | My Worklogs        | View personal worklogs grouped by date               |
+| `/timesheet/project-worklogs` | Project Worklogs   | View all worklogs for a project with filters         |
+| `/worklog-management`         | Worklog Management | Bulk edit/delete worklogs (hidden — direct URL only) |
+| `/autolog`                    | Autolog            | Manage recurring auto-log configurations             |
+| `/config`                     | Configuration      | Save Jira instance, username, and API token locally  |
 
 ### Log Work — Bulk Date Range Submission
 

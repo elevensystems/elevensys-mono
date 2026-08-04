@@ -16,14 +16,14 @@ const secondaryFeatures = [
     title: 'My Worklogs',
     description:
       'Your logged hours and approval status, searchable by date range.',
-    href: '/my-worklogs',
+    href: '/timesheet/my-worklogs',
     icon: ClipboardList,
   },
   {
     title: 'Project Worklogs',
     description:
       "A project's worklogs, filtered by person, type of work, and status.",
-    href: '/project-worklogs',
+    href: '/timesheet/project-worklogs',
     icon: FolderSearch,
   },
 ] as const;
@@ -64,7 +64,7 @@ export default function TimesheetPage() {
                   size="lg"
                   className="mt-2 bg-white text-zinc-900 hover:bg-white/90 dark:bg-zinc-900 dark:text-white dark:hover:bg-zinc-900/90"
                 >
-                  <Link href="/logwork">
+                  <Link href="/timesheet/logwork">
                     Open Log Work
                     <ArrowRight className="h-4 w-4" />
                   </Link>

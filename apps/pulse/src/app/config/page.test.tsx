@@ -321,11 +321,11 @@ describe('TimesheetConfigPage', () => {
     render(<TimesheetConfigPage />);
     expect(screen.getByText('Log Work').closest('a')).toHaveAttribute(
       'href',
-      '/logwork'
+      '/timesheet/logwork'
     );
     expect(screen.getByText('My Worklogs').closest('a')).toHaveAttribute(
       'href',
-      '/my-worklogs'
+      '/timesheet/my-worklogs'
     );
   });
 

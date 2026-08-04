@@ -38,9 +38,9 @@ export const appSidebarData: {
           title: 'Timesheet',
           icon: Clock,
           items: [
-            { title: 'Log Work', url: '/logwork' },
-            { title: 'My Worklogs', url: '/my-worklogs' },
-            { title: 'Project Worklogs', url: '/project-worklogs' },
+            { title: 'Log Work', url: '/timesheet/logwork' },
+            { title: 'My Worklogs', url: '/timesheet/my-worklogs' },
+            { title: 'Project Worklogs', url: '/timesheet/project-worklogs' },
           ],
         },
         { title: 'Autolog', url: '/autolog', icon: RefreshCw, badge: 'New' },

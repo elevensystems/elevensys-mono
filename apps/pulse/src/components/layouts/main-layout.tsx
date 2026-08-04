@@ -29,6 +29,9 @@ interface MainLayoutProps {
   headerRight?: ReactNode;
 }
 
+/** Path segments that group pages but have no page of their own. */
+const GROUP_ONLY_SEGMENTS = new Set(['timesheet']);
+
 const formatSegment = (segment: string) =>
   segment
     .split('-')
@@ -79,6 +82,10 @@ export default function MainLayout({
                             <BreadcrumbPage>
                               {formatSegment(segment)}
                             </BreadcrumbPage>
+                          ) : GROUP_ONLY_SEGMENTS.has(segment) ? (
+                            <span className="hidden md:block">
+                              {formatSegment(segment)}
+                            </span>
                           ) : (
                             <BreadcrumbLink asChild className="hidden md:block">
                               <Link href={href}>{formatSegment(segment)}</Link>
