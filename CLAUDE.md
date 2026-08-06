@@ -15,7 +15,7 @@ packages. It provides AI-powered productivity tools and an admin dashboard. Buil
 | -------------- | ------------------- | ------------------------------------------ | ---- |
 | `apps/web`     | `elevensys-web`     | Main web app with developer tools and auth | 3000 |
 | `apps/admin`   | `elevensys-admin`   | Admin dashboard (newly scaffolded)         | 3002 |
-| `apps/insight` | `elevensys-insight` | Usage analytics dashboard                  | 3003 |
+| `apps/insight` | `elevensys-insight` | Internal insight dashboard                 | 3003 |
 | `apps/pulse`   | `elevensys-pulse`   | Jira timesheet & worklog app               | 3004 |
 | `packages/ui`  | `@workspace/ui`     | Shared UI components (shadcn/ui + Radix)   | —    |
 
@@ -129,7 +129,7 @@ elevensys-mono/
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   │
-│   ├── insight/                    # Usage analytics dashboard (elevensys-insight)
+│   ├── insight/                    # Internal insight dashboard (elevensys-insight)
 │   │
 │   └── pulse/                      # Jira timesheet & worklog app (elevensys-pulse)
 │       ├── src/

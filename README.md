@@ -7,7 +7,7 @@ Turborepo.
 
 - `apps/web`: The main consumer-facing Next.js application (Port 3000).
 - `apps/admin`: The administrative Next.js application (Port 3002).
-- `apps/insight`: The usage analytics dashboard (Port 3003).
+- `apps/insight`: The internal insight dashboard (Port 3003).
 - `apps/pulse`: The Jira timesheet & worklog application (Port 3004).
 - `packages/ui`: Shared UI components using shadcn/ui and Tailwind CSS.
 
