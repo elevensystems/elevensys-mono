@@ -119,7 +119,7 @@ elevensys-mono/
 │   ├── admin/                      # Admin dashboard (elevensys-admin)
 │   │   ├── src/
 │   │   │   ├── app/
-│   │   │   │   ├── layout.tsx      # Root layout (Inter font, ThemeProvider)
+│   │   │   │   ├── layout.tsx      # Root layout (Ubuntu font, ThemeProvider)
 │   │   │   │   └── page.tsx        # Admin dashboard page
 │   │   │   ├── components/
 │   │   │   │   └── theme-provider.tsx
@@ -394,7 +394,7 @@ The main web application with developer tools and authentication. Single-brand (
 
 The admin dashboard application. Currently a minimal scaffold sharing `@workspace/ui`.
 
-- **Font**: Inter (via `next/font/google`)
+- **Font**: Ubuntu (via `next/font/google`) — same as the other apps
 - **Port**: 3002 (`next dev -p 3002`)
 - **Providers**: `ThemeProvider` only (no auth/domain/flags yet)
 
@@ -750,7 +750,7 @@ calendar day in the range.
 - **Turbopack**: Enabled for faster dev/build (Next.js 16 feature)
 - **Server Components**: Root layout fetches auth server-side
 - **Image Optimization**: Use `next/image` for images
-- **Font Optimization**: `next/font` with Ubuntu (web) and Inter (admin)
+- **Font Optimization**: `next/font` with Ubuntu + Ubuntu Mono across all apps
 - **Code Splitting**: Tool pages are naturally code-split by route
 - **Workspace caching**: Turborepo caches build outputs across apps
 
