@@ -40,7 +40,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Claude Watch</SidebarGroupLabel>
+      <SidebarGroupLabel>Insight</SidebarGroupLabel>
       <SidebarMenu>
         {items.map(item =>
           item.items?.length ? (
