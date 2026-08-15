@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('Authorization') || '';
     const body = await request.json();
-    const { pid, startDate, endDate, jiraInstance } = body;
+    const { pid, startDate, endDate, username, jiraInstance } = body;
 
     if (!jiraInstance) {
       return missingJiraInstanceResponse();
@@ -26,17 +26,21 @@ export async function POST(request: NextRequest) {
 
     const params = new URLSearchParams({ jiraInstance });
 
-    // Scoped to the caller by the backend. For every user on a project, use
-    // /api/jira/project-worklogs/warning/all instead.
     const response = await fetch(
-      `${JIRA_URLS.PROJECT_WORKLOGS_WARNING}?${params.toString()}`,
+      `${JIRA_URLS.PROJECT_WORKLOGS_WARNING_ALL}?${params.toString()}`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: authHeader,
         },
-        body: JSON.stringify({ pid, startDate, endDate }),
+        // An empty username asks for every user on the project.
+        body: JSON.stringify({
+          pid,
+          startDate,
+          endDate,
+          username: username ?? '',
+        }),
       }
     );
 

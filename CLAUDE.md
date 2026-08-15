@@ -716,7 +716,8 @@ All routes proxy to `API_BASE_URL`, forwarding the caller's `Authorization: Bear
 | `POST /api/jira/worklogs/logwork`         | Proxy to backend; forwards worklog with date range |
 | `GET  /api/jira/worklogs`                 | List the current user's worklogs                   |
 | `GET  /api/jira/project-worklogs`         | List worklogs for a project                        |
-| `GET  /api/jira/project-worklogs/warning` | Find dates with missing worklogs for a project     |
+| `POST /api/jira/project-worklogs/warning` | Caller's own missing worklog dates for a project    |
+| `POST /api/jira/project-worklogs/warning/all` | Missing worklog dates for every user on a project |
 | `GET  /api/jira/projects`                 | List Jira projects                                 |
 | `GET  /api/jira/issues/search`            | Search issues for a project                        |
 | `GET  /api/jira/auth/check`               | Validate the stored Jira token                     |

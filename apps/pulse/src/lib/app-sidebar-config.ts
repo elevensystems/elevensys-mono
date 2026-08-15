@@ -41,6 +41,7 @@ export const appSidebarData: {
             { title: 'Log Work', url: '/timesheet/logwork' },
             { title: 'My Worklogs', url: '/timesheet/my-worklogs' },
             { title: 'Project Worklogs', url: '/timesheet/project-worklogs' },
+            { title: 'Missing Worklogs', url: '/timesheet/missing-worklogs' },
           ],
         },
         { title: 'Autolog', url: '/autolog', icon: RefreshCw, badge: 'New' },

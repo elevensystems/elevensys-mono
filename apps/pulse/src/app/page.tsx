@@ -5,7 +5,13 @@ import Link from 'next/link';
 import { Banner } from '@workspace/ui/components/banner';
 import { Button } from '@workspace/ui/components/button';
 import { Card, CardContent, CardHeader } from '@workspace/ui/components/card';
-import { ArrowRight, ClipboardList, FolderSearch, PenLine } from 'lucide-react';
+import {
+  ArrowRight,
+  ClipboardList,
+  FolderSearch,
+  PenLine,
+  UserX,
+} from 'lucide-react';
 
 import MainLayout from '@/components/layouts/main-layout';
 import { ToolPageHeader } from '@/components/layouts/tool-page-header';
@@ -25,6 +31,12 @@ const secondaryFeatures = [
       "A project's worklogs, filtered by person, type of work, and status.",
     href: '/timesheet/project-worklogs',
     icon: FolderSearch,
+  },
+  {
+    title: 'Missing Worklogs',
+    description: 'Who on a project has not logged work for a date range.',
+    href: '/timesheet/missing-worklogs',
+    icon: UserX,
   },
 ] as const;
 

@@ -1,4 +1,9 @@
-import type { DateRange, WorkEntry } from '@/types/timesheet';
+import type {
+  DateRange,
+  MissingWorklogUser,
+  WorkEntry,
+  WorklogsWarningEntry,
+} from '@/types/timesheet';
 
 const MONTH_ABBRS = [
   'Jan',
@@ -258,6 +263,38 @@ export function groupDatesIntoRanges(dates: string[]): DateRange[] {
 
   ranges.push({ startDate: rangeStart, endDate: rangeEnd, dates: rangeDates });
   return ranges;
+}
+
+/**
+ * Turn the warning endpoint's {key, value} entries into one row per user.
+ * `key` is the Jira username, `value` a comma-separated list of missing dates.
+ * Dates are sorted chronologically, users with no dates are dropped, and rows
+ * are ordered by most missing days first, then username.
+ */
+export function parseWarningEntries(
+  entries: WorklogsWarningEntry[]
+): MissingWorklogUser[] {
+  return entries
+    .map(entry => {
+      const dates = (entry.value ?? '')
+        .split(',')
+        .map(date => date.trim())
+        .filter(Boolean)
+        .sort((a, b) => {
+          const dateA = parseApiDate(a);
+          const dateB = parseApiDate(b);
+          if (!dateA || !dateB) return a.localeCompare(b);
+          return dateA.getTime() - dateB.getTime();
+        });
+
+      return { username: entry.key, dates, count: dates.length };
+    })
+    .filter(user => user.count > 0)
+    .sort((a, b) =>
+      b.count !== a.count
+        ? b.count - a.count
+        : a.username.localeCompare(b.username)
+    );
 }
 
 /**

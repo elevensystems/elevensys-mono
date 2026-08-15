@@ -124,6 +124,14 @@ export interface WorklogsWarningEntry {
   value: string;
 }
 
+/** A single user's missing worklog dates, parsed from a WorklogsWarningEntry. */
+export interface MissingWorklogUser {
+  username: string;
+  /** Jira D/Mon/YY dates, chronological */
+  dates: string[];
+  count: number;
+}
+
 export interface JiraIssue {
   id: string;
   key: string;
