@@ -21,6 +21,7 @@ import type {
 } from '@/types/timesheet';
 
 import { useProjects } from './use-projects';
+import { useResetOnProjectChange } from './use-reset-on-project-change';
 
 interface UseMissingWorklogsReportParams {
   settings: TimesheetSettings;
@@ -44,7 +45,7 @@ export function useMissingWorklogsReport({
     authError,
     selectedProject,
     setSelectedProject,
-  } = useProjects({ settings, isConfigured });
+  } = useProjects({ settings, isConfigured, globalSelection: true });
 
   // Filter form state
   const [username, setUsername] = useState('');
@@ -56,6 +57,12 @@ export function useMissingWorklogsReport({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
+
+  useResetOnProjectChange(selectedProject?.id ?? null, () => {
+    setRows([]);
+    setHasSearched(false);
+    setError('');
+  });
 
   const handleSearch = useCallback(async () => {
     if (!isConfigured) {

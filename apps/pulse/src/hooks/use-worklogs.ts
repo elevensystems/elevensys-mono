@@ -12,6 +12,7 @@ import type {
 } from '@/types/timesheet';
 
 import { useProjects } from './use-projects';
+import { useResetOnProjectChange } from './use-reset-on-project-change';
 import { getWorklogKey, useWorklogMutations } from './use-worklog-mutations';
 
 export { getWorklogKey };
@@ -35,7 +36,7 @@ export function useWorklogs({ settings, isConfigured }: UseWorklogsParams) {
     isLoading: projectsLoading,
     selectedProject,
     setSelectedProject,
-  } = useProjects({ settings, isConfigured });
+  } = useProjects({ settings, isConfigured, globalSelection: true });
 
   // Filter form state
   const [statusWorklog, setStatusWorklog] = useState('All');
@@ -65,6 +66,19 @@ export function useWorklogs({ settings, isConfigured }: UseWorklogsParams) {
     setWorklogs,
   });
   const { clearSelection } = mutations;
+
+  useResetOnProjectChange(selectedProject?.id ?? null, () => {
+    setWorklogs([]);
+    setHasSearched(false);
+    setError('');
+    setCurrentPage(1);
+    setTotalPages(0);
+    setTotalRecords(0);
+    setPageStart(0);
+    setPageEnd(0);
+    lastFiltersRef.current = null;
+    clearSelection();
+  });
 
   const fetchPage = useCallback(
     async (filters: CommittedFilters, page: number) => {

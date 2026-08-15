@@ -17,6 +17,7 @@ import type {
 } from '@/types/timesheet';
 
 import { useProjects } from './use-projects';
+import { useResetOnProjectChange } from './use-reset-on-project-change';
 
 interface UseAbsencesParams {
   settings: TimesheetSettings;
@@ -44,7 +45,7 @@ export function useAbsences({ settings, isConfigured }: UseAbsencesParams) {
     authError,
     selectedProject,
     setSelectedProject,
-  } = useProjects({ settings, isConfigured });
+  } = useProjects({ settings, isConfigured, globalSelection: true });
 
   // Filter form state
   const [username, setUsername] = useState('');
@@ -64,6 +65,16 @@ export function useAbsences({ settings, isConfigured }: UseAbsencesParams) {
 
   // Store last committed filters so paging does not pick up edited-but-unsearched values
   const lastFiltersRef = useRef<CommittedFilters | null>(null);
+
+  useResetOnProjectChange(selectedProject?.id ?? null, () => {
+    setRows([]);
+    setHasSearched(false);
+    setError('');
+    setCurrentPage(1);
+    setTotalPages(0);
+    setTotalRecords(0);
+    lastFiltersRef.current = null;
+  });
 
   const fetchPage = useCallback(
     async (filters: CommittedFilters, page: number) => {

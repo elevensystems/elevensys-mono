@@ -27,6 +27,7 @@ export const DEFAULT_HOURS = 1;
 export const HOUR_STEP = 0.5;
 export const REQUEST_DELAY_MS = 1500;
 export const SETTINGS_STORAGE_KEY = 'timesheet_settings';
+export const SELECTED_PROJECT_STORAGE_KEY = 'pulse_selected_project';
 
 /**
  * Parse Jira date format "D/Mon/YY" or "DD/Mon/YY" to a Date object (local time).

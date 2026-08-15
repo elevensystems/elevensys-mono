@@ -28,23 +28,13 @@ export function useMissingWorklogs({
 }: UseMissingWorklogsParams) {
   const router = useRouter();
 
-  const {
-    projects,
-    isLoading: isLoadingProjects,
-    authError,
-    selectedProject,
-    setSelectedProject,
-  } = useProjects({ settings, isConfigured });
+  const { authError, selectedProject } = useProjects({
+    settings,
+    isConfigured,
+    globalSelection: true,
+  });
 
   const selectedProjectId = selectedProject?.id ?? '';
-
-  const setSelectedProjectId = useCallback(
-    (id: string) => {
-      const project = projects.find(p => p.id === id) ?? null;
-      setSelectedProject(project);
-    },
-    [projects, setSelectedProject]
-  );
 
   const [warningFromDate, setWarningFromDate] = useState(getMonthStart());
   const [warningToDate, setWarningToDate] = useState(getMonthEnd());
@@ -128,14 +118,11 @@ export function useMissingWorklogs({
   ]);
 
   return {
-    projects,
     authError,
     selectedProjectId,
-    setSelectedProjectId,
     selectedProject,
     issues,
     issuesByKey,
-    isLoadingProjects,
     isLoadingIssues,
     warningFromDate,
     setWarningFromDate,

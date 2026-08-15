@@ -246,8 +246,17 @@ describe('MissingWorklogsPage', () => {
   it('renders the initial empty state before searching', () => {
     render(<MissingWorklogsPage />);
     expect(screen.getByText('Missing Worklogs')).toBeInTheDocument();
+    expect(screen.getByText(/Pick a date range/)).toBeInTheDocument();
+  });
+
+  it('prompts for a project when none is scoped', () => {
+    mockUseMissingWorklogsReport.mockReturnValue({
+      ...defaultReportReturn,
+      selectedProject: null,
+    });
+    render(<MissingWorklogsPage />);
     expect(
-      screen.getByText(/Select a project and date range/)
+      screen.getByText(/Choose a project in the sidebar/)
     ).toBeInTheDocument();
   });
 

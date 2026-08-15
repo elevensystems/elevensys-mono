@@ -16,6 +16,7 @@ import type {
 } from '@/types/timesheet';
 
 import { useProjects } from './use-projects';
+import { useResetOnProjectChange } from './use-reset-on-project-change';
 
 interface UseProjectWorklogsParams {
   settings: TimesheetSettings;
@@ -45,7 +46,7 @@ export function useProjectWorklogs({
     authError,
     selectedProject,
     setSelectedProject,
-  } = useProjects({ settings, isConfigured });
+  } = useProjects({ settings, isConfigured, globalSelection: true });
 
   // Filter form state
   const [username, setUsername] = useState('');
@@ -70,6 +71,18 @@ export function useProjectWorklogs({
 
   // Store last committed filters for pagination
   const lastFiltersRef = useRef<CommittedFilters | null>(null);
+
+  useResetOnProjectChange(selectedProject?.id ?? null, () => {
+    setRows([]);
+    setHasSearched(false);
+    setError('');
+    setCurrentPage(1);
+    setTotalPages(0);
+    setTotalRecords(0);
+    setPageStart(0);
+    setPageEnd(0);
+    lastFiltersRef.current = null;
+  });
 
   const fetchPage = useCallback(
     async (filters: CommittedFilters, page: number) => {

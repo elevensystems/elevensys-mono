@@ -485,12 +485,14 @@ describe('WorklogManagementPage', () => {
     expect(screen.getByTestId('date-range-picker')).toBeInTheDocument();
   });
 
-  it('renders project select with options', () => {
+  it('hides the project select, which now lives in the sidebar', () => {
     render(<WorklogManagementPage />);
-    const projectSelect = screen.getByLabelText(/Project/);
-    expect(projectSelect).toBeInTheDocument();
-    expect(screen.getByText('Project One (PROJ)')).toBeInTheDocument();
-    expect(screen.getByText('Project Two (PROJ2)')).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Project/)).not.toBeInTheDocument();
+  });
+
+  it('echoes the active project scope in the search card', () => {
+    render(<WorklogManagementPage />);
+    expect(screen.getByText(/PROJ — Project One/)).toBeInTheDocument();
   });
 
   it('renders status select with options', () => {
@@ -571,7 +573,18 @@ describe('WorklogManagementPage', () => {
   it('renders initial prompt before search', () => {
     render(<WorklogManagementPage />);
     expect(
-      screen.getByText(/Select a project and date range/)
+      screen.getByText(/Pick a date range, then click "Search" to view your/)
+    ).toBeInTheDocument();
+  });
+
+  it('prompts for a project when none is scoped', () => {
+    mockUseWorklogs.mockReturnValue({
+      ...defaultWorklogsReturn,
+      selectedProject: null,
+    });
+    render(<WorklogManagementPage />);
+    expect(
+      screen.getByText(/Choose a project in the sidebar to get started/)
     ).toBeInTheDocument();
   });
 

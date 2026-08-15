@@ -40,10 +40,7 @@ export default function WorklogManagementPage() {
   const { settings, isConfigured, isLoaded } = useTimesheetSettings();
 
   const {
-    projects,
-    projectsLoading,
     selectedProject,
-    setSelectedProject,
     statusWorklog,
     setStatusWorklog,
     fromDate,
@@ -113,39 +110,13 @@ export default function WorklogManagementPage() {
                 Search Worklogs
               </CardTitle>
               <CardDescription>
-                Select a project, date range, and status, then click
-                &quot;Search&quot; to view your worklogs.
+                {selectedProject
+                  ? `${selectedProject.name}. Pick a date range and status, then click "Search".`
+                  : 'Choose a project in the sidebar, then pick a date range and status.'}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_2fr_1fr_1fr] gap-4 items-end">
-                <div className="space-y-1.5">
-                  <Label htmlFor="project-select">
-                    Project <span className="text-destructive">*</span>
-                  </Label>
-                  <NativeSelect
-                    id="project-select"
-                    value={selectedProject?.id ?? ''}
-                    onChange={e => {
-                      const project =
-                        projects.find(p => p.id === e.target.value) ?? null;
-                      setSelectedProject(project);
-                    }}
-                    disabled={!isConfigured || projectsLoading}
-                  >
-                    <option value="">
-                      {projectsLoading
-                        ? 'Loading projects…'
-                        : 'Select a project'}
-                    </option>
-                    {projects.map(project => (
-                      <option key={project.id} value={project.id}>
-                        {project.name} ({project.key})
-                      </option>
-                    ))}
-                  </NativeSelect>
-                </div>
-
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr] gap-4 items-end">
                 <div className="space-y-1.5">
                   <Label htmlFor="date-range">Date Range</Label>
                   <DateRangePicker
@@ -270,12 +241,14 @@ export default function WorklogManagementPage() {
                 </div>
               ) : worklogs.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
-                  {hasSearched ? (
+                  {!selectedProject ? (
+                    <p>Choose a project in the header to get started.</p>
+                  ) : hasSearched ? (
                     <p>No worklogs found for the selected filters.</p>
                   ) : (
                     <p>
-                      Select a project and date range, then click
-                      &quot;Search&quot; to view your worklogs.
+                      Pick a date range, then click &quot;Search&quot; to view
+                      your worklogs.
                     </p>
                   )}
                 </div>

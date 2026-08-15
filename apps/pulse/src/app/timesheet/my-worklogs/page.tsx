@@ -5,6 +5,7 @@ import { useEffect, useMemo } from 'react';
 import { Button } from '@workspace/ui/components/button';
 import { Checkbox } from '@workspace/ui/components/checkbox';
 import { DateRangePicker } from '@workspace/ui/components/date-range-picker';
+import { Frame, FrameHeader, FramePanel } from '@workspace/ui/components/frame';
 import { Label } from '@workspace/ui/components/label';
 import { NativeSelect } from '@workspace/ui/components/native-select';
 import { Skeleton } from '@workspace/ui/components/skeleton';
@@ -122,119 +123,127 @@ export default function MyWorklogsPage() {
 
           {isConfigured && <TokenExpiredAlert authError={authError} />}
 
-          {/* Inline filter bar */}
-          <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_auto] gap-3 items-end">
-            <div className="space-y-1.5">
-              <Label htmlFor="date-range">Date Range</Label>
-              <DateRangePicker
-                id="date-range"
-                from={fromDate}
-                to={toDate}
-                onRangeChange={(from, to) => {
-                  setFromDate(from);
-                  setToDate(to);
-                }}
-                className="w-full"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="status-select">Status</Label>
-              <NativeSelect
-                id="status-select"
-                value={statusWorklog}
-                onChange={e => setStatusWorklog(e.target.value)}
-                disabled={!isConfigured}
-              >
-                {STATUS_OPTIONS.map(status => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </NativeSelect>
-            </div>
-
-            <Button
-              onClick={handleSearch}
-              disabled={isLoading || !isConfigured}
-            >
-              {isLoading ? <Spinner /> : <Search />}
-              {isLoading ? 'Searching…' : 'Search'}
-            </Button>
-          </div>
-
-          {/* Select-all + bulk delete bar */}
-          {worklogs.length > 0 && (
-            <div className="flex items-center justify-between h-8">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={
-                    allSelected ? true : someSelected ? 'indeterminate' : false
-                  }
-                  onCheckedChange={toggleSelectAll}
-                  aria-label="Select all"
-                />
-                <span className="text-sm text-muted-foreground">
-                  Select all
-                </span>
-              </div>
-              <BulkDeleteAction
-                selectedCount={selectedIds.size}
-                isBulkDeleting={isBulkDeleting}
-                bulkDeleteProgress={bulkDeleteProgress}
-                onBulkDelete={handleBulkDelete}
-                onClearSelection={clearSelection}
-                onCancelBulkDelete={cancelBulkDelete}
-              />
-            </div>
-          )}
-
-          {/* Loading skeleton */}
-          {isLoading && (
-            <div className="rounded-lg border overflow-hidden">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-3 px-3 py-2.5 border-b last:border-b-0"
-                >
-                  <Skeleton className="size-4 shrink-0" />
-                  <Skeleton className="h-4 w-24 shrink-0" />
-                  <Skeleton className="h-4 flex-1" />
-                  <Skeleton className="h-4 w-10 shrink-0" />
-                  <Skeleton className="h-4 w-16 shrink-0" />
-                  <Skeleton className="h-5 w-16 rounded-full shrink-0" />
-                  <Skeleton className="size-8 shrink-0" />
-                  <Skeleton className="size-8 shrink-0" />
+          <Frame dense>
+            {/* Filters */}
+            <FrameHeader className="gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_auto] gap-3 items-end">
+                <div className="space-y-2">
+                  <Label htmlFor="date-range">Date Range</Label>
+                  <DateRangePicker
+                    id="date-range"
+                    from={fromDate}
+                    to={toDate}
+                    onRangeChange={(from, to) => {
+                      setFromDate(from);
+                      setToDate(to);
+                    }}
+                    className="w-full"
+                  />
                 </div>
-              ))}
-            </div>
-          )}
 
-          {/* Empty state */}
-          {!isLoading && worklogs.length === 0 && hasSearched && (
-            <p className="text-center text-muted-foreground py-10">
-              No worklogs found for the selected filters.
-            </p>
-          )}
+                <div className="space-y-2">
+                  <Label htmlFor="status-select">Status</Label>
+                  <NativeSelect
+                    id="status-select"
+                    value={statusWorklog}
+                    onChange={e => setStatusWorklog(e.target.value)}
+                    disabled={!isConfigured}
+                  >
+                    {STATUS_OPTIONS.map(status => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </div>
 
-          {/* Grouped results */}
-          {!isLoading && dateGroups.length > 0 && (
-            <div className="rounded-lg border overflow-hidden">
-              {dateGroups.map(group => (
-                <WorklogDateGroup
-                  key={group.dateKey}
-                  displayDate={group.displayDate}
-                  totalHours={group.totalHours}
-                  worklogs={group.rows}
-                  selectedIds={selectedIds}
-                  deletingId={deletingId}
-                  onToggleSelect={toggleSelect}
-                  onDelete={handleDelete}
-                  onEdit={openEditModal}
-                />
-              ))}
-            </div>
-          )}
+                <Button
+                  onClick={handleSearch}
+                  disabled={isLoading || !isConfigured}
+                >
+                  {isLoading ? <Spinner /> : <Search />}
+                  {isLoading ? 'Searching…' : 'Search'}
+                </Button>
+              </div>
+            </FrameHeader>
+
+            {/* Results — flush inside the frame, keeping its radius. Select all
+                and bulk delete sit in the panel's own toolbar, directly above
+                the rows they act on. */}
+            <FramePanel rounded className="gap-0 overflow-hidden p-0">
+              {!isLoading && worklogs.length > 0 && (
+                <div className="flex min-h-10 flex-wrap items-center justify-between gap-2 border-b px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={
+                        allSelected
+                          ? true
+                          : someSelected
+                            ? 'indeterminate'
+                            : false
+                      }
+                      onCheckedChange={toggleSelectAll}
+                      aria-label="Select all"
+                    />
+                    <span className="text-sm font-semibold text-muted-foreground">
+                      Select all
+                    </span>
+                  </div>
+                  <BulkDeleteAction
+                    selectedCount={selectedIds.size}
+                    isBulkDeleting={isBulkDeleting}
+                    bulkDeleteProgress={bulkDeleteProgress}
+                    onBulkDelete={handleBulkDelete}
+                    onClearSelection={clearSelection}
+                    onCancelBulkDelete={cancelBulkDelete}
+                  />
+                </div>
+              )}
+
+              {/* Loading skeleton */}
+              {isLoading &&
+                Array.from({ length: 8 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 px-3 py-2.5 border-b last:border-b-0"
+                  >
+                    <Skeleton className="size-4 shrink-0" />
+                    <Skeleton className="h-4 w-24 shrink-0" />
+                    <Skeleton className="h-4 flex-1" />
+                    <Skeleton className="h-4 w-10 shrink-0" />
+                    <Skeleton className="h-4 w-16 shrink-0" />
+                    <Skeleton className="h-5 w-16 rounded-full shrink-0" />
+                    <Skeleton className="size-8 shrink-0" />
+                    <Skeleton className="size-8 shrink-0" />
+                  </div>
+                ))}
+
+              {/* Empty state */}
+              {!isLoading && worklogs.length === 0 && (
+                <p className="text-center text-muted-foreground py-10">
+                  {hasSearched
+                    ? 'No worklogs found for the selected filters.'
+                    : 'Pick a date range and status, then click “Search” to see your worklogs.'}
+                </p>
+              )}
+
+              {/* Grouped results */}
+              {!isLoading &&
+                dateGroups.map(group => (
+                  <WorklogDateGroup
+                    key={group.dateKey}
+                    displayDate={group.displayDate}
+                    totalHours={group.totalHours}
+                    worklogs={group.rows}
+                    selectedIds={selectedIds}
+                    deletingId={deletingId}
+                    onToggleSelect={toggleSelect}
+                    onDelete={handleDelete}
+                    onEdit={openEditModal}
+                  />
+                ))}
+            </FramePanel>
+          </Frame>
 
           <EditWorklogModal
             worklog={editingWorklog}
