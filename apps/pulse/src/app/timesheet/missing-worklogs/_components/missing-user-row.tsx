@@ -5,7 +5,7 @@ import { Token } from '@workspace/ui/components/token';
 
 import {
   formatDisplayDate,
-  getUsernameColor,
+  getUserInitials,
   parseApiDate,
 } from '@/lib/timesheet';
 import type { MissingWorklogUser } from '@/types/timesheet';
@@ -34,12 +34,16 @@ export function MissingUserRow({ no, user }: MissingUserRowProps) {
     <TableRow>
       <TableCell className="text-muted-foreground tabular-nums">{no}</TableCell>
       <TableCell>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <span
-            className="size-2 shrink-0 rounded-full"
-            style={{ backgroundColor: getUsernameColor(user.username) }}
-          />
-          <span className="truncate font-medium">{user.username}</span>
+            aria-hidden
+            className="bg-muted text-muted-foreground ring-border flex size-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold tracking-wide ring-1 ring-inset"
+          >
+            {getUserInitials(user.username)}
+          </span>
+          <span className="truncate font-medium" title={user.username}>
+            {user.username}
+          </span>
         </div>
       </TableCell>
       <TableCell className="text-right">

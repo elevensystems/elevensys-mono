@@ -359,6 +359,19 @@ export function getUsernameColor(username: string): string {
   return `hsl(${hue}, 65%, 48%)`;
 }
 
+/**
+ * Build up-to-two-letter initials for an avatar.
+ * Names split on separators use the first letter of the first two parts
+ * ("nguyen.van.a" → "NV"); a single word falls back to its first two letters
+ * ("ducptm" → "DU").
+ */
+export function getUserInitials(username: string): string {
+  const parts = username.split(/[\s._-]+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
+  return (parts[0]![0]! + parts[1]![0]!).toUpperCase();
+}
+
 const WORK_TYPE_DOT_CLASS: Record<string, string> = {
   create: 'bg-worktype-create',
   review: 'bg-worktype-review',
