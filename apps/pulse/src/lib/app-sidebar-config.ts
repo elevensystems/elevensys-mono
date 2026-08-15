@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { Clock, Home, RefreshCw, Settings } from 'lucide-react';
+import { CalendarX, Clock, Home, RefreshCw, Settings } from 'lucide-react';
 
 export interface NavSubItem {
   title: string;
@@ -44,7 +44,8 @@ export const appSidebarData: {
             { title: 'Missing Worklogs', url: '/timesheet/missing-worklogs' },
           ],
         },
-        { title: 'Autolog', url: '/autolog', icon: RefreshCw, badge: 'New' },
+        { title: 'Autolog', url: '/autolog', icon: RefreshCw },
+        { title: 'Absences', url: '/absences', icon: CalendarX, badge: 'New' },
       ],
     },
     {

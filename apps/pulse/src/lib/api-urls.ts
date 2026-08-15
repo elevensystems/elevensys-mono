@@ -14,6 +14,8 @@ export const JIRA_URLS = {
   PROJECT_WORKLOGS_WARNING: `${JIRA_BASE}/project-worklogs/warning`,
   PROJECT_WORKLOGS_WARNING_ALL: `${JIRA_BASE}/project-worklogs/warning/all`,
   PROJECT_WORKLOGS_REPORT: `${JIRA_BASE}/project-worklogs/report`,
+  ABSENCES: `${JIRA_BASE}/absences`,
+  ABSENCES_PAGE_INFO: `${JIRA_BASE}/absences/page-info`,
 };
 
 export const AUTOLOG_URLS = {

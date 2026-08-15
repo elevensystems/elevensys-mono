@@ -168,6 +168,34 @@ export interface ProjectWorklogsData {
   rows: ProjectWorklogRow[];
 }
 
+/**
+ * A project leave record. The upstream `hunger` project-absence rows reach us
+ * as an untyped passthrough, so every field is optional and the index signature
+ * keeps whatever else comes back. Tighten this once a real response is seen.
+ */
+export interface AbsenceRow {
+  id?: number | string;
+  username?: string;
+  fullName?: string;
+  fromDate?: string;
+  toDate?: string;
+  absenceType?: string;
+  numberOfDays?: number;
+  status?: string;
+  reason?: string;
+  [key: string]: unknown;
+}
+
+/** One page of absences, merged from `/jira/absences` and `/jira/absences/page-info`. */
+export interface AbsencesData {
+  rows: AbsenceRow[];
+  page: number;
+  totalPages: number;
+  totalRecords: number;
+  startRecord: number;
+  endRecord: number;
+}
+
 export interface MyWorklogsRow {
   id: number;
   typeIssueName: string;
