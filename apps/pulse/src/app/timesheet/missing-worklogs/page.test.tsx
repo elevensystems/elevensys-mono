@@ -280,7 +280,7 @@ describe('MissingWorklogsPage', () => {
     });
     render(<MissingWorklogsPage />);
     expect(
-      screen.getByText(/Choose a project in the sidebar/)
+      screen.getByText(/Choose a project in the header/)
     ).toBeInTheDocument();
   });
 

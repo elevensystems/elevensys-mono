@@ -201,7 +201,7 @@ export function MissingWorklogsCard({
                   className="flex-1 sm:flex-none"
                   title={
                     !selectedProjectId
-                      ? 'Choose a project in the sidebar first'
+                      ? 'Choose a project in the header first'
                       : undefined
                   }
                 >

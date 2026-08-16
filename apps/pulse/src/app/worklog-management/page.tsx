@@ -112,7 +112,7 @@ export default function WorklogManagementPage() {
               <CardDescription>
                 {selectedProject
                   ? `${selectedProject.name}. Pick a date range and status, then click "Search".`
-                  : 'Choose a project in the sidebar, then pick a date range and status.'}
+                  : 'Choose a project in the header, then pick a date range and status.'}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

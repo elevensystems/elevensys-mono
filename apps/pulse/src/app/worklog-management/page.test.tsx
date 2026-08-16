@@ -488,14 +488,16 @@ describe('WorklogManagementPage', () => {
     expect(screen.getByTestId('date-range-picker')).toBeInTheDocument();
   });
 
-  it('hides the project select, which now lives in the sidebar', () => {
+  it('hides the project select, which now lives in the header', () => {
     render(<WorklogManagementPage />);
     expect(screen.queryByLabelText(/Project/)).not.toBeInTheDocument();
   });
 
   it('echoes the active project scope in the search card', () => {
     render(<WorklogManagementPage />);
-    expect(screen.getByText(/PROJ — Project One/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Project One\. Pick a date range and status/)
+    ).toBeInTheDocument();
   });
 
   it('renders status select with options', () => {
@@ -590,7 +592,7 @@ describe('WorklogManagementPage', () => {
     });
     render(<WorklogManagementPage />);
     expect(
-      screen.getByText(/Choose a project in the sidebar to get started/)
+      screen.getByText(/Choose a project in the header to get started/)
     ).toBeInTheDocument();
   });
 
