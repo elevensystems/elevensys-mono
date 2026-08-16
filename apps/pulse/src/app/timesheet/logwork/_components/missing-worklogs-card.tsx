@@ -152,11 +152,11 @@ export function MissingWorklogsCard({
                   onWarningFromDateChange(from);
                   onWarningToDateChange(to);
                 }}
-                className="flex-1 w-full"
+                className="w-full sm:w-64"
               />
               {/* Find Dates and Add manually are two ways to fill the same
                   list of selected dates, so they share one group */}
-              <ButtonGroup className="w-full sm:w-fit">
+              <ButtonGroup className="w-full sm:ml-auto sm:w-fit">
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="flex-1 sm:flex-none">

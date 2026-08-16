@@ -5,7 +5,6 @@ import * as React from 'react';
 import { Button } from '@workspace/ui/components/button';
 import { DateRangePicker } from '@workspace/ui/components/date-range-picker';
 import { Frame, FrameHeader, FramePanel } from '@workspace/ui/components/frame';
-import { Label } from '@workspace/ui/components/label';
 import { Skeleton } from '@workspace/ui/components/skeleton';
 import { Spinner } from '@workspace/ui/components/spinner';
 import {
@@ -15,9 +14,9 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table';
-import { Copy, Search } from 'lucide-react';
-import { toast } from 'sonner';
+import { Search } from 'lucide-react';
 
+import { FilterBar } from '@/components/features/timesheet/filter-bar';
 import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
 import { TokenExpiredAlert } from '@/components/features/timesheet/token-expired-alert';
 import { UserSelector } from '@/components/features/timesheet/user-selector';
@@ -25,10 +24,8 @@ import MainLayout from '@/components/layouts/main-layout';
 import { ToolPageHeader } from '@/components/layouts/tool-page-header';
 import { useMissingWorklogsReport } from '@/hooks/use-missing-worklogs-report';
 import { useTimesheetSettings } from '@/hooks/use-timesheet-settings';
-import { formatDateForApi } from '@/lib/timesheet';
 
 import { MissingUserRow } from './_components/missing-user-row';
-import { buildMissingSummary } from './_components/missing-worklogs-utils';
 
 export default function MissingWorklogsPage() {
   const { settings, isConfigured, isLoaded } = useTimesheetSettings();
@@ -54,23 +51,26 @@ export default function MissingWorklogsPage() {
     [rows]
   );
 
-  const handleCopySummary = React.useCallback(async () => {
-    const summary = buildMissingSummary({
-      rows,
-      projectLabel: selectedProject
-        ? selectedProject.name
-        : 'Project',
-      startDate: formatDateForApi(fromDate),
-      endDate: formatDateForApi(toDate),
-    });
+  // One line, every state: the header keeps its subtitle while a search runs
+  // and when it comes back empty, so nothing below it shifts.
+  const subtitle = React.useMemo(() => {
+    if (error) return <span className="text-destructive">{error}</span>;
+    if (!selectedProject)
+      return 'See who on a project has not logged work for a date range.';
+    if (isLoading) return `${selectedProject.name} · Searching…`;
+    if (!hasSearched) return selectedProject.name;
+    if (rows.length === 0)
+      return `${selectedProject.name} · Everyone logged work for this range`;
 
-    try {
-      await navigator.clipboard.writeText(summary);
-      toast.success('Summary copied to clipboard');
-    } catch {
-      toast.error('Failed to copy summary');
-    }
-  }, [rows, selectedProject, fromDate, toDate]);
+    return `${selectedProject.name} · ${rows.length} user${rows.length !== 1 ? 's' : ''} · ${totalMissingDays} missing day${totalMissingDays !== 1 ? 's' : ''}`;
+  }, [
+    error,
+    selectedProject,
+    isLoading,
+    hasSearched,
+    rows.length,
+    totalMissingDays,
+  ]);
 
   if (!isLoaded) {
     return (
@@ -90,30 +90,7 @@ export default function MissingWorklogsPage() {
     <MainLayout>
       <section className="container mx-auto px-4 py-12">
         <div className="max-w-full mx-auto space-y-6">
-          <ToolPageHeader
-            title="Missing Worklogs"
-            subtitle={
-              <>
-                {hasSearched && rows.length > 0 && selectedProject && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {selectedProject.name} &middot; {rows.length} user
-                    {rows.length !== 1 ? 's' : ''} &middot; {totalMissingDays}{' '}
-                    missing day{totalMissingDays !== 1 ? 's' : ''}
-                  </p>
-                )}
-                {!hasSearched && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {selectedProject
-                      ? selectedProject.name
-                      : 'See who on a project has not logged work for a date range.'}
-                  </p>
-                )}
-                {error && (
-                  <p className="text-sm text-destructive mt-1">{error}</p>
-                )}
-              </>
-            }
-          />
+          <ToolPageHeader title="Missing Worklogs" subtitle={subtitle} />
 
           <NotConfiguredAlert isConfigured={isConfigured} />
 
@@ -122,66 +99,42 @@ export default function MissingWorklogsPage() {
           <Frame dense>
             {/* Filters */}
             <FrameHeader className="gap-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_auto] gap-3 items-end">
-                <div className="space-y-2">
-                  <Label htmlFor="date-range">Date Range</Label>
-                  <DateRangePicker
-                    id="date-range"
-                    from={fromDate}
-                    to={toDate}
-                    onRangeChange={(from, to) => {
-                      setFromDate(from);
-                      setToDate(to);
-                    }}
-                    className="w-full"
-                  />
-                </div>
+              <FilterBar>
+                <DateRangePicker
+                  aria-label="Date Range"
+                  from={fromDate}
+                  to={toDate}
+                  onRangeChange={(from, to) => {
+                    setFromDate(from);
+                    setToDate(to);
+                  }}
+                  className="w-full sm:w-64"
+                />
 
-                <div className="space-y-2">
-                  <Label htmlFor="username-input">User</Label>
-                  <UserSelector
-                    id="username-input"
-                    value={username}
-                    onChange={setUsername}
-                    disabled={!isConfigured}
-                    className="w-full"
-                  />
-                </div>
+                <UserSelector
+                  aria-label="User"
+                  value={username}
+                  onChange={setUsername}
+                  disabled={!isConfigured}
+                  className="w-full sm:w-72"
+                />
 
                 <Button
                   onClick={handleSearch}
                   disabled={isLoading || !isConfigured || !selectedProject}
-                  className="w-full lg:w-auto"
+                  className="w-full sm:ml-auto sm:w-auto"
                 >
                   {isLoading ? <Spinner /> : <Search />}
                   {isLoading ? 'Searching…' : 'Search'}
                 </Button>
-              </div>
+              </FilterBar>
             </FrameHeader>
 
-            {/* Results — flush inside the frame, keeping its radius. Copy
-                summary sits in the panel's own toolbar, directly above the rows
-                it summarises. */}
+            {/* Results — flush inside the frame, keeping its radius. */}
             <FramePanel rounded className="gap-0 overflow-hidden p-0">
-              {!isLoading && rows.length > 0 && (
-                <div className="flex min-h-10 flex-wrap items-center justify-between gap-2 border-b px-3 py-2">
-                  <span className="text-sm font-semibold text-muted-foreground">
-                    Users missing worklogs
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="xs"
-                    onClick={handleCopySummary}
-                  >
-                    <Copy />
-                    Copy summary
-                  </Button>
-                </div>
-              )}
-
               {showTable ? (
                 <Table className="table-fixed">
-                  <TableHeader className="sticky bg-muted/50 top-0 z-10">
+                  <TableHeader className="sticky top-0 z-10">
                     <TableRow>
                       <TableHead className="w-[48px]">No</TableHead>
                       <TableHead className="w-[200px]">User</TableHead>

@@ -344,11 +344,9 @@ export default function LogWorkPage() {
             <ToolPageHeader
               title="Log Work"
               subtitle={
-                <p className="text-sm text-muted-foreground mt-1">
-                  {selectedProject
-                    ? selectedProject.name
-                    : 'Choose a project in the header to get started.'}
-                </p>
+                selectedProject
+                  ? selectedProject.name
+                  : 'Choose a project in the header to get started.'
               }
               className=""
             />

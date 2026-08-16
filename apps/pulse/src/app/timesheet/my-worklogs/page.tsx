@@ -6,7 +6,6 @@ import { Button } from '@workspace/ui/components/button';
 import { Checkbox } from '@workspace/ui/components/checkbox';
 import { DateRangePicker } from '@workspace/ui/components/date-range-picker';
 import { Frame, FrameHeader, FramePanel } from '@workspace/ui/components/frame';
-import { Label } from '@workspace/ui/components/label';
 import { NativeSelect } from '@workspace/ui/components/native-select';
 import { Skeleton } from '@workspace/ui/components/skeleton';
 import { Spinner } from '@workspace/ui/components/spinner';
@@ -14,6 +13,7 @@ import { Search } from 'lucide-react';
 
 import { BulkDeleteAction } from '@/components/features/timesheet/bulk-delete-action';
 import { EditWorklogModal } from '@/components/features/timesheet/edit-worklog-modal';
+import { FilterBar } from '@/components/features/timesheet/filter-bar';
 import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
 import { TokenExpiredAlert } from '@/components/features/timesheet/token-expired-alert';
 import MainLayout from '@/components/layouts/main-layout';
@@ -90,6 +90,16 @@ export default function MyWorklogsPage() {
       }));
   }, [worklogs]);
 
+  // One line, every state: the header keeps its subtitle while a search runs
+  // and when it comes back empty, so nothing below it shifts.
+  const subtitle = useMemo(() => {
+    if (isLoading) return 'Searching…';
+    if (!hasSearched) return 'View your logged work for a date range.';
+    if (worklogs.length === 0) return 'No worklogs for this range';
+
+    return `${worklogs.length} record${worklogs.length !== 1 ? 's' : ''} · ${formatHours(totalHours)} total hours`;
+  }, [isLoading, hasSearched, worklogs.length, totalHours]);
+
   if (!isLoaded) {
     return (
       <MainLayout>
@@ -107,17 +117,7 @@ export default function MyWorklogsPage() {
       <section className="container mx-auto px-4 py-12">
         <div className="max-w-full mx-auto space-y-6">
           {/* Header */}
-          <ToolPageHeader
-            title="My Worklogs"
-            subtitle={
-              hasSearched && worklogs.length > 0 ? (
-                <p className="text-sm text-muted-foreground mt-1">
-                  {worklogs.length} record{worklogs.length !== 1 ? 's' : ''}{' '}
-                  &middot; {formatHours(totalHours)} total hours
-                </p>
-              ) : undefined
-            }
-          />
+          <ToolPageHeader title="My Worklogs" subtitle={subtitle} />
 
           <NotConfiguredAlert isConfigured={isConfigured} />
 
@@ -126,45 +126,41 @@ export default function MyWorklogsPage() {
           <Frame dense>
             {/* Filters */}
             <FrameHeader className="gap-3">
-              <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_auto] gap-3 items-end">
-                <div className="space-y-2">
-                  <Label htmlFor="date-range">Date Range</Label>
-                  <DateRangePicker
-                    id="date-range"
-                    from={fromDate}
-                    to={toDate}
-                    onRangeChange={(from, to) => {
-                      setFromDate(from);
-                      setToDate(to);
-                    }}
-                    className="w-full"
-                  />
-                </div>
+              <FilterBar>
+                <DateRangePicker
+                  aria-label="Date Range"
+                  from={fromDate}
+                  to={toDate}
+                  onRangeChange={(from, to) => {
+                    setFromDate(from);
+                    setToDate(to);
+                  }}
+                  className="w-full sm:w-64"
+                />
 
-                <div className="space-y-2">
-                  <Label htmlFor="status-select">Status</Label>
-                  <NativeSelect
-                    id="status-select"
-                    value={statusWorklog}
-                    onChange={e => setStatusWorklog(e.target.value)}
-                    disabled={!isConfigured}
-                  >
-                    {STATUS_OPTIONS.map(status => (
-                      <option key={status} value={status}>
-                        {status}
-                      </option>
-                    ))}
-                  </NativeSelect>
-                </div>
+                <NativeSelect
+                  aria-label="Status"
+                  value={statusWorklog}
+                  onChange={e => setStatusWorklog(e.target.value)}
+                  disabled={!isConfigured}
+                  containerClassName="w-full sm:w-44"
+                >
+                  {STATUS_OPTIONS.map(status => (
+                    <option key={status} value={status}>
+                      {status === 'All' ? 'All statuses' : status}
+                    </option>
+                  ))}
+                </NativeSelect>
 
                 <Button
                   onClick={handleSearch}
                   disabled={isLoading || !isConfigured}
+                  className="w-full sm:ml-auto sm:w-auto"
                 >
                   {isLoading ? <Spinner /> : <Search />}
                   {isLoading ? 'Searching…' : 'Search'}
                 </Button>
-              </div>
+              </FilterBar>
             </FrameHeader>
 
             {/* Results — flush inside the frame, keeping its radius. Select all

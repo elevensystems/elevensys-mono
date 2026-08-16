@@ -358,44 +358,6 @@ describe('MissingWorklogsPage', () => {
     expect(screen.getByRole('button', { name: /Search/ })).toBeDisabled();
   });
 
-  it('hides Copy summary when there are no rows', () => {
-    mockUseMissingWorklogsReport.mockReturnValue({
-      ...defaultReportReturn,
-      hasSearched: true,
-    });
-    render(<MissingWorklogsPage />);
-    expect(
-      screen.queryByRole('button', { name: /Copy summary/ })
-    ).not.toBeInTheDocument();
-  });
-
-  it('copies the summary to the clipboard', async () => {
-    mockUseMissingWorklogsReport.mockReturnValue({
-      ...defaultReportReturn,
-      rows: sampleRows,
-      hasSearched: true,
-    });
-
-    // setup() installs its own clipboard stub, so override it afterwards
-    const user = userEvent.setup();
-    const writeText = jest.fn().mockResolvedValue(undefined);
-    Object.defineProperty(navigator, 'clipboard', {
-      value: { writeText },
-      configurable: true,
-    });
-
-    render(<MissingWorklogsPage />);
-    await user.click(screen.getByRole('button', { name: /Copy summary/ }));
-
-    expect(writeText).toHaveBeenCalledWith(
-      [
-        'Missing worklogs — PROJ — Project One (1/Aug/26 → 15/Aug/26)',
-        'anhnd137 (3): 03/Aug/26, 04/Aug/26, 05/Aug/26',
-        'anhvnt2 (1): 14/Aug/26',
-      ].join('\n')
-    );
-  });
-
   // --- Configuration ---
 
   it('renders the configuration warning when Jira is not configured', () => {

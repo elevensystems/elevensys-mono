@@ -25,6 +25,8 @@ interface DateRangePickerProps {
   id?: string;
   className?: string;
   placeholder?: string;
+  /** Accessible name, for filter bars that show no visible label */
+  'aria-label'?: string;
   /** Height of the trigger button — matches Button sizes */
   size?: VariantProps<typeof buttonVariants>['size'];
 }
@@ -36,6 +38,7 @@ function DateRangePicker({
   id,
   className,
   placeholder = 'Pick a date range',
+  'aria-label': ariaLabel,
   size = 'default',
 }: DateRangePickerProps) {
   const [open, setOpen] = React.useState(false);
@@ -62,6 +65,7 @@ function DateRangePicker({
         <PopoverTrigger asChild>
           <Button
             id={id}
+            aria-label={ariaLabel}
             variant="outline"
             size={size}
             className={cn(

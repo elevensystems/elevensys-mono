@@ -10,7 +10,6 @@ import {
 } from '@workspace/ui/components/card';
 import { Checkbox } from '@workspace/ui/components/checkbox';
 import { DateRangePicker } from '@workspace/ui/components/date-range-picker';
-import { Label } from '@workspace/ui/components/label';
 import { NativeSelect } from '@workspace/ui/components/native-select';
 import { Skeleton } from '@workspace/ui/components/skeleton';
 import { Spinner } from '@workspace/ui/components/spinner';
@@ -25,6 +24,7 @@ import { ClipboardList, Search } from 'lucide-react';
 
 import { BulkDeleteAction } from '@/components/features/timesheet/bulk-delete-action';
 import { EditWorklogModal } from '@/components/features/timesheet/edit-worklog-modal';
+import { FilterBar } from '@/components/features/timesheet/filter-bar';
 import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
 import { TimesheetPagination } from '@/components/features/timesheet/timesheet-pagination';
 import MainLayout from '@/components/layouts/main-layout';
@@ -116,48 +116,41 @@ export default function WorklogManagementPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr] gap-4 items-end">
-                <div className="space-y-1.5">
-                  <Label htmlFor="date-range">Date Range</Label>
-                  <DateRangePicker
-                    id="date-range"
-                    from={fromDate}
-                    to={toDate}
-                    onRangeChange={(from, to) => {
-                      setFromDate(from);
-                      setToDate(to);
-                    }}
-                    className="w-full"
-                  />
-                </div>
+              <FilterBar>
+                <DateRangePicker
+                  aria-label="Date Range"
+                  from={fromDate}
+                  to={toDate}
+                  onRangeChange={(from, to) => {
+                    setFromDate(from);
+                    setToDate(to);
+                  }}
+                  className="w-full sm:w-64"
+                />
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="status-select">Status</Label>
-                  <NativeSelect
-                    id="status-select"
-                    value={statusWorklog}
-                    onChange={e => setStatusWorklog(e.target.value)}
-                    disabled={!isConfigured}
-                  >
-                    {STATUS_OPTIONS.map(status => (
-                      <option key={status} value={status}>
-                        {status}
-                      </option>
-                    ))}
-                  </NativeSelect>
-                </div>
+                <NativeSelect
+                  aria-label="Status"
+                  value={statusWorklog}
+                  onChange={e => setStatusWorklog(e.target.value)}
+                  disabled={!isConfigured}
+                  containerClassName="w-full sm:w-44"
+                >
+                  {STATUS_OPTIONS.map(status => (
+                    <option key={status} value={status}>
+                      {status === 'All' ? 'All statuses' : status}
+                    </option>
+                  ))}
+                </NativeSelect>
 
-                <div className="flex items-end">
-                  <Button
-                    onClick={handleSearch}
-                    disabled={isLoading || !isConfigured || !selectedProject}
-                    className="w-full"
-                  >
-                    {isLoading ? <Spinner /> : <Search />}
-                    {isLoading ? 'Searching…' : 'Search'}
-                  </Button>
-                </div>
-              </div>
+                <Button
+                  onClick={handleSearch}
+                  disabled={isLoading || !isConfigured || !selectedProject}
+                  className="w-full sm:ml-auto sm:w-auto"
+                >
+                  {isLoading ? <Spinner /> : <Search />}
+                  {isLoading ? 'Searching…' : 'Search'}
+                </Button>
+              </FilterBar>
             </CardContent>
           </Card>
 

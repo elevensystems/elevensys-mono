@@ -5,7 +5,6 @@ import * as React from 'react';
 import { Button } from '@workspace/ui/components/button';
 import { DateRangePicker } from '@workspace/ui/components/date-range-picker';
 import { Frame, FrameHeader, FramePanel } from '@workspace/ui/components/frame';
-import { Label } from '@workspace/ui/components/label';
 import { Skeleton } from '@workspace/ui/components/skeleton';
 import { Spinner } from '@workspace/ui/components/spinner';
 import {
@@ -18,6 +17,7 @@ import {
 import { Copy, Search } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { FilterBar } from '@/components/features/timesheet/filter-bar';
 import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
 import { TimesheetPagination } from '@/components/features/timesheet/timesheet-pagination';
 import { TokenExpiredAlert } from '@/components/features/timesheet/token-expired-alert';
@@ -44,7 +44,7 @@ const COLUMNS = [
 
 function AbsencesTableHeader() {
   return (
-    <TableHeader className="sticky bg-muted/50 top-0 z-10">
+    <TableHeader className="sticky top-0 z-10">
       <TableRow>
         {COLUMNS.map(column => (
           <TableHead key={column.label} className={column.className}>
@@ -78,6 +78,30 @@ export default function AbsencesPage() {
     handleSearch,
     goToPage,
   } = useAbsences({ settings, isConfigured });
+
+  // One line, every state: the header keeps its subtitle while a search runs
+  // and when it comes back empty, so nothing below it shifts.
+  const subtitle = React.useMemo(() => {
+    if (error) return <span className="text-destructive">{error}</span>;
+    if (!selectedProject)
+      return 'See who on a project is on leave for a date range.';
+    if (isLoading) return `${selectedProject.name} · Searching…`;
+    if (!hasSearched) return selectedProject.name;
+    if (totalRecords === 0)
+      return `${selectedProject.name} · No absences for this range`;
+
+    const pageLabel =
+      totalPages > 1 ? ` · page ${currentPage} of ${totalPages}` : '';
+    return `${selectedProject.name} · ${totalRecords} absence${totalRecords !== 1 ? 's' : ''}${pageLabel}`;
+  }, [
+    error,
+    selectedProject,
+    isLoading,
+    hasSearched,
+    totalRecords,
+    totalPages,
+    currentPage,
+  ]);
 
   const handleCopySummary = React.useCallback(async () => {
     const summary = buildAbsencesSummary({
@@ -113,35 +137,7 @@ export default function AbsencesPage() {
     <MainLayout>
       <section className="container mx-auto px-4 py-12">
         <div className="max-w-full mx-auto space-y-6">
-          <ToolPageHeader
-            title="Absences"
-            subtitle={
-              <>
-                {hasSearched && rows.length > 0 && selectedProject && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {selectedProject.name} &middot; {totalRecords} absence
-                    {totalRecords !== 1 ? 's' : ''}
-                    {totalPages > 1 && (
-                      <>
-                        {' '}
-                        &middot; page {currentPage} of {totalPages}
-                      </>
-                    )}
-                  </p>
-                )}
-                {!hasSearched && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {selectedProject
-                      ? selectedProject.name
-                      : 'See who on a project is on leave for a date range.'}
-                  </p>
-                )}
-                {error && (
-                  <p className="text-sm text-destructive mt-1">{error}</p>
-                )}
-              </>
-            }
-          />
+          <ToolPageHeader title="Absences" subtitle={subtitle} />
 
           <NotConfiguredAlert isConfigured={isConfigured} />
 
@@ -150,41 +146,35 @@ export default function AbsencesPage() {
           <Frame dense>
             {/* Filters */}
             <FrameHeader className="gap-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_auto] gap-3 items-end">
-                <div className="space-y-2">
-                  <Label htmlFor="date-range">Date Range</Label>
-                  <DateRangePicker
-                    id="date-range"
-                    from={fromDate}
-                    to={toDate}
-                    onRangeChange={(from, to) => {
-                      setFromDate(from);
-                      setToDate(to);
-                    }}
-                    className="w-full"
-                  />
-                </div>
+              <FilterBar>
+                <DateRangePicker
+                  aria-label="Date Range"
+                  from={fromDate}
+                  to={toDate}
+                  onRangeChange={(from, to) => {
+                    setFromDate(from);
+                    setToDate(to);
+                  }}
+                  className="w-full sm:w-64"
+                />
 
-                <div className="space-y-2">
-                  <Label htmlFor="username-input">User</Label>
-                  <UserSelector
-                    id="username-input"
-                    value={username}
-                    onChange={setUsername}
-                    disabled={!isConfigured}
-                    className="w-full"
-                  />
-                </div>
+                <UserSelector
+                  aria-label="User"
+                  value={username}
+                  onChange={setUsername}
+                  disabled={!isConfigured}
+                  className="w-full sm:w-72"
+                />
 
                 <Button
                   onClick={handleSearch}
                   disabled={isLoading || !isConfigured || !selectedProject}
-                  className="w-full lg:w-auto"
+                  className="w-full sm:ml-auto sm:w-auto"
                 >
                   {isLoading ? <Spinner /> : <Search />}
                   {isLoading ? 'Searching…' : 'Search'}
                 </Button>
-              </div>
+              </FilterBar>
             </FrameHeader>
 
             {/* Results — flush inside the frame, keeping its radius. Copy

@@ -213,9 +213,12 @@ jest.mock('@workspace/ui/components/native-select', () => ({
   NativeSelect: ({
     children,
     onChange,
+    // Consumed by the real component's wrapper div, not the <select>.
+    containerClassName: _containerClassName,
     ...props
   }: React.SelectHTMLAttributes<HTMLSelectElement> & {
     children: React.ReactNode;
+    containerClassName?: string;
   }) => (
     <select onChange={onChange} {...props}>
       {children}
@@ -499,7 +502,10 @@ describe('WorklogManagementPage', () => {
     render(<WorklogManagementPage />);
     const statusSelect = screen.getByLabelText('Status');
     expect(statusSelect).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'All' })).toBeInTheDocument();
+    // The filter bar shows no visible label, so the "All" option spells out
+    // what it clears — its value is still 'All'.
+    const allOption = screen.getByRole('option', { name: 'All statuses' });
+    expect(allOption).toHaveValue('All');
     expect(screen.getByRole('option', { name: 'Pending' })).toBeInTheDocument();
     expect(
       screen.getByRole('option', { name: 'Approved' })

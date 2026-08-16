@@ -10,6 +10,7 @@ import {
   ComboboxItem,
   ComboboxList,
 } from '@workspace/ui/components/combobox';
+import { cn } from '@workspace/ui/lib/utils';
 
 import { useTimesheetSettings } from '@/hooks/use-timesheet-settings';
 import { MIN_USER_QUERY_LENGTH, useUserSearch } from '@/hooks/use-user-search';
@@ -22,6 +23,8 @@ interface UserSelectorProps {
   onChange: (username: string) => void;
   disabled?: boolean;
   placeholder?: string;
+  /** Accessible name, for filter bars that show no visible label */
+  'aria-label'?: string;
   className?: string;
 }
 
@@ -39,6 +42,7 @@ export function UserSelector({
   onChange,
   disabled = false,
   placeholder = 'All users',
+  'aria-label': ariaLabel,
   className,
 }: UserSelectorProps) {
   const { settings, isConfigured } = useTimesheetSettings();
@@ -83,8 +87,12 @@ export function UserSelector({
     >
       <ComboboxInput
         id={id}
+        aria-label={ariaLabel}
         placeholder={placeholder}
-        className={className}
+        // The input group is transparent by default, which reads as a tinted
+        // field next to the date picker and the type select on the filter
+        // bar's muted header. Paint the field surface so the row matches.
+        className={cn('bg-background', className)}
         disabled={disabled}
         loading={isLoading}
         showClear
