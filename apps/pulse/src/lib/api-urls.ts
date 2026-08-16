@@ -12,7 +12,11 @@ export const JIRA_URLS = {
   PROJECT_WORKLOGS: `${JIRA_BASE}/project-worklogs`,
   PROJECT_WORKLOGS_PAGINATION: `${JIRA_BASE}/project-worklogs/pagination`,
   PROJECT_WORKLOGS_WARNING: `${JIRA_BASE}/project-worklogs/warning`,
+  PROJECT_WORKLOGS_WARNING_ALL: `${JIRA_BASE}/project-worklogs/warning/all`,
   PROJECT_WORKLOGS_REPORT: `${JIRA_BASE}/project-worklogs/report`,
+  ABSENCES: `${JIRA_BASE}/absences`,
+  ABSENCES_PAGE_INFO: `${JIRA_BASE}/absences/page-info`,
+  USERS_PICKER: `${JIRA_BASE}/users/picker`,
 };
 
 export const AUTOLOG_URLS = {

@@ -15,6 +15,7 @@ import { NotConfiguredAlert } from '@/components/features/timesheet/not-configur
 import { TokenExpiredAlert } from '@/components/features/timesheet/token-expired-alert';
 import { WorkEntriesFrame } from '@/components/features/timesheet/work-entries-frame';
 import MainLayout from '@/components/layouts/main-layout';
+import { ToolPageHeader } from '@/components/layouts/tool-page-header';
 import { useLogWorkSubmission } from '@/hooks/use-log-work-submission';
 import { useMissingWorklogs } from '@/hooks/use-missing-worklogs';
 import { useTimesheetSettings } from '@/hooks/use-timesheet-settings';
@@ -53,13 +54,10 @@ export default function LogWorkPage() {
   const { settings, isConfigured, isLoaded } = useTimesheetSettings();
 
   const {
-    projects,
     selectedProjectId,
-    setSelectedProjectId,
     selectedProject,
     issues,
     issuesByKey,
-    isLoadingProjects,
     isLoadingIssues,
     authError,
     warningFromDate,
@@ -140,18 +138,29 @@ export default function LogWorkPage() {
     return () => window.removeEventListener('beforeunload', handler);
   }, [entries]);
 
-  const handleProjectChange = useCallback(
-    (projectId: string) => {
-      setSelectedProjectId(projectId);
-      const saved = loadSavedEntries(projectId);
-      if (saved.length > 0 && saved[0].issueKey) {
-        setEntries(saved);
-      } else {
-        setEntries([createDefaultEntry()]);
-      }
-    },
-    [setSelectedProjectId]
-  );
+  // Entries are per-project drafts, but the project now comes from the header
+  // switcher and can change at any time — so stash the current entries under
+  // the outgoing project before swapping in the incoming project's draft.
+  const entriesRef = useRef(entries);
+  useEffect(() => {
+    entriesRef.current = entries;
+  }, [entries]);
+
+  const previousProjectIdRef = useRef(selectedProjectId);
+  useEffect(() => {
+    const previousProjectId = previousProjectIdRef.current;
+    if (previousProjectId === selectedProjectId) return;
+    previousProjectIdRef.current = selectedProjectId;
+
+    if (previousProjectId) {
+      saveEntriesToStorage(entriesRef.current, previousProjectId);
+    }
+    setEntries(
+      selectedProjectId
+        ? loadSavedEntries(selectedProjectId)
+        : [createDefaultEntry()]
+    );
+  }, [selectedProjectId]);
 
   const validEntryCount = useMemo(
     () => entries.filter(e => e.issueKey.trim()).length,
@@ -332,11 +341,19 @@ export default function LogWorkPage() {
       <section className="container mx-auto px-4 py-12">
         <div className="max-w-full mx-auto space-y-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h1 className="text-2xl font-bold whitespace-nowrap">Log Work</h1>
+            <ToolPageHeader
+              title="Log Work"
+              subtitle={
+                selectedProject
+                  ? selectedProject.name
+                  : 'Choose a project in the header to get started.'
+              }
+              className=""
+            />
             <div className="flex items-center gap-3">
               <Button
                 onClick={handleSubmitClick}
-                disabled={isSubmitting || !isConfigured}
+                disabled={isSubmitting || !isConfigured || !selectedProject}
                 title={
                   isReadyToSubmit
                     ? `Will send ${requestCount} request${requestCount !== 1 ? 's' : ''} (${validEntryCount} entr${validEntryCount !== 1 ? 'ies' : 'y'} × ${dateRanges.length} range${dateRanges.length !== 1 ? 's' : ''}) covering ${parsedDates.length} date${parsedDates.length !== 1 ? 's' : ''}`
@@ -354,12 +371,9 @@ export default function LogWorkPage() {
           {isConfigured && <TokenExpiredAlert authError={authError} />}
 
           <LogworkStepper currentStep={currentStep}>
-            <LogworkStep step={1} title="Select project & dates">
+            <LogworkStep step={1} title="Select dates">
               <MissingWorklogsCard
-                projects={projects}
                 selectedProjectId={selectedProjectId}
-                onProjectChange={handleProjectChange}
-                isLoadingProjects={isLoadingProjects}
                 warningFromDate={warningFromDate}
                 warningToDate={warningToDate}
                 onWarningFromDateChange={setWarningFromDate}

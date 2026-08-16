@@ -1,5 +1,6 @@
+import type { TokenProps } from '@workspace/ui/components/token';
 import type { LucideIcon } from 'lucide-react';
-import { Clock, Home, RefreshCw, Settings } from 'lucide-react';
+import { CalendarX, Clock, Home, RefreshCw, Settings } from 'lucide-react';
 
 export interface NavSubItem {
   title: string;
@@ -13,6 +14,8 @@ export interface NavItem {
   icon: LucideIcon;
   /** Short label shown next to the title, e.g. "New" for a recently shipped feature. */
   badge?: string;
+  /** Badge color; defaults to blue. */
+  badgeColor?: TokenProps['color'];
   items?: NavSubItem[];
 }
 
@@ -41,9 +44,17 @@ export const appSidebarData: {
             { title: 'Log Work', url: '/timesheet/logwork' },
             { title: 'My Worklogs', url: '/timesheet/my-worklogs' },
             { title: 'Project Worklogs', url: '/timesheet/project-worklogs' },
+            { title: 'Missing Worklogs', url: '/timesheet/missing-worklogs' },
           ],
         },
-        { title: 'Autolog', url: '/autolog', icon: RefreshCw, badge: 'New' },
+        { title: 'Absences', url: '/absences', icon: CalendarX, badge: 'New' },
+        {
+          title: 'Autolog',
+          url: '/autolog',
+          icon: RefreshCw,
+          badge: 'Experiment',
+          badgeColor: 'green',
+        },
       ],
     },
     {

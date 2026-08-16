@@ -1,23 +1,14 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { Button } from '@workspace/ui/components/button';
 import { ButtonGroup } from '@workspace/ui/components/button-group';
 import { Calendar } from '@workspace/ui/components/calendar';
 import { Checkbox } from '@workspace/ui/components/checkbox';
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from '@workspace/ui/components/combobox';
 import { DateRangePicker } from '@workspace/ui/components/date-range-picker';
 import { FieldMessage } from '@workspace/ui/components/field-message';
 import { Frame, FrameHeader, FramePanel } from '@workspace/ui/components/frame';
-import { Label } from '@workspace/ui/components/label';
 import {
   Popover,
   PopoverContent,
@@ -30,7 +21,6 @@ import { CalendarPlus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { parseApiDate } from '@/lib/timesheet';
-import type { JiraProject } from '@/types/timesheet';
 
 import { DateChipList } from './date-chip-list';
 
@@ -44,10 +34,8 @@ function toDateKey(date: Date): string {
 }
 
 interface MissingWorklogsCardProps {
-  projects: JiraProject[];
+  /** App-wide project scope, owned by the header switcher. */
   selectedProjectId: string;
-  onProjectChange: (id: string) => void;
-  isLoadingProjects: boolean;
   warningFromDate: string;
   warningToDate: string;
   onWarningFromDateChange: (date: string) => void;
@@ -64,10 +52,7 @@ interface MissingWorklogsCardProps {
 }
 
 export function MissingWorklogsCard({
-  projects,
   selectedProjectId,
-  onProjectChange,
-  isLoadingProjects,
   warningFromDate,
   warningToDate,
   onWarningFromDateChange,
@@ -83,28 +68,6 @@ export function MissingWorklogsCard({
   dateError,
 }: MissingWorklogsCardProps) {
   const [manualDateKeys, setManualDateKeys] = useState<Set<string>>(new Set());
-  const [projectSearch, setProjectSearch] = useState('');
-
-  const selectedProject = useMemo(
-    () => projects.find(p => p.id === selectedProjectId) ?? null,
-    [projects, selectedProjectId]
-  );
-
-  const handleProjectInputChange = useCallback(
-    (value: string, eventDetails: { reason: string }) => {
-      if (eventDetails.reason === 'input-clear') return;
-      setProjectSearch(value);
-    },
-    []
-  );
-
-  const handleProjectSelect = useCallback(
-    (value: JiraProject | null) => {
-      onProjectChange(value?.id ?? '');
-      setProjectSearch('');
-    },
-    [onProjectChange]
-  );
 
   const handleRemoveDate = (date: Date) => {
     onSelectedDatesChange(
@@ -177,122 +140,75 @@ export function MissingWorklogsCard({
     >
       <Frame dense className={cn(dateError && 'border-destructive')}>
         <FrameHeader className="gap-3">
-          {/* Search controls — aligned from the top so Project and Date Range
-              share one row; the combobox trails an empty node that would push
-              a bottom-aligned column out of line. */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:items-start">
-            <div className="space-y-2">
-              <Label htmlFor="project-select">
-                Project <span className="text-destructive">*</span>
-              </Label>
-              <Combobox
-                items={projects}
-                value={selectedProject}
-                inputValue={
-                  selectedProject
-                    ? `${selectedProject.key} — ${selectedProject.name}`
-                    : projectSearch
-                }
-                onInputValueChange={handleProjectInputChange}
-                onValueChange={handleProjectSelect}
-                itemToStringLabel={(project: JiraProject) =>
-                  `${project.key} — ${project.name}`
-                }
-              >
-                <ComboboxInput
-                  id="project-select"
-                  placeholder={
-                    isLoadingProjects
-                      ? 'Loading projects...'
-                      : 'Search project...'
-                  }
-                  className="h-9 w-full bg-background [&_input]:h-9"
-                  disabled={isLoadingProjects}
-                  loading={isLoadingProjects}
-                  showClear
-                />
-                <ComboboxContent>
-                  <ComboboxList>
-                    {(project: JiraProject) => (
-                      <ComboboxItem key={project.id} value={project}>
-                        <span className="font-medium shrink-0">
-                          {project.key}
-                        </span>
-                        <span className="text-muted-foreground truncate">
-                          — {project.name}
-                        </span>
-                      </ComboboxItem>
-                    )}
-                  </ComboboxList>
-                  <ComboboxEmpty>No projects found</ComboboxEmpty>
-                </ComboboxContent>
-              </Combobox>
-            </div>
-
-            <div className="space-y-2 sm:col-span-2">
-              <Label>Date Range</Label>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <DateRangePicker
-                  id="warning-date-range"
-                  from={warningFromDate}
-                  to={warningToDate}
-                  onRangeChange={(from, to) => {
-                    onWarningFromDateChange(from);
-                    onWarningToDateChange(to);
-                  }}
-                  className="flex-1 w-full"
-                />
-                {/* Find Dates and Add manually are two ways to fill the same
-                    list of selected dates, so they share one group */}
-                <ButtonGroup className="w-full sm:w-fit">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="flex-1 sm:flex-none">
-                        <CalendarPlus />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="w-auto p-0"
-                      align="end"
-                      sideOffset={8}
-                    >
-                      <div className="p-3 border-b">
-                        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
-                          <Checkbox
-                            checked={includeWeekends}
-                            onCheckedChange={checked =>
-                              onIncludeWeekendsChange(checked === true)
-                            }
-                          />
-                          Include weekends
-                        </label>
-                      </div>
-                      <Calendar
-                        mode="multiple"
-                        selected={selectedDates}
-                        onSelect={handleCalendarSelect}
-                        disabled={includeWeekends ? undefined : isWeekend}
-                        numberOfMonths={3}
-                        showOutsideDays={false}
-                      />
-                    </PopoverContent>
-                  </Popover>
-
-                  <Button
-                    onClick={handleSearchClick}
-                    disabled={
-                      isSearchingWarnings ||
-                      !selectedProjectId ||
-                      !warningFromDate ||
-                      !warningToDate
-                    }
-                    className="flex-1 sm:flex-none"
+          {/* The project comes from the header switcher, so the range picker
+              and its two fill actions are all this row carries. */}
+          <div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <DateRangePicker
+                id="warning-date-range"
+                from={warningFromDate}
+                to={warningToDate}
+                onRangeChange={(from, to) => {
+                  onWarningFromDateChange(from);
+                  onWarningToDateChange(to);
+                }}
+                className="w-full sm:w-64"
+              />
+              {/* Find Dates and Add manually are two ways to fill the same
+                  list of selected dates, so they share one group */}
+              <ButtonGroup className="w-full sm:ml-auto sm:w-fit">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="flex-1 sm:flex-none">
+                      <CalendarPlus />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-auto p-0"
+                    align="end"
+                    sideOffset={8}
                   >
-                    {isSearchingWarnings ? <Spinner /> : <Search />}
-                    {isSearchingWarnings ? 'Searching' : 'Find Dates'}
-                  </Button>
-                </ButtonGroup>
-              </div>
+                    <div className="p-3 border-b">
+                      <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+                        <Checkbox
+                          checked={includeWeekends}
+                          onCheckedChange={checked =>
+                            onIncludeWeekendsChange(checked === true)
+                          }
+                        />
+                        Include weekends
+                      </label>
+                    </div>
+                    <Calendar
+                      mode="multiple"
+                      selected={selectedDates}
+                      onSelect={handleCalendarSelect}
+                      disabled={includeWeekends ? undefined : isWeekend}
+                      numberOfMonths={3}
+                      showOutsideDays={false}
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                <Button
+                  onClick={handleSearchClick}
+                  disabled={
+                    isSearchingWarnings ||
+                    !selectedProjectId ||
+                    !warningFromDate ||
+                    !warningToDate
+                  }
+                  className="flex-1 sm:flex-none"
+                  title={
+                    !selectedProjectId
+                      ? 'Choose a project in the header first'
+                      : undefined
+                  }
+                >
+                  {isSearchingWarnings ? <Spinner /> : <Search />}
+                  {isSearchingWarnings ? 'Searching' : 'Find Dates'}
+                </Button>
+              </ButtonGroup>
             </div>
           </div>
         </FrameHeader>

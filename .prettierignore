@@ -51,3 +51,6 @@ tailwind.config.js
 
 # PostCSS config
 postcss.config.mjs
+
+# Vendored upstream stylesheet (shadcn/typeset) — keep as a verbatim copy
+packages/ui/src/styles/typeset.css

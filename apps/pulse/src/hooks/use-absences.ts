@@ -2,49 +2,58 @@
 
 import { useCallback, useRef, useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import { toast } from 'sonner';
 
+import { normalizeAbsence } from '@/app/absences/_components/absences-utils';
+import { showAuthErrorToast } from '@/lib/auth-toast';
+import { isAuthError } from '@/lib/fetch-utils';
 import { formatDateForApi, getMonthEnd, getMonthStart } from '@/lib/timesheet';
 import type {
-  MyWorklogsData,
-  MyWorklogsRow,
+  AbsenceRow,
+  AbsencesData,
   TimesheetSettings,
 } from '@/types/timesheet';
 
 import { useProjects } from './use-projects';
 import { useResetOnProjectChange } from './use-reset-on-project-change';
-import { getWorklogKey, useWorklogMutations } from './use-worklog-mutations';
 
-export { getWorklogKey };
-
-interface UseWorklogsParams {
+interface UseAbsencesParams {
   settings: TimesheetSettings;
   isConfigured: boolean;
 }
 
 interface CommittedFilters {
-  projectKey: string;
-  fromDate: string;
-  toDate: string;
-  statusWorklog: string;
-  jiraInstance: string;
+  projectId: string;
+  filterUsername: string;
+  filterFromDate: string;
+  filterToDate: string;
 }
 
-export function useWorklogs({ settings, isConfigured }: UseWorklogsParams) {
+/**
+ * Drives the Absences page: project leave records for a project and date range.
+ * Paginated upstream — `/api/jira/absences` merges the row page with its
+ * page-info metadata in a single request.
+ */
+export function useAbsences({ settings, isConfigured }: UseAbsencesParams) {
+  const router = useRouter();
+
   const {
     projects,
     isLoading: projectsLoading,
+    authError,
     selectedProject,
     setSelectedProject,
   } = useProjects({ settings, isConfigured, globalSelection: true });
 
   // Filter form state
-  const [statusWorklog, setStatusWorklog] = useState('All');
+  const [username, setUsername] = useState('');
   const [fromDate, setFromDate] = useState(getMonthStart());
   const [toDate, setToDate] = useState(getMonthEnd());
 
   // Results state
-  const [worklogs, setWorklogs] = useState<MyWorklogsRow[]>([]);
+  const [rows, setRows] = useState<AbsenceRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
@@ -53,53 +62,48 @@ export function useWorklogs({ settings, isConfigured }: UseWorklogsParams) {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [pageStart, setPageStart] = useState(0);
-  const [pageEnd, setPageEnd] = useState(0);
 
-  // Store last committed filters for pagination
+  // Store last committed filters so paging does not pick up edited-but-unsearched values
   const lastFiltersRef = useRef<CommittedFilters | null>(null);
 
-  const mutations = useWorklogMutations({
-    settings,
-    isConfigured,
-    worklogs,
-    setWorklogs,
-  });
-  const { clearSelection } = mutations;
-
   useResetOnProjectChange(selectedProject?.id ?? null, () => {
-    setWorklogs([]);
+    setRows([]);
     setHasSearched(false);
     setError('');
     setCurrentPage(1);
     setTotalPages(0);
     setTotalRecords(0);
-    setPageStart(0);
-    setPageEnd(0);
     lastFiltersRef.current = null;
-    clearSelection();
   });
 
   const fetchPage = useCallback(
     async (filters: CommittedFilters, page: number) => {
       setIsLoading(true);
       setError('');
+
       try {
         const params = new URLSearchParams({
-          projectKey: filters.projectKey,
-          fromDate: filters.fromDate,
-          toDate: filters.toDate,
-          statusWorklog: filters.statusWorklog,
-          page: String(page),
-          jiraInstance: filters.jiraInstance,
+          projectId: filters.projectId,
+          filterUsername: filters.filterUsername,
+          filterFromDate: filters.filterFromDate,
+          filterToDate: filters.filterToDate,
+          pageNo: String(page),
+          jiraInstance: settings.jiraInstance,
         });
 
         const response = await fetch(
-          `/api/jira/project-worklogs?${params.toString()}`,
-          { headers: { Authorization: `Bearer ${settings.token}` } }
+          `/api/jira/absences?${params.toString()}`,
+          {
+            headers: { Authorization: `Bearer ${settings.token}` },
+          }
         );
 
         if (!response.ok) {
+          if (isAuthError(response.status)) {
+            showAuthErrorToast(() => router.push('/config'));
+            setRows([]);
+            return;
+          }
           const errorData = await response.json().catch(() => null);
           throw new Error(
             errorData?.error || `Failed to fetch: HTTP ${response.status}`
@@ -109,33 +113,37 @@ export function useWorklogs({ settings, isConfigured }: UseWorklogsParams) {
         const result = await response.json();
 
         if (result.success && result.data) {
-          const data = result.data as MyWorklogsData;
-          setWorklogs(data.rows ?? []);
-          setCurrentPage(page);
-          const pages =
-            data.pageSize > 0 ? Math.ceil(data.records / data.pageSize) : 0;
-          setTotalPages(pages);
-          setTotalRecords(data.records);
-          setPageStart(data.start);
-          setPageEnd(data.end);
-          clearSelection();
-          toast.success(`Loaded ${data.rows?.length ?? 0} entries`);
+          const data = result.data as AbsencesData;
+          const parsed = (data.rows ?? []).map(normalizeAbsence);
+
+          setRows(parsed);
+          setCurrentPage(data.page ?? page);
+          setTotalPages(data.totalPages ?? 0);
+          setTotalRecords(data.totalRecords ?? parsed.length);
+
+          if (parsed.length === 0) {
+            toast.info('No absences for this range.');
+          } else {
+            toast.success(
+              `Loaded ${parsed.length} absence${parsed.length !== 1 ? 's' : ''}`
+            );
+          }
         } else {
-          setWorklogs([]);
+          setRows([]);
           setTotalPages(0);
           setTotalRecords(0);
         }
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : 'Failed to fetch worklogs';
+          err instanceof Error ? err.message : 'Failed to fetch absences';
         setError(message);
         toast.error(message);
-        setWorklogs([]);
+        setRows([]);
       } finally {
         setIsLoading(false);
       }
     },
-    [settings.token, clearSelection]
+    [settings.token, settings.jiraInstance, router]
   );
 
   const handleSearch = useCallback(async () => {
@@ -160,24 +168,16 @@ export function useWorklogs({ settings, isConfigured }: UseWorklogsParams) {
     setHasSearched(true);
 
     const filters: CommittedFilters = {
-      projectKey: selectedProject.key,
-      fromDate: formatDateForApi(fromDate),
-      toDate: formatDateForApi(toDate),
-      statusWorklog,
-      jiraInstance: settings.jiraInstance,
+      projectId: selectedProject.id,
+      // An empty username asks for every member of the project.
+      filterUsername: username.trim() || 'All',
+      filterFromDate: formatDateForApi(fromDate),
+      filterToDate: formatDateForApi(toDate),
     };
 
     lastFiltersRef.current = filters;
     await fetchPage(filters, 1);
-  }, [
-    isConfigured,
-    selectedProject,
-    fromDate,
-    toDate,
-    statusWorklog,
-    settings.jiraInstance,
-    fetchPage,
-  ]);
+  }, [isConfigured, selectedProject, fromDate, toDate, username, fetchPage]);
 
   const goToPage = useCallback(
     async (page: number) => {
@@ -191,17 +191,18 @@ export function useWorklogs({ settings, isConfigured }: UseWorklogsParams) {
     // Projects list
     projects,
     projectsLoading,
+    authError,
     // Filter form
     selectedProject,
     setSelectedProject,
-    statusWorklog,
-    setStatusWorklog,
+    username,
+    setUsername,
     fromDate,
     setFromDate,
     toDate,
     setToDate,
     // Results
-    worklogs,
+    rows,
     isLoading,
     error,
     hasSearched,
@@ -209,10 +210,6 @@ export function useWorklogs({ settings, isConfigured }: UseWorklogsParams) {
     currentPage,
     totalPages,
     totalRecords,
-    pageStart,
-    pageEnd,
-    // Mutations (delete, edit, selection, bulk delete)
-    ...mutations,
     // Actions
     handleSearch,
     goToPage,

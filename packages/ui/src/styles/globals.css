@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
+@import './typeset.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -356,4 +357,14 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* shadcn/typeset preset — documentation / long-form markdown surfaces */
+.typeset-docs {
+  --typeset-font-body: var(--font-ubuntu);
+  --typeset-font-heading: var(--font-ubuntu);
+  --typeset-font-mono: var(--font-ubuntu-mono);
+  --typeset-size: 15px;
+  --typeset-leading: 1.6;
+  --typeset-flow: 1.25em;
 }

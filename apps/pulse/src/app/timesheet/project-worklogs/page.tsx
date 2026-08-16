@@ -10,15 +10,13 @@ import {
   ComboboxChipsInput,
   ComboboxContent,
   ComboboxEmpty,
-  ComboboxInput,
   ComboboxItem,
   ComboboxList,
   ComboboxValue,
   useComboboxAnchor,
 } from '@workspace/ui/components/combobox';
 import { DateRangePicker } from '@workspace/ui/components/date-range-picker';
-import { Input } from '@workspace/ui/components/input';
-import { Label } from '@workspace/ui/components/label';
+import { Frame, FrameHeader, FramePanel } from '@workspace/ui/components/frame';
 import { NativeSelect } from '@workspace/ui/components/native-select';
 import { Skeleton } from '@workspace/ui/components/skeleton';
 import { Spinner } from '@workspace/ui/components/spinner';
@@ -31,14 +29,15 @@ import {
 } from '@workspace/ui/components/table';
 import { Search } from 'lucide-react';
 
+import { FilterBar } from '@/components/features/timesheet/filter-bar';
 import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
 import { TimesheetPagination } from '@/components/features/timesheet/timesheet-pagination';
 import { TokenExpiredAlert } from '@/components/features/timesheet/token-expired-alert';
+import { UserSelector } from '@/components/features/timesheet/user-selector';
 import MainLayout from '@/components/layouts/main-layout';
 import { ToolPageHeader } from '@/components/layouts/tool-page-header';
 import { useProjectWorklogs } from '@/hooks/use-project-worklogs';
 import { useTimesheetSettings } from '@/hooks/use-timesheet-settings';
-import type { JiraProject } from '@/types/timesheet';
 
 import { ProjectWorklogRow } from './_components/project-worklog-row';
 
@@ -59,11 +58,8 @@ export default function ProjectWorklogsPage() {
   const statusAnchor = useComboboxAnchor();
 
   const {
-    projects,
-    projectsLoading,
     authError,
     selectedProject,
-    setSelectedProject,
     username,
     setUsername,
     typeOfWork,
@@ -85,28 +81,35 @@ export default function ProjectWorklogsPage() {
     goToPage,
   } = useProjectWorklogs({ settings, isConfigured });
 
-  const [projectSearch, setProjectSearch] = React.useState('');
-
-  const handleProjectInputChange = React.useCallback(
-    (value: string, eventDetails: { reason: string }) => {
-      if (eventDetails.reason === 'input-clear') return;
-      setProjectSearch(value);
-    },
-    []
-  );
-
-  const handleProjectSelect = React.useCallback(
-    (value: JiraProject | null) => {
-      setSelectedProject(value);
-      setProjectSearch('');
-    },
-    [setSelectedProject]
-  );
-
   const uniqueContributors = React.useMemo(
     () => new Set(rows.map(r => r.user)).size,
     [rows]
   );
+
+  // One line, every state: the header keeps its subtitle while a search runs
+  // and when it comes back empty, so nothing below it shifts.
+  const subtitle = React.useMemo(() => {
+    if (error) return <span className="text-destructive">{error}</span>;
+    if (!selectedProject)
+      return 'Choose a project in the header to get started.';
+    if (isLoading) return `${selectedProject.name} · Searching…`;
+    if (!hasSearched) return selectedProject.name;
+    if (totalRecords === 0)
+      return `${selectedProject.name} · No worklogs for this range`;
+
+    const contributorLabel =
+      uniqueContributors > 0
+        ? ` · ${uniqueContributors} contributor${uniqueContributors !== 1 ? 's' : ''} on this page`
+        : '';
+    return `${selectedProject.name} · ${totalRecords} record${totalRecords !== 1 ? 's' : ''}${contributorLabel}`;
+  }, [
+    error,
+    selectedProject,
+    isLoading,
+    hasSearched,
+    totalRecords,
+    uniqueContributors,
+  ]);
 
   if (!isLoaded) {
     return (
@@ -120,256 +123,118 @@ export default function ProjectWorklogsPage() {
     );
   }
 
+  // The table carries the results while loading too, so the skeleton keeps the
+  // column layout instead of collapsing to a bare message.
+  const showTable = isLoading || rows.length > 0;
+
   return (
     <MainLayout>
       <section className="container mx-auto px-4 py-12">
         <div className="max-w-full mx-auto space-y-6">
           {/* Header */}
-          <ToolPageHeader
-            title="Project Worklogs"
-            subtitle={
-              <>
-                {hasSearched && totalRecords > 0 && selectedProject && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {selectedProject.name} &middot; {totalRecords} record
-                    {totalRecords !== 1 ? 's' : ''}
-                    {uniqueContributors > 0 &&
-                      ` · ${uniqueContributors} contributor${uniqueContributors !== 1 ? 's' : ''} on this page`}
-                  </p>
-                )}
-                {error && (
-                  <p className="text-sm text-destructive mt-1">{error}</p>
-                )}
-              </>
-            }
-          />
+          <ToolPageHeader title="Project Worklogs" subtitle={subtitle} />
 
           <NotConfiguredAlert isConfigured={isConfigured} />
 
           {isConfigured && <TokenExpiredAlert authError={authError} />}
 
-          {/* Filters */}
-          <div className="space-y-4">
-            {/* Row 1: primary filters */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_2fr_1fr_1fr] gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="project-select">
-                  Project <span className="text-destructive">*</span>
-                </Label>
-                <div className="relative">
-                  <Combobox
-                    items={projects}
-                    value={selectedProject}
-                    inputValue={
-                      selectedProject
-                        ? `${selectedProject.key} — ${selectedProject.name}`
-                        : projectSearch
-                    }
-                    onInputValueChange={handleProjectInputChange}
-                    onValueChange={handleProjectSelect}
-                    itemToStringLabel={(project: JiraProject) =>
-                      `${project.key} — ${project.name}`
-                    }
-                  >
-                    <ComboboxInput
-                      id="project-select"
-                      placeholder={
-                        projectsLoading
-                          ? 'Loading projects...'
-                          : 'Search project...'
-                      }
-                      className="w-full"
-                      disabled={!isConfigured || projectsLoading}
-                      loading={projectsLoading}
-                      showClear
-                    />
-                    <ComboboxContent>
-                      <ComboboxList>
-                        {(project: JiraProject) => (
-                          <ComboboxItem key={project.id} value={project}>
-                            <span className="font-medium shrink-0">
-                              {project.key}
-                            </span>
-                            <span className="text-muted-foreground truncate">
-                              — {project.name}
-                            </span>
-                          </ComboboxItem>
-                        )}
-                      </ComboboxList>
-                      <ComboboxEmpty>No projects found</ComboboxEmpty>
-                    </ComboboxContent>
-                  </Combobox>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="date-range">Date Range</Label>
+          <Frame dense>
+            {/* Filters */}
+            <FrameHeader className="gap-3">
+              <FilterBar>
                 <DateRangePicker
-                  id="date-range"
+                  aria-label="Date Range"
                   from={fromDate}
                   to={toDate}
                   onRangeChange={(from, to) => {
                     setFromDate(from);
                     setToDate(to);
                   }}
-                  className="w-full"
+                  className="w-full sm:w-64"
                 />
-              </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="username-input">Username</Label>
-                <Input
-                  id="username-input"
+                <UserSelector
+                  aria-label="User"
                   value={username}
-                  onChange={e => setUsername(e.target.value)}
-                  placeholder="All users"
+                  onChange={setUsername}
                   disabled={!isConfigured}
+                  className="w-full sm:w-72"
                 />
-              </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="type-of-work-select">Type of Work</Label>
                 <NativeSelect
-                  id="type-of-work-select"
+                  aria-label="Type of Work"
                   value={typeOfWork}
                   onChange={e => setTypeOfWork(e.target.value)}
                   disabled={!isConfigured}
+                  containerClassName="w-full sm:w-44"
                 >
                   {TYPE_OF_WORK_OPTIONS.map(type => (
                     <option key={type} value={type}>
-                      {type}
+                      {type === 'All' ? 'All types' : type}
                     </option>
                   ))}
                 </NativeSelect>
-              </div>
-            </div>
 
-            {/* Row 2: secondary filters + action */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[5fr_1fr] gap-4 items-end">
-              <div className="space-y-1.5">
-                <Label htmlFor="status-combobox">Status</Label>
-                <div>
-                  <Combobox
-                    id="status-combobox"
-                    multiple
-                    autoHighlight
-                    items={STATUS_OPTIONS}
-                    value={filterStatus}
-                    onValueChange={setFilterStatus}
-                    disabled={!isConfigured}
+                {/* Chips grow with the selection, so this one takes the slack
+                    rather than a fixed width. */}
+                <Combobox
+                  multiple
+                  autoHighlight
+                  items={STATUS_OPTIONS}
+                  value={filterStatus}
+                  onValueChange={setFilterStatus}
+                  disabled={!isConfigured}
+                >
+                  <ComboboxChips
+                    ref={statusAnchor}
+                    className="bg-background min-h-9 w-full sm:w-auto sm:min-w-48 sm:flex-1"
                   >
-                    <ComboboxChips
-                      ref={statusAnchor}
-                      className="w-full min-h-9"
-                    >
-                      <ComboboxValue>
-                        {values => (
-                          <React.Fragment>
-                            {(values as string[]).map(v => (
-                              <ComboboxChip key={v}>{v}</ComboboxChip>
-                            ))}
-                            <ComboboxChipsInput
-                              placeholder={
-                                filterStatus.length === 0
-                                  ? 'All statuses'
-                                  : undefined
-                              }
-                            />
-                          </React.Fragment>
-                        )}
-                      </ComboboxValue>
-                    </ComboboxChips>
-                    <ComboboxContent anchor={statusAnchor}>
-                      <ComboboxEmpty>No statuses found.</ComboboxEmpty>
-                      <ComboboxList>
-                        {item => (
-                          <ComboboxItem key={item} value={item}>
-                            {item}
-                          </ComboboxItem>
-                        )}
-                      </ComboboxList>
-                    </ComboboxContent>
-                  </Combobox>
-                </div>
-              </div>
+                    <ComboboxValue>
+                      {values => (
+                        <React.Fragment>
+                          {(values as string[]).map(v => (
+                            <ComboboxChip key={v}>{v}</ComboboxChip>
+                          ))}
+                          <ComboboxChipsInput
+                            aria-label="Status"
+                            placeholder={
+                              filterStatus.length === 0
+                                ? 'All statuses'
+                                : undefined
+                            }
+                          />
+                        </React.Fragment>
+                      )}
+                    </ComboboxValue>
+                  </ComboboxChips>
+                  <ComboboxContent anchor={statusAnchor}>
+                    <ComboboxEmpty>No statuses found.</ComboboxEmpty>
+                    <ComboboxList>
+                      {item => (
+                        <ComboboxItem key={item} value={item}>
+                          {item}
+                        </ComboboxItem>
+                      )}
+                    </ComboboxList>
+                  </ComboboxContent>
+                </Combobox>
 
-              <div className="flex items-end">
                 <Button
                   onClick={handleSearch}
                   disabled={isLoading || !isConfigured || !selectedProject}
-                  className="w-full"
+                  className="w-full sm:w-auto"
                 >
                   {isLoading ? <Spinner /> : <Search />}
                   {isLoading ? 'Searching…' : 'Search'}
                 </Button>
-              </div>
-            </div>
-          </div>
+              </FilterBar>
+            </FrameHeader>
 
-          {/* Results */}
-          {isLoading ? (
-            <div className="overflow-hidden rounded-lg border">
-              <Table className="table-fixed">
-                <TableHeader className="sticky bg-muted/50 top-0 z-10">
-                  <TableRow>
-                    <TableHead className="w-[48px]">No</TableHead>
-                    <TableHead className="w-[130px]">User</TableHead>
-                    <TableHead className="w-[156px]">Key</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead className="w-[80px] text-right">Hours</TableHead>
-                    <TableHead className="w-[120px]">Type</TableHead>
-                    <TableHead className="w-[120px]">Date</TableHead>
-                    <TableHead className="w-[110px]">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <td className="p-2 pl-4">
-                        <Skeleton className="h-4 w-6" />
-                      </td>
-                      <td className="p-2">
-                        <Skeleton className="h-4 w-20" />
-                      </td>
-                      <td className="p-2">
-                        <Skeleton className="h-4 w-28" />
-                      </td>
-                      <td className="p-2">
-                        <Skeleton className="h-4 w-40" />
-                      </td>
-                      <td className="p-2 text-right">
-                        <Skeleton className="h-4 w-10 ml-auto" />
-                      </td>
-                      <td className="p-2">
-                        <Skeleton className="h-5 w-16 rounded-full" />
-                      </td>
-                      <td className="p-2">
-                        <Skeleton className="h-4 w-24" />
-                      </td>
-                      <td className="p-2">
-                        <Skeleton className="h-5 w-16 rounded-full" />
-                      </td>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : rows.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
-              {hasSearched ? (
-                <p>No worklogs found for the selected filters.</p>
-              ) : (
-                <p>
-                  Select a project and date range, then click &quot;Search&quot;
-                  to view project worklogs.
-                </p>
-              )}
-            </div>
-          ) : (
-            <>
-              <div className="overflow-hidden rounded-lg border">
+            {/* Results — flush inside the frame, keeping its radius. */}
+            <FramePanel rounded className="gap-0 overflow-hidden p-0">
+              {showTable ? (
                 <Table className="table-fixed">
-                  <TableHeader className="sticky bg-muted/50 top-0 z-10">
+                  <TableHeader className="sticky top-0 z-10">
                     <TableRow>
                       <TableHead className="w-[48px]">No</TableHead>
                       <TableHead className="w-[130px]">User</TableHead>
@@ -384,20 +249,64 @@ export default function ProjectWorklogsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {rows.map(row => (
-                      <ProjectWorklogRow key={row.id} row={row} />
-                    ))}
+                    {isLoading
+                      ? Array.from({ length: 8 }).map((_, i) => (
+                          <TableRow key={i}>
+                            <td className="p-2 pl-4">
+                              <Skeleton className="h-4 w-6" />
+                            </td>
+                            <td className="p-2">
+                              <Skeleton className="h-4 w-20" />
+                            </td>
+                            <td className="p-2">
+                              <Skeleton className="h-4 w-28" />
+                            </td>
+                            <td className="p-2">
+                              <Skeleton className="h-4 w-40" />
+                            </td>
+                            <td className="p-2 text-right">
+                              <Skeleton className="h-4 w-10 ml-auto" />
+                            </td>
+                            <td className="p-2">
+                              <Skeleton className="h-5 w-16 rounded-full" />
+                            </td>
+                            <td className="p-2">
+                              <Skeleton className="h-4 w-24" />
+                            </td>
+                            <td className="p-2">
+                              <Skeleton className="h-5 w-16 rounded-full" />
+                            </td>
+                          </TableRow>
+                        ))
+                      : rows.map(row => (
+                          <ProjectWorklogRow key={row.id} row={row} />
+                        ))}
                   </TableBody>
                 </Table>
-              </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
+                  {!selectedProject ? (
+                    <p>Choose a project in the header to get started.</p>
+                  ) : hasSearched ? (
+                    <p>No worklogs found for the selected filters.</p>
+                  ) : (
+                    <p>
+                      Pick a date range, then click &quot;Search&quot; to view
+                      project worklogs.
+                    </p>
+                  )}
+                </div>
+              )}
+            </FramePanel>
+          </Frame>
 
-              <TimesheetPagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                isLoading={isLoading}
-                onPageChange={goToPage}
-              />
-            </>
+          {!isLoading && rows.length > 0 && (
+            <TimesheetPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              isLoading={isLoading}
+              onPageChange={goToPage}
+            />
           )}
         </div>
       </section>

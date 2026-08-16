@@ -119,7 +119,7 @@ elevensys-mono/
 │   ├── admin/                      # Admin dashboard (elevensys-admin)
 │   │   ├── src/
 │   │   │   ├── app/
-│   │   │   │   ├── layout.tsx      # Root layout (Inter font, ThemeProvider)
+│   │   │   │   ├── layout.tsx      # Root layout (Ubuntu font, ThemeProvider)
 │   │   │   │   └── page.tsx        # Admin dashboard page
 │   │   │   ├── components/
 │   │   │   │   └── theme-provider.tsx
@@ -288,6 +288,8 @@ import type { AuthUser } from '@/types/auth';
 
 // Always use 'use client' directive for client components
 
+// Always use 'use client' directive for client components
+
 // Define interfaces above component
 interface MyComponentProps {
   title: string;
@@ -394,7 +396,7 @@ The main web application with developer tools and authentication. Single-brand (
 
 The admin dashboard application. Currently a minimal scaffold sharing `@workspace/ui`.
 
-- **Font**: Inter (via `next/font/google`)
+- **Font**: Ubuntu (via `next/font/google`) — same as the other apps
 - **Port**: 3002 (`next dev -p 3002`)
 - **Providers**: `ThemeProvider` only (no auth/domain/flags yet)
 
@@ -650,8 +652,10 @@ The timesheet feature lets users log, review, and manage Jira worklogs. It lives
 | `/timesheet/logwork`          | Log Work           | Find missing dates and bulk-log entries to Jira      |
 | `/timesheet/my-worklogs`      | My Worklogs        | View personal worklogs grouped by date               |
 | `/timesheet/project-worklogs` | Project Worklogs   | View all worklogs for a project with filters         |
+| `/timesheet/missing-worklogs` | Missing Worklogs   | See who on a project has not logged work for a range |
 | `/worklog-management`         | Worklog Management | Bulk edit/delete worklogs (hidden — direct URL only) |
 | `/autolog`                    | Autolog            | Manage recurring auto-log configurations             |
+| `/absences`                   | Absences           | Project leave records, filtered and paginated        |
 | `/config`                     | Configuration      | Save Jira instance, username, and API token locally  |
 
 ### Log Work — Bulk Date Range Submission
@@ -711,16 +715,19 @@ interface LogWorkResult {
 
 All routes proxy to `API_BASE_URL`, forwarding the caller's `Authorization: Bearer <PAT>` header.
 
-| Route                                     | Purpose                                            |
-| ----------------------------------------- | -------------------------------------------------- |
-| `POST /api/jira/worklogs/logwork`         | Proxy to backend; forwards worklog with date range |
-| `GET  /api/jira/worklogs`                 | List the current user's worklogs                   |
-| `GET  /api/jira/project-worklogs`         | List worklogs for a project                        |
-| `GET  /api/jira/project-worklogs/warning` | Find dates with missing worklogs for a project     |
-| `GET  /api/jira/projects`                 | List Jira projects                                 |
-| `GET  /api/jira/issues/search`            | Search issues for a project                        |
-| `GET  /api/jira/auth/check`               | Validate the stored Jira token                     |
-| `/api/jira/autolog/*`                     | CRUD + run for autolog configurations              |
+| Route                                         | Purpose                                              |
+| --------------------------------------------- | ---------------------------------------------------- |
+| `POST /api/jira/worklogs/logwork`             | Proxy to backend; forwards worklog with date range   |
+| `GET  /api/jira/worklogs`                     | List the current user's worklogs                     |
+| `GET  /api/jira/project-worklogs`             | List worklogs for a project                          |
+| `POST /api/jira/project-worklogs/warning`     | Caller's own missing worklog dates for a project     |
+| `POST /api/jira/project-worklogs/warning/all` | Missing worklog dates for every user on a project    |
+| `GET  /api/jira/projects`                     | List Jira projects                                   |
+| `GET  /api/jira/issues/search`                | Search issues for a project                          |
+| `GET  /api/jira/absences`                     | One page of project leave records (rows + page info) |
+| `GET  /api/jira/users/picker`                 | Search users by name/username for the user selector  |
+| `GET  /api/jira/auth/check`                   | Validate the stored Jira token                       |
+| `/api/jira/autolog/*`                         | CRUD + run for autolog configurations                |
 
 ### Logwork API Payload
 
@@ -750,7 +757,7 @@ calendar day in the range.
 - **Turbopack**: Enabled for faster dev/build (Next.js 16 feature)
 - **Server Components**: Root layout fetches auth server-side
 - **Image Optimization**: Use `next/image` for images
-- **Font Optimization**: `next/font` with Ubuntu (web) and Inter (admin)
+- **Font Optimization**: `next/font` with Ubuntu + Ubuntu Mono across all apps
 - **Code Splitting**: Tool pages are naturally code-split by route
 - **Workspace caching**: Turborepo caches build outputs across apps
 

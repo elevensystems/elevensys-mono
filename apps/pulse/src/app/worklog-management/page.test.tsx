@@ -213,9 +213,12 @@ jest.mock('@workspace/ui/components/native-select', () => ({
   NativeSelect: ({
     children,
     onChange,
+    // Consumed by the real component's wrapper div, not the <select>.
+    containerClassName: _containerClassName,
     ...props
   }: React.SelectHTMLAttributes<HTMLSelectElement> & {
     children: React.ReactNode;
+    containerClassName?: string;
   }) => (
     <select onChange={onChange} {...props}>
       {children}
@@ -485,19 +488,26 @@ describe('WorklogManagementPage', () => {
     expect(screen.getByTestId('date-range-picker')).toBeInTheDocument();
   });
 
-  it('renders project select with options', () => {
+  it('hides the project select, which now lives in the header', () => {
     render(<WorklogManagementPage />);
-    const projectSelect = screen.getByLabelText(/Project/);
-    expect(projectSelect).toBeInTheDocument();
-    expect(screen.getByText('Project One (PROJ)')).toBeInTheDocument();
-    expect(screen.getByText('Project Two (PROJ2)')).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Project/)).not.toBeInTheDocument();
+  });
+
+  it('echoes the active project scope in the search card', () => {
+    render(<WorklogManagementPage />);
+    expect(
+      screen.getByText(/Project One\. Pick a date range and status/)
+    ).toBeInTheDocument();
   });
 
   it('renders status select with options', () => {
     render(<WorklogManagementPage />);
     const statusSelect = screen.getByLabelText('Status');
     expect(statusSelect).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'All' })).toBeInTheDocument();
+    // The filter bar shows no visible label, so the "All" option spells out
+    // what it clears — its value is still 'All'.
+    const allOption = screen.getByRole('option', { name: 'All statuses' });
+    expect(allOption).toHaveValue('All');
     expect(screen.getByRole('option', { name: 'Pending' })).toBeInTheDocument();
     expect(
       screen.getByRole('option', { name: 'Approved' })
@@ -571,7 +581,18 @@ describe('WorklogManagementPage', () => {
   it('renders initial prompt before search', () => {
     render(<WorklogManagementPage />);
     expect(
-      screen.getByText(/Select a project and date range/)
+      screen.getByText(/Pick a date range, then click "Search" to view your/)
+    ).toBeInTheDocument();
+  });
+
+  it('prompts for a project when none is scoped', () => {
+    mockUseWorklogs.mockReturnValue({
+      ...defaultWorklogsReturn,
+      selectedProject: null,
+    });
+    render(<WorklogManagementPage />);
+    expect(
+      screen.getByText(/Choose a project in the header to get started/)
     ).toBeInTheDocument();
   });
 

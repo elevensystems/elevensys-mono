@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, Suspense } from 'react';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -22,6 +22,10 @@ import {
 import { SidebarAutoCollapse } from '@workspace/ui/components/sidebar-auto-collapse';
 
 import { AppSidebar } from '@/components/layouts/app-sidebar';
+import {
+  ProjectSwitcher,
+  isProjectScopedRoute,
+} from '@/components/layouts/project-switcher';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -101,7 +105,14 @@ export default function MainLayout({
                 </BreadcrumbList>
               </Breadcrumb>
             </div>
-            {headerRight && <div className="ml-auto pr-4">{headerRight}</div>}
+            <div className="ml-auto flex items-center gap-3 pr-4">
+              {isProjectScopedRoute(pathname) && (
+                <Suspense fallback={null}>
+                  <ProjectSwitcher />
+                </Suspense>
+              )}
+              {headerRight}
+            </div>
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-6">

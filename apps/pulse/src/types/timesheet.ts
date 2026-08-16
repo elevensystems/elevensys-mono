@@ -119,9 +119,24 @@ export interface JiraProject {
   name: string;
 }
 
+/** A user returned by the Jira user picker. `name` is what worklog filters match on. */
+export interface JiraUser {
+  name: string;
+  key: string;
+  displayName: string;
+}
+
 export interface WorklogsWarningEntry {
   key: string;
   value: string;
+}
+
+/** A single user's missing worklog dates, parsed from a WorklogsWarningEntry. */
+export interface MissingWorklogUser {
+  username: string;
+  /** Jira D/Mon/YY dates, chronological */
+  dates: string[];
+  count: number;
 }
 
 export interface JiraIssue {
@@ -158,6 +173,34 @@ export interface ProjectWorklogsData {
   start: number;
   end: number;
   rows: ProjectWorklogRow[];
+}
+
+/**
+ * A project leave record. The upstream `hunger` project-absence rows reach us
+ * as an untyped passthrough, so every field is optional and the index signature
+ * keeps whatever else comes back. Tighten this once a real response is seen.
+ */
+export interface AbsenceRow {
+  id?: number | string;
+  username?: string;
+  fullName?: string;
+  fromDate?: string;
+  toDate?: string;
+  absenceType?: string;
+  numberOfDays?: number;
+  status?: string;
+  reason?: string;
+  [key: string]: unknown;
+}
+
+/** One page of absences, merged from `/jira/absences` and `/jira/absences/page-info`. */
+export interface AbsencesData {
+  rows: AbsenceRow[];
+  page: number;
+  totalPages: number;
+  totalRecords: number;
+  startRecord: number;
+  endRecord: number;
 }
 
 export interface MyWorklogsRow {

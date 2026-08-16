@@ -18,15 +18,22 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from '@workspace/ui/components/sidebar';
+import type { TokenProps } from '@workspace/ui/components/token';
 import { Token } from '@workspace/ui/components/token';
 import { ChevronRight } from 'lucide-react';
 
 import type { NavGroup } from '@/lib/app-sidebar-config';
 
-function NavBadge({ label }: { label: string }) {
+function NavBadge({
+  label,
+  color = 'blue',
+}: {
+  label: string;
+  color?: TokenProps['color'];
+}) {
   return (
     <Token
-      color="blue"
+      color={color}
       shape="pill"
       density="compact"
       className="ml-auto group-data-[collapsible=icon]:hidden"
@@ -71,7 +78,12 @@ export function NavMain({ groups }: { groups: NavGroup[] }) {
                       >
                         <item.icon />
                         <span className="truncate">{item.title}</span>
-                        {item.badge ? <NavBadge label={item.badge} /> : null}
+                        {item.badge ? (
+                          <NavBadge
+                            label={item.badge}
+                            color={item.badgeColor}
+                          />
+                        ) : null}
                         <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                       </SidebarMenuButton>
                     </CollapsibleTrigger>
@@ -100,10 +112,12 @@ export function NavMain({ groups }: { groups: NavGroup[] }) {
                     tooltip={item.title}
                     isActive={item.url ? isActive(item.url) : false}
                   >
-                    <Link href={item.url ?? '#'}>
+                    <Link href={item.url ? `${item.url}${suffix}` : '#'}>
                       <item.icon />
                       <span className="truncate">{item.title}</span>
-                      {item.badge ? <NavBadge label={item.badge} /> : null}
+                      {item.badge ? (
+                        <NavBadge label={item.badge} color={item.badgeColor} />
+                      ) : null}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

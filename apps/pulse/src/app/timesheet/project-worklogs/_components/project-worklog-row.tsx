@@ -10,10 +10,10 @@ import {
   TooltipTrigger,
 } from '@workspace/ui/components/tooltip';
 
+import { UserCell } from '@/components/features/timesheet/user-cell';
 import {
   formatDisplayDate,
   getStatusVariant,
-  getUsernameColor,
   getWorkTypeDotClass,
 } from '@/lib/timesheet';
 import type { ProjectWorklogRow as ProjectWorklogRowData } from '@/types/timesheet';
@@ -33,11 +33,8 @@ export const ProjectWorklogRow = memo(function ProjectWorklogRow({
       <TableCell className="text-muted-foreground text-sm">
         {row.no + 1}
       </TableCell>
-      <TableCell
-        className="font-medium"
-        style={{ color: getUsernameColor(row.user) }}
-      >
-        {row.user}
+      <TableCell>
+        <UserCell name={row.user} />
       </TableCell>
       <TableCell className="font-mono font-semibold text-nowrap">
         {row.key}

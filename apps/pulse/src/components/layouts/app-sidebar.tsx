@@ -35,7 +35,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                     {appSidebarData.appName}
                   </span>
                   <span className="truncate text-xs text-muted-foreground">
-                    Version 1.0.2
+                    Version 1.0.11
                   </span>
                 </div>
               </Link>

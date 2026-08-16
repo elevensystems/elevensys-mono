@@ -1,4 +1,9 @@
-import type { DateRange, WorkEntry } from '@/types/timesheet';
+import type {
+  DateRange,
+  MissingWorklogUser,
+  WorkEntry,
+  WorklogsWarningEntry,
+} from '@/types/timesheet';
 
 const MONTH_ABBRS = [
   'Jan',
@@ -22,6 +27,7 @@ export const DEFAULT_HOURS = 1;
 export const HOUR_STEP = 0.5;
 export const REQUEST_DELAY_MS = 1500;
 export const SETTINGS_STORAGE_KEY = 'timesheet_settings';
+export const SELECTED_PROJECT_STORAGE_KEY = 'pulse_selected_project';
 
 /**
  * Parse Jira date format "D/Mon/YY" or "DD/Mon/YY" to a Date object (local time).
@@ -261,6 +267,38 @@ export function groupDatesIntoRanges(dates: string[]): DateRange[] {
 }
 
 /**
+ * Turn the warning endpoint's {key, value} entries into one row per user.
+ * `key` is the Jira username, `value` a comma-separated list of missing dates.
+ * Dates are sorted chronologically, users with no dates are dropped, and rows
+ * are ordered by most missing days first, then username.
+ */
+export function parseWarningEntries(
+  entries: WorklogsWarningEntry[]
+): MissingWorklogUser[] {
+  return entries
+    .map(entry => {
+      const dates = (entry.value ?? '')
+        .split(',')
+        .map(date => date.trim())
+        .filter(Boolean)
+        .sort((a, b) => {
+          const dateA = parseApiDate(a);
+          const dateB = parseApiDate(b);
+          if (!dateA || !dateB) return a.localeCompare(b);
+          return dateA.getTime() - dateB.getTime();
+        });
+
+      return { username: entry.key, dates, count: dates.length };
+    })
+    .filter(user => user.count > 0)
+    .sort((a, b) =>
+      b.count !== a.count
+        ? b.count - a.count
+        : a.username.localeCompare(b.username)
+    );
+}
+
+/**
  * Format a DateRange as a human-readable label.
  * Single-date range: "4/May/26"
  * Multi-date range: "4/May/26 → 8/May/26"
@@ -306,19 +344,16 @@ export function formatHours(value: number): string {
 }
 
 /**
- * Deterministically map a username to an HSL color for visual differentiation.
- * Same username always produces the same hue; saturation/lightness are fixed
- * for readability on both light and dark backgrounds.
+ * Build up-to-two-letter initials for an avatar.
+ * Names split on separators use the first letter of the first two parts
+ * ("nguyen.van.a" → "NV"); a single word falls back to its first two letters
+ * ("ducptm" → "DU").
  */
-export function getUsernameColor(username: string): string {
-  let hash = 0;
-  for (let i = 0; i < username.length; i++) {
-    hash = username.charCodeAt(i) + ((hash << 5) - hash);
-    hash |= 0;
-  }
-  // Multiply by the golden angle to maximally spread hues apart
-  const hue = (Math.abs(hash) * 137.508) % 360;
-  return `hsl(${hue}, 65%, 48%)`;
+export function getUserInitials(username: string): string {
+  const parts = username.split(/[\s._-]+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
+  return (parts[0]![0]! + parts[1]![0]!).toUpperCase();
 }
 
 const WORK_TYPE_DOT_CLASS: Record<string, string> = {

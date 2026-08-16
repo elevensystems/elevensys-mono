@@ -26,6 +26,7 @@ import {
 } from '@workspace/ui/components/tooltip';
 import { SquarePenIcon, Trash2Icon } from 'lucide-react';
 
+import { UserCell } from '@/components/features/timesheet/user-cell';
 import { getWorklogKey } from '@/hooks/use-worklogs';
 import {
   formatDisplayDate,
@@ -118,8 +119,8 @@ export const WorklogRow = memo(function WorklogRow({
           {worklog.statusWorklog}
         </Badge>
       </TableCell>
-      <TableCell className="text-muted-foreground text-nowrap">
-        {worklog.author}
+      <TableCell>
+        <UserCell name={worklog.author} />
       </TableCell>
       <TableCell>
         <div className="flex items-center gap-1">

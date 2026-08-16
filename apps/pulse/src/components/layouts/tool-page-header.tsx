@@ -21,10 +21,12 @@ export function ToolPageHeader({
     <>
       <div className={className ?? 'mb-8'}>
         <h1 className="text-2xl font-bold mb-2">{title}</h1>
-        {subtitle ??
-          (description && (
-            <p className="text-sm text-muted-foreground">{description}</p>
-          ))}
+        {/* The subtitle line is always reserved, even when a page has nothing
+            to say yet: pages swap its text as they search, and a collapsing
+            line would shift everything below it on every state change. */}
+        <p className="min-h-5 text-sm text-muted-foreground">
+          {subtitle ?? description}
+        </p>
       </div>
 
       {infoMessage && (

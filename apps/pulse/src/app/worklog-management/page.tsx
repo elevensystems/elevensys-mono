@@ -10,7 +10,6 @@ import {
 } from '@workspace/ui/components/card';
 import { Checkbox } from '@workspace/ui/components/checkbox';
 import { DateRangePicker } from '@workspace/ui/components/date-range-picker';
-import { Label } from '@workspace/ui/components/label';
 import { NativeSelect } from '@workspace/ui/components/native-select';
 import { Skeleton } from '@workspace/ui/components/skeleton';
 import { Spinner } from '@workspace/ui/components/spinner';
@@ -25,6 +24,7 @@ import { ClipboardList, Search } from 'lucide-react';
 
 import { BulkDeleteAction } from '@/components/features/timesheet/bulk-delete-action';
 import { EditWorklogModal } from '@/components/features/timesheet/edit-worklog-modal';
+import { FilterBar } from '@/components/features/timesheet/filter-bar';
 import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
 import { TimesheetPagination } from '@/components/features/timesheet/timesheet-pagination';
 import MainLayout from '@/components/layouts/main-layout';
@@ -40,10 +40,7 @@ export default function WorklogManagementPage() {
   const { settings, isConfigured, isLoaded } = useTimesheetSettings();
 
   const {
-    projects,
-    projectsLoading,
     selectedProject,
-    setSelectedProject,
     statusWorklog,
     setStatusWorklog,
     fromDate,
@@ -113,80 +110,47 @@ export default function WorklogManagementPage() {
                 Search Worklogs
               </CardTitle>
               <CardDescription>
-                Select a project, date range, and status, then click
-                &quot;Search&quot; to view your worklogs.
+                {selectedProject
+                  ? `${selectedProject.name}. Pick a date range and status, then click "Search".`
+                  : 'Choose a project in the header, then pick a date range and status.'}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_2fr_1fr_1fr] gap-4 items-end">
-                <div className="space-y-1.5">
-                  <Label htmlFor="project-select">
-                    Project <span className="text-destructive">*</span>
-                  </Label>
-                  <NativeSelect
-                    id="project-select"
-                    value={selectedProject?.id ?? ''}
-                    onChange={e => {
-                      const project =
-                        projects.find(p => p.id === e.target.value) ?? null;
-                      setSelectedProject(project);
-                    }}
-                    disabled={!isConfigured || projectsLoading}
-                  >
-                    <option value="">
-                      {projectsLoading
-                        ? 'Loading projects…'
-                        : 'Select a project'}
+              <FilterBar>
+                <DateRangePicker
+                  aria-label="Date Range"
+                  from={fromDate}
+                  to={toDate}
+                  onRangeChange={(from, to) => {
+                    setFromDate(from);
+                    setToDate(to);
+                  }}
+                  className="w-full sm:w-64"
+                />
+
+                <NativeSelect
+                  aria-label="Status"
+                  value={statusWorklog}
+                  onChange={e => setStatusWorklog(e.target.value)}
+                  disabled={!isConfigured}
+                  containerClassName="w-full sm:w-44"
+                >
+                  {STATUS_OPTIONS.map(status => (
+                    <option key={status} value={status}>
+                      {status === 'All' ? 'All statuses' : status}
                     </option>
-                    {projects.map(project => (
-                      <option key={project.id} value={project.id}>
-                        {project.name} ({project.key})
-                      </option>
-                    ))}
-                  </NativeSelect>
-                </div>
+                  ))}
+                </NativeSelect>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="date-range">Date Range</Label>
-                  <DateRangePicker
-                    id="date-range"
-                    from={fromDate}
-                    to={toDate}
-                    onRangeChange={(from, to) => {
-                      setFromDate(from);
-                      setToDate(to);
-                    }}
-                    className="w-full"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="status-select">Status</Label>
-                  <NativeSelect
-                    id="status-select"
-                    value={statusWorklog}
-                    onChange={e => setStatusWorklog(e.target.value)}
-                    disabled={!isConfigured}
-                  >
-                    {STATUS_OPTIONS.map(status => (
-                      <option key={status} value={status}>
-                        {status}
-                      </option>
-                    ))}
-                  </NativeSelect>
-                </div>
-
-                <div className="flex items-end">
-                  <Button
-                    onClick={handleSearch}
-                    disabled={isLoading || !isConfigured || !selectedProject}
-                    className="w-full"
-                  >
-                    {isLoading ? <Spinner /> : <Search />}
-                    {isLoading ? 'Searching…' : 'Search'}
-                  </Button>
-                </div>
-              </div>
+                <Button
+                  onClick={handleSearch}
+                  disabled={isLoading || !isConfigured || !selectedProject}
+                  className="w-full sm:ml-auto sm:w-auto"
+                >
+                  {isLoading ? <Spinner /> : <Search />}
+                  {isLoading ? 'Searching…' : 'Search'}
+                </Button>
+              </FilterBar>
             </CardContent>
           </Card>
 
@@ -270,12 +234,14 @@ export default function WorklogManagementPage() {
                 </div>
               ) : worklogs.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
-                  {hasSearched ? (
+                  {!selectedProject ? (
+                    <p>Choose a project in the header to get started.</p>
+                  ) : hasSearched ? (
                     <p>No worklogs found for the selected filters.</p>
                   ) : (
                     <p>
-                      Select a project and date range, then click
-                      &quot;Search&quot; to view your worklogs.
+                      Pick a date range, then click &quot;Search&quot; to view
+                      your worklogs.
                     </p>
                   )}
                 </div>
