@@ -17,7 +17,6 @@ import {
 } from '@workspace/ui/components/combobox';
 import { DateRangePicker } from '@workspace/ui/components/date-range-picker';
 import { Frame, FrameHeader, FramePanel } from '@workspace/ui/components/frame';
-import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
 import { NativeSelect } from '@workspace/ui/components/native-select';
 import { Skeleton } from '@workspace/ui/components/skeleton';
@@ -34,6 +33,7 @@ import { Search } from 'lucide-react';
 import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
 import { TimesheetPagination } from '@/components/features/timesheet/timesheet-pagination';
 import { TokenExpiredAlert } from '@/components/features/timesheet/token-expired-alert';
+import { UserSelector } from '@/components/features/timesheet/user-selector';
 import MainLayout from '@/components/layouts/main-layout';
 import { ToolPageHeader } from '@/components/layouts/tool-page-header';
 import { useProjectWorklogs } from '@/hooks/use-project-worklogs';
@@ -155,13 +155,13 @@ export default function ProjectWorklogsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="username-input">Username</Label>
-                  <Input
+                  <Label htmlFor="username-input">User</Label>
+                  <UserSelector
                     id="username-input"
                     value={username}
-                    onChange={e => setUsername(e.target.value)}
-                    placeholder="All users"
+                    onChange={setUsername}
                     disabled={!isConfigured}
+                    className="w-full"
                   />
                 </div>
 

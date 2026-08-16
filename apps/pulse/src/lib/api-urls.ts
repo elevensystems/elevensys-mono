@@ -16,6 +16,7 @@ export const JIRA_URLS = {
   PROJECT_WORKLOGS_REPORT: `${JIRA_BASE}/project-worklogs/report`,
   ABSENCES: `${JIRA_BASE}/absences`,
   ABSENCES_PAGE_INFO: `${JIRA_BASE}/absences/page-info`,
+  USERS_PICKER: `${JIRA_BASE}/users/picker`,
 };
 
 export const AUTOLOG_URLS = {

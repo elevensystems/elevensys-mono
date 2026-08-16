@@ -725,6 +725,7 @@ All routes proxy to `API_BASE_URL`, forwarding the caller's `Authorization: Bear
 | `GET  /api/jira/projects`                     | List Jira projects                                   |
 | `GET  /api/jira/issues/search`                | Search issues for a project                          |
 | `GET  /api/jira/absences`                     | One page of project leave records (rows + page info) |
+| `GET  /api/jira/users/picker`                 | Search users by name/username for the user selector  |
 | `GET  /api/jira/auth/check`                   | Validate the stored Jira token                       |
 | `/api/jira/autolog/*`                         | CRUD + run for autolog configurations                |
 

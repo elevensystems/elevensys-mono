@@ -119,6 +119,13 @@ export interface JiraProject {
   name: string;
 }
 
+/** A user returned by the Jira user picker. `name` is what worklog filters match on. */
+export interface JiraUser {
+  name: string;
+  key: string;
+  displayName: string;
+}
+
 export interface WorklogsWarningEntry {
   key: string;
   value: string;

@@ -58,6 +58,30 @@ jest.mock('@/components/features/timesheet/token-expired-alert', () => ({
     authError ? <div data-testid="token-expired-alert" /> : null,
 }));
 
+jest.mock('@/components/features/timesheet/user-selector', () => ({
+  UserSelector: ({
+    id,
+    value,
+    onChange,
+    disabled,
+  }: {
+    id?: string;
+    value: string;
+    onChange: (username: string) => void;
+    disabled?: boolean;
+    className?: string;
+  }) => (
+    <input
+      id={id}
+      data-testid="user-selector"
+      value={value}
+      onChange={event => onChange(event.target.value)}
+      placeholder="All users"
+      disabled={disabled}
+    />
+  ),
+}));
+
 // --- Mock child components ---
 
 jest.mock('./_components/missing-user-row', () => ({
