@@ -3,11 +3,8 @@
 import { TableCell, TableRow } from '@workspace/ui/components/table';
 import { Token } from '@workspace/ui/components/token';
 
-import {
-  formatDisplayDate,
-  getUserInitials,
-  parseApiDate,
-} from '@/lib/timesheet';
+import { UserCell } from '@/components/features/timesheet/user-cell';
+import { formatDisplayDate, parseApiDate } from '@/lib/timesheet';
 import type { MissingWorklogUser } from '@/types/timesheet';
 
 interface MissingUserRowProps {
@@ -34,22 +31,10 @@ export function MissingUserRow({ no, user }: MissingUserRowProps) {
     <TableRow>
       <TableCell className="text-muted-foreground tabular-nums">{no}</TableCell>
       <TableCell>
-        <div className="flex items-center gap-2.5">
-          <span
-            aria-hidden
-            className="bg-muted text-muted-foreground ring-border flex size-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold tracking-wide ring-1 ring-inset"
-          >
-            {getUserInitials(user.username)}
-          </span>
-          <span className="truncate font-medium" title={user.username}>
-            {user.username}
-          </span>
-        </div>
+        <UserCell name={user.username} />
       </TableCell>
-      <TableCell className="text-right">
-        <Token color={user.count > 4 ? 'red' : 'yellow'} density="compact">
-          {user.count}
-        </Token>
+      <TableCell className="text-center">
+        <span className="text-xl font-bold tabular-nums">{user.count}</span>
       </TableCell>
       <TableCell>
         <div className="flex flex-wrap gap-1.5">
@@ -58,7 +43,7 @@ export function MissingUserRow({ no, user }: MissingUserRowProps) {
               key={date}
               shape="pill"
               density="compact"
-              color={isWeekend(date) ? 'orange' : 'gray'}
+              color={isWeekend(date) ? 'orange' : 'yellow'}
               title={formatDisplayDate(date)}
             >
               {formatChip(date)}

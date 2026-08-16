@@ -14,8 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table';
-import { Copy, Search } from 'lucide-react';
-import { toast } from 'sonner';
+import { Search } from 'lucide-react';
 
 import { FilterBar } from '@/components/features/timesheet/filter-bar';
 import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
@@ -26,10 +25,8 @@ import MainLayout from '@/components/layouts/main-layout';
 import { ToolPageHeader } from '@/components/layouts/tool-page-header';
 import { useAbsences } from '@/hooks/use-absences';
 import { useTimesheetSettings } from '@/hooks/use-timesheet-settings';
-import { formatDateForApi } from '@/lib/timesheet';
 
 import { AbsenceRow } from './_components/absence-row';
-import { buildAbsencesSummary } from './_components/absences-utils';
 
 const COLUMNS = [
   { label: 'No', className: 'w-[48px]' },
@@ -38,7 +35,6 @@ const COLUMNS = [
   { label: 'To', className: 'w-[130px]' },
   { label: 'Type', className: 'w-[150px]' },
   { label: 'Days', className: 'w-[80px] text-right' },
-  { label: 'Status', className: 'w-[120px]' },
   { label: 'Reason', className: '' },
 ] as const;
 
@@ -103,22 +99,6 @@ export default function AbsencesPage() {
     currentPage,
   ]);
 
-  const handleCopySummary = React.useCallback(async () => {
-    const summary = buildAbsencesSummary({
-      rows,
-      projectLabel: selectedProject ? selectedProject.name : 'Project',
-      startDate: formatDateForApi(fromDate),
-      endDate: formatDateForApi(toDate),
-    });
-
-    try {
-      await navigator.clipboard.writeText(summary);
-      toast.success('Summary copied to clipboard');
-    } catch {
-      toast.error('Failed to copy summary');
-    }
-  }, [rows, selectedProject, fromDate, toDate]);
-
   if (!isLoaded) {
     return (
       <MainLayout>
@@ -177,26 +157,8 @@ export default function AbsencesPage() {
               </FilterBar>
             </FrameHeader>
 
-            {/* Results — flush inside the frame, keeping its radius. Copy
-                summary sits in the panel's own toolbar, directly above the rows
-                it summarises. */}
+            {/* Results — flush inside the frame, keeping its radius. */}
             <FramePanel rounded className="gap-0 overflow-hidden p-0">
-              {!isLoading && rows.length > 0 && (
-                <div className="flex min-h-10 flex-wrap items-center justify-between gap-2 border-b px-3 py-2">
-                  <span className="text-sm font-semibold text-muted-foreground">
-                    Absences
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="xs"
-                    onClick={handleCopySummary}
-                  >
-                    <Copy />
-                    Copy summary
-                  </Button>
-                </div>
-              )}
-
               {showTable ? (
                 <Table className="table-fixed">
                   <AbsencesTableHeader />
@@ -221,9 +183,6 @@ export default function AbsencesPage() {
                             </td>
                             <td className="p-2">
                               <Skeleton className="h-4 w-6 ml-auto" />
-                            </td>
-                            <td className="p-2">
-                              <Skeleton className="h-5 w-20 rounded-full" />
                             </td>
                             <td className="p-2">
                               <Skeleton className="h-4 w-40" />

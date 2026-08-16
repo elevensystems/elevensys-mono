@@ -1,8 +1,5 @@
 import type { AbsenceRow } from '@/types/timesheet';
 
-/** Colors accepted by `Token`; narrowed to the ones a status can map to. */
-type TokenColor = 'green' | 'yellow' | 'red' | 'gray';
-
 /**
  * Returns the first key present on `raw` from a list of candidates.
  *
@@ -32,58 +29,6 @@ export function normalizeAbsence(raw: AbsenceRow): AbsenceRow {
     toDate: pick<string>(raw, ['toDate', 'endDate', 'to']),
     absenceType: pick<string>(raw, ['absenceType', 'type', 'leaveType']),
     numberOfDays: pick<number>(raw, ['numberOfDays', 'days', 'duration']),
-    status: pick<string>(raw, ['status', 'state']),
     reason: pick<string>(raw, ['reason', 'description', 'note']),
   };
-}
-
-/** Token color for an absence approval status. */
-export function getAbsenceStatusColor(status: string): TokenColor {
-  switch (status.toLowerCase()) {
-    case 'approved':
-    case 'accepted':
-      return 'green';
-    case 'pending':
-    case 'waiting':
-      return 'yellow';
-    case 'rejected':
-    case 'cancelled':
-    case 'canceled':
-      return 'red';
-    default:
-      return 'gray';
-  }
-}
-
-interface SummaryParams {
-  rows: AbsenceRow[];
-  projectLabel: string;
-  startDate: string;
-  endDate: string;
-}
-
-/**
- * Build a plain-text report of the current page of absences, suitable for
- * pasting into a chat message.
- */
-export function buildAbsencesSummary({
-  rows,
-  projectLabel,
-  startDate,
-  endDate,
-}: SummaryParams): string {
-  const heading = `Absences — ${projectLabel} (${startDate} → ${endDate})`;
-
-  const lines = rows.map(row => {
-    const who = row.username ?? row.fullName ?? 'Unknown';
-    const days = row.numberOfDays != null ? ` (${row.numberOfDays}d)` : '';
-    const range =
-      row.fromDate && row.toDate && row.fromDate !== row.toDate
-        ? `${row.fromDate} → ${row.toDate}`
-        : (row.fromDate ?? row.toDate ?? '');
-    const type = row.absenceType ? ` — ${row.absenceType}` : '';
-    return `${who}${days}: ${range}${type}`;
-  });
-
-  return [heading, ...lines].join('\n');
 }

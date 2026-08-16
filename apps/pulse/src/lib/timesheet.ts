@@ -344,22 +344,6 @@ export function formatHours(value: number): string {
 }
 
 /**
- * Deterministically map a username to an HSL color for visual differentiation.
- * Same username always produces the same hue; saturation/lightness are fixed
- * for readability on both light and dark backgrounds.
- */
-export function getUsernameColor(username: string): string {
-  let hash = 0;
-  for (let i = 0; i < username.length; i++) {
-    hash = username.charCodeAt(i) + ((hash << 5) - hash);
-    hash |= 0;
-  }
-  // Multiply by the golden angle to maximally spread hues apart
-  const hue = (Math.abs(hash) * 137.508) % 360;
-  return `hsl(${hue}, 65%, 48%)`;
-}
-
-/**
  * Build up-to-two-letter initials for an avatar.
  * Names split on separators use the first letter of the first two parts
  * ("nguyen.van.a" → "NV"); a single word falls back to its first two letters

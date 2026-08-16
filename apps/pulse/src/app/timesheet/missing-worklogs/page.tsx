@@ -138,7 +138,7 @@ export default function MissingWorklogsPage() {
                     <TableRow>
                       <TableHead className="w-[48px]">No</TableHead>
                       <TableHead className="w-[200px]">User</TableHead>
-                      <TableHead className="w-[80px] text-right">
+                      <TableHead className="w-[120px] text-center">
                         Days
                       </TableHead>
                       <TableHead>Missing dates</TableHead>
@@ -155,7 +155,7 @@ export default function MissingWorklogsPage() {
                               <Skeleton className="h-4 w-28" />
                             </td>
                             <td className="p-2">
-                              <Skeleton className="h-5 w-8 ml-auto rounded-full" />
+                              <Skeleton className="h-7 w-8 mx-auto" />
                             </td>
                             <td className="p-2">
                               <div className="flex gap-1.5">

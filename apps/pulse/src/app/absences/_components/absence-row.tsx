@@ -3,10 +3,9 @@
 import { TableCell, TableRow } from '@workspace/ui/components/table';
 import { Token } from '@workspace/ui/components/token';
 
-import { formatDisplayDate, getUsernameColor } from '@/lib/timesheet';
+import { UserCell } from '@/components/features/timesheet/user-cell';
+import { formatDisplayDate } from '@/lib/timesheet';
 import type { AbsenceRow as Absence } from '@/types/timesheet';
-
-import { getAbsenceStatusColor } from './absences-utils';
 
 interface AbsenceRowProps {
   no: number;
@@ -29,20 +28,10 @@ export function AbsenceRow({ no, absence }: AbsenceRowProps) {
     <TableRow>
       <TableCell className="text-muted-foreground tabular-nums">{no}</TableCell>
       <TableCell>
-        <div className="flex items-center gap-2">
-          <span
-            className="size-2 shrink-0 rounded-full"
-            style={{ backgroundColor: getUsernameColor(who) }}
-          />
-          <div className="min-w-0">
-            <p className="truncate font-medium">{who}</p>
-            {absence.fullName && absence.username && (
-              <p className="truncate text-xs text-muted-foreground">
-                {absence.fullName}
-              </p>
-            )}
-          </div>
-        </div>
+        <UserCell
+          name={who}
+          secondary={absence.username ? absence.fullName : undefined}
+        />
       </TableCell>
       <TableCell className="whitespace-nowrap">
         {formatDate(absence.fromDate)}
@@ -61,19 +50,6 @@ export function AbsenceRow({ no, absence }: AbsenceRowProps) {
       </TableCell>
       <TableCell className="text-right tabular-nums">
         {absence.numberOfDays ?? EMPTY}
-      </TableCell>
-      <TableCell>
-        {absence.status ? (
-          <Token
-            color={getAbsenceStatusColor(absence.status)}
-            shape="pill"
-            density="compact"
-          >
-            {absence.status}
-          </Token>
-        ) : (
-          <span className="text-muted-foreground">{EMPTY}</span>
-        )}
       </TableCell>
       <TableCell
         className="truncate text-muted-foreground"
