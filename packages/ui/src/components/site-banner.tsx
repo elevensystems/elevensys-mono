@@ -3,9 +3,11 @@
 import { useSyncExternalStore } from 'react';
 
 import { Banner } from '@workspace/ui/components/banner';
-
-import { useFlags } from '@/contexts/flags-context';
-import { parseAnnouncementBanner } from '@/lib/flags-utils';
+import { useFlags } from '@workspace/ui/components/flags-provider';
+import {
+  SITE_BANNER_FLAG_KEY,
+  parseAnnouncementBanner,
+} from '@workspace/ui/lib/site-announcement';
 
 const DISMISSED_STORAGE_KEY = 'site-banner-dismissed';
 const dismissListeners = new Set<() => void>();
@@ -32,15 +34,26 @@ function dismissAnnouncement(dismissKey: string) {
   dismissListeners.forEach(listener => listener());
 }
 
+interface SiteBannerProps {
+  /**
+   * Raw announcement JSON. Defaults to the `site-banner` flag exposed by
+   * `FlagsProvider`; pass explicitly to drive the banner from another source.
+   */
+  value?: string;
+  /** Full-bleed styling, for rendering directly under a sticky header. */
+  flush?: boolean;
+}
+
 /**
- * Site-wide announcement/maintenance banner rendered flush under the sticky
- * header. Content comes from the `site-banner` flag; dismissal is keyed by
- * the announcement's own content, so editing the flag surfaces the banner
- * again for users who dismissed a previous message.
+ * Site-wide announcement/maintenance banner shared by every app.
+ *
+ * Content comes from the `site-banner` flag; dismissal is keyed by the
+ * announcement's own content, so editing the flag surfaces the banner again
+ * for users who dismissed a previous message.
  */
-export function SiteBanner() {
+export function SiteBanner({ value, flush = true }: SiteBannerProps) {
   const flags = useFlags();
-  const rawValue = flags['site-banner'];
+  const rawValue = value ?? flags[SITE_BANNER_FLAG_KEY];
   const announcement =
     typeof rawValue === 'string' ? parseAnnouncementBanner(rawValue) : null;
   const dismissKey = announcement ? JSON.stringify(announcement) : null;
@@ -55,7 +68,7 @@ export function SiteBanner() {
 
   return (
     <Banner
-      flush
+      flush={flush}
       state={announcement.state}
       title={announcement.title}
       message={announcement.message}

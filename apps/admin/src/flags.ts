@@ -4,22 +4,10 @@ import { flag } from 'flags/next';
 /**
  * `vercelAdapter()` reads the `FLAGS` env var while this module is evaluated
  * and throws when the project has no Vercel Flags integration provisioned,
- * which fails the build. Until an environment is provisioned, fall back to each
- * flag's default value so the app behaves as if the flags were simply unset.
+ * which fails the build. Until an environment is provisioned, fall back to the
+ * flag's default value so the app behaves as if the flag were simply unset.
  */
 const flagsProvisioned = Boolean(process.env.FLAGS);
-
-export const sidebarToolsFlag = flag<string>({
-  key: 'sidebar-tools',
-  description:
-    'Controls which tools are shown in the sidebar. JSON array of tool URL paths. Empty string means show all.',
-  defaultValue: '',
-  options: [
-    { value: '', label: 'All tools' },
-    { value: '[]', label: 'No tools' },
-  ],
-  ...(flagsProvisioned ? { adapter: vercelAdapter() } : { decide: () => '' }),
-});
 
 export const siteBannerFlag = flag<string>({
   key: 'site-banner',

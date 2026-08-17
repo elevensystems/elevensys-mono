@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import { Ubuntu, Ubuntu_Mono } from 'next/font/google';
 
+import { FlagsProvider } from '@workspace/ui/components/flags-provider';
 import { Toaster } from '@workspace/ui/components/sonner';
 
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/contexts/auth-context';
+import { siteBannerFlag } from '@/flags';
 import { getUserFromSession } from '@/lib/auth';
 import '@/styles/globals.css';
 
@@ -31,6 +33,9 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const user = await getUserFromSession();
+  const flags = {
+    'site-banner': String((await siteBannerFlag()) ?? ''),
+  };
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -42,8 +47,10 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider user={user}>
-            {children}
-            <Toaster position="bottom-right" />
+            <FlagsProvider flags={flags}>
+              {children}
+              <Toaster position="bottom-right" />
+            </FlagsProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
