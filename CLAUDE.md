@@ -770,9 +770,9 @@ every app (`web`, `admin`, `insight`, `pulse`). Editing the flag is all it takes
 | `components/flags-provider.tsx` | `FlagsProvider`, `useFlags()`, `FlagsRecord`     |
 | `components/site-banner.tsx`    | `SiteBanner` — parses the flag, renders `Banner` |
 
-`SiteBanner` reads the flag from `useFlags()`, so apps just render it. Dismissal is stored in
-`localStorage` keyed by the announcement's own content, so editing the flag re-surfaces the banner
-for users who dismissed the previous message.
+`SiteBanner` reads the flag from `useFlags()`, so apps just render it. The banner is not
+dismissible — it stays visible for every user until the flag is cleared or updated. (`Banner` still
+supports an `onDismiss` prop for other, non-site-wide uses; `SiteBanner` simply never passes it.)
 
 ### Flag value
 
