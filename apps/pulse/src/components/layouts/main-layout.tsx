@@ -20,6 +20,7 @@ import {
   SidebarTrigger,
 } from '@workspace/ui/components/sidebar';
 import { SidebarAutoCollapse } from '@workspace/ui/components/sidebar-auto-collapse';
+import { SiteBanner } from '@workspace/ui/components/site-banner';
 
 import { AppSidebar } from '@/components/layouts/app-sidebar';
 import {
@@ -31,6 +32,11 @@ interface MainLayoutProps {
   children: ReactNode;
   className?: string;
   headerRight?: ReactNode;
+  /**
+   * Announcement banner rendered flush under the sticky header. Defaults to
+   * the flag-driven `SiteBanner`; pass `null` to suppress it.
+   */
+  banner?: ReactNode;
 }
 
 /** Path segments that group pages but have no page of their own. */
@@ -46,6 +52,7 @@ export default function MainLayout({
   children,
   className = '',
   headerRight,
+  banner,
 }: MainLayoutProps) {
   const pathname = usePathname();
 
@@ -115,6 +122,7 @@ export default function MainLayout({
             </div>
           </div>
         </header>
+        {banner === undefined ? <SiteBanner /> : banner}
         <div className="flex flex-1 flex-col gap-4 p-6">
           <main className={className}>{children}</main>
         </div>

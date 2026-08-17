@@ -1,4 +1,4 @@
-import { parseAnnouncementBanner } from './flags-utils';
+import { parseAnnouncementBanner } from '@workspace/ui/lib/site-announcement';
 
 describe('parseAnnouncementBanner', () => {
   // --- Hidden / empty ---

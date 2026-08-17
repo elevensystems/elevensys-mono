@@ -20,6 +20,7 @@ import {
   SidebarTrigger,
 } from '@workspace/ui/components/sidebar';
 import { SidebarAutoCollapse } from '@workspace/ui/components/sidebar-auto-collapse';
+import { SiteBanner } from '@workspace/ui/components/site-banner';
 
 import { AppSidebar } from '@/components/layouts/app-sidebar';
 import { useAuth } from '@/contexts/auth-context';
@@ -27,6 +28,11 @@ import { useAuth } from '@/contexts/auth-context';
 interface MainLayoutProps {
   children: ReactNode;
   className?: string;
+  /**
+   * Announcement banner rendered flush under the sticky header. Defaults to
+   * the flag-driven `SiteBanner`; pass `null` to suppress it.
+   */
+  banner?: ReactNode;
 }
 
 const formatSegment = (segment: string) =>
@@ -38,6 +44,7 @@ const formatSegment = (segment: string) =>
 export default function MainLayout({
   children,
   className = '',
+  banner,
 }: MainLayoutProps) {
   const pathname = usePathname();
   const { user } = useAuth();
@@ -93,6 +100,7 @@ export default function MainLayout({
             </Breadcrumb>
           </div>
         </header>
+        {banner === undefined ? <SiteBanner /> : banner}
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           <main className={className}>{children}</main>
         </div>

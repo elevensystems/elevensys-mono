@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
 import { Ubuntu, Ubuntu_Mono } from 'next/font/google';
 
+import { FlagsProvider } from '@workspace/ui/components/flags-provider';
 import { Toaster } from '@workspace/ui/components/sonner';
 
 import { ThemeProvider } from '@/components/theme-provider';
+import { siteBannerFlag } from '@/flags';
 import '@/styles/globals.css';
 
 const ubuntu = Ubuntu({
@@ -35,11 +37,15 @@ export const metadata: Metadata = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const flags = {
+    'site-banner': String((await siteBannerFlag()) ?? ''),
+  };
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${ubuntu.variable} ${ubuntuMono.variable} antialiased`}>
@@ -49,8 +55,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
-          <Toaster position="bottom-right" />
+          <FlagsProvider flags={flags}>
+            {children}
+            <Toaster position="bottom-right" />
+          </FlagsProvider>
         </ThemeProvider>
       </body>
     </html>

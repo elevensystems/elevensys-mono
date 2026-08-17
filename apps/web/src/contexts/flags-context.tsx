@@ -1,28 +1,16 @@
 'use client';
 
-import { createContext, useContext } from 'react';
+import type { FlagsRecord } from '@workspace/ui/components/flags-provider';
 
 import { getVisibleToolPaths as parseVisibleToolPaths } from '@/lib/flags-utils';
 
-type FlagsRecord = Record<string, boolean | string>;
-
-const FlagsContext = createContext<FlagsRecord>({});
-
-export function FlagsProvider({
-  children,
-  flags,
-}: {
-  children: React.ReactNode;
-  flags: FlagsRecord;
-}) {
-  return (
-    <FlagsContext.Provider value={flags}>{children}</FlagsContext.Provider>
-  );
-}
-
-export function useFlags() {
-  return useContext(FlagsContext);
-}
+// The provider/hook themselves are shared so every app wires flags the same
+// way; re-exported here so app-local imports keep pointing at one place.
+export {
+  FlagsProvider,
+  useFlags,
+} from '@workspace/ui/components/flags-provider';
+export type { FlagsRecord } from '@workspace/ui/components/flags-provider';
 
 /**
  * Parses the `sidebar-tools` flag from the flags record into an allowlist of

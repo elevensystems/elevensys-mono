@@ -20,9 +20,9 @@ import {
   SidebarTrigger,
 } from '@workspace/ui/components/sidebar';
 import { SidebarAutoCollapse } from '@workspace/ui/components/sidebar-auto-collapse';
+import { SiteBanner } from '@workspace/ui/components/site-banner';
 
 import { AppSidebar } from '@/components/layouts/app-sidebar';
-import { SiteBanner } from '@/components/layouts/site-banner';
 import { useAuth } from '@/contexts/auth-context';
 
 interface MainLayoutProps {

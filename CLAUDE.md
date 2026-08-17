@@ -408,10 +408,10 @@ moved to the app root: `/`, `/timesheet/logwork`, `/timesheet/my-worklogs`,
 
 - **Font**: Ubuntu (via `next/font/google`)
 - **Port**: 3004 (`next dev -p 3004`)
-- **Providers**: `ThemeProvider` only — no Cognito, no feature flags
+- **Providers**: `ThemeProvider` → `FlagsProvider` — no Cognito
 - **Auth**: Jira PAT saved in `localStorage` via `/config`, sent as a `Bearer` header to
   `/api/jira/*` proxy routes (forwarded to `API_BASE_URL`)
-- **Env**: only `API_BASE_URL` (validated in `src/env.ts`)
+- **Env**: `API_BASE_URL` (validated in `src/env.ts`); optional `FLAGS` for the site banner
 - Shared timesheet components live in `src/components/features/timesheet/`; page-private components
   stay in each route's `_components/`
 
@@ -513,6 +513,10 @@ NEXT_PUBLIC_APP_URL=
 
 # External APIs
 API_BASE_URL=         # Base URL for backend API (e.g. https://api.elevensys.dev)
+
+# Vercel Flags (all apps) — injected by the Vercel Flags integration.
+# Optional: when unset, every flag falls back to its default value.
+FLAGS=
 ```
 
 Access pattern:
@@ -751,6 +755,59 @@ All routes proxy to `API_BASE_URL`, forwarding the caller's `Authorization: Bear
 
 When `startDate === endDate`, logs for a single day. When they differ, the backend logs for every
 calendar day in the range.
+
+## Site Announcement Banner (all apps)
+
+A site-wide announcement/maintenance banner, driven by the `site-banner` feature flag and shared by
+every app (`web`, `admin`, `insight`, `pulse`). Editing the flag is all it takes to show or hide it
+— no deploy required.
+
+### Shared pieces (`@workspace/ui`)
+
+| File                            | Exports                                          |
+| ------------------------------- | ------------------------------------------------ |
+| `lib/site-announcement.ts`      | `SiteAnnouncement`, `parseAnnouncementBanner()`  |
+| `components/flags-provider.tsx` | `FlagsProvider`, `useFlags()`, `FlagsRecord`     |
+| `components/site-banner.tsx`    | `SiteBanner` — parses the flag, renders `Banner` |
+
+`SiteBanner` reads the flag from `useFlags()`, so apps just render it. The banner is not
+dismissible — it stays visible for every user until the flag is cleared or updated. (`Banner` still
+supports an `onDismiss` prop for other, non-site-wide uses; `SiteBanner` simply never passes it.)
+
+### Flag value
+
+Set the `site-banner` flag to a JSON object; an empty string hides the banner.
+
+```json
+{
+  "state": "warning",
+  "title": "Scheduled maintenance",
+  "message": "Jira sync is paused Sat 2-4am UTC.",
+  "actionLabel": "Status page",
+  "actionHref": "https://status.elevensys.dev"
+}
+```
+
+- `state`: `info` | `success` | `warning` | `error` (defaults to `info`)
+- `message` is required; a missing or blank message hides the banner
+- `actionLabel`/`actionHref` are only used as a pair
+
+Malformed JSON logs to `console.error` and hides the banner rather than breaking the page.
+
+### Wiring in an app
+
+1. Declare the flag in `src/flags.ts` (see any app for the pattern)
+2. Resolve it in the root layout and pass it down:
+   `<FlagsProvider flags={{ 'site-banner': String((await siteBannerFlag()) ?? '') }}>`
+3. Render `<SiteBanner />` in `main-layout.tsx` just below the sticky header
+
+Each `MainLayout` accepts a `banner` prop: omit it for the flag-driven banner, or pass `null` to
+suppress it on a given page.
+
+> `vercelAdapter()` throws at module-evaluation time when `FLAGS` is unset, which would fail the
+> build. Each `src/flags.ts` therefore attaches the adapter only when `process.env.FLAGS` is present
+> and falls back to the flag's default value otherwise — so apps without the Vercel Flags
+> integration provisioned still build, with the banner simply hidden.
 
 ## Performance Considerations
 
