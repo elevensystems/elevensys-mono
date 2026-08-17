@@ -80,7 +80,11 @@ export default function LogWorkPage() {
     resetResults,
   } = useLogWorkSubmission(settings);
 
-  const [entries, setEntries] = useState<WorkEntry[]>([createDefaultEntry()]);
+  const [entries, setEntries] = useState<WorkEntry[]>(() =>
+    selectedProjectId
+      ? loadSavedEntries(selectedProjectId)
+      : [createDefaultEntry()]
+  );
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [includeWeekends, setIncludeWeekends] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({
