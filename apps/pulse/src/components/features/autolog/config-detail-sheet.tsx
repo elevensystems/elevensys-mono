@@ -36,6 +36,7 @@ import type {
   AutologRunResult,
   AutologTicket,
 } from '@/types/autolog';
+import { formatNextRun } from '@/types/autolog';
 
 import {
   RUN_STATUS_CONFIG,
@@ -133,6 +134,8 @@ export function ConfigDetailSheet({
   };
 
   const totalHours = config.tickets.reduce((sum, t) => sum + t.hours, 0);
+  const nextRun = formatNextRun(config.schedule);
+  const isRetrying = (config.schedule.attempt ?? 0) > 0;
   const resultsMap = new Map(
     config.lastRunResults?.map(r => [r.issueKey, r]) ?? []
   );
@@ -177,6 +180,17 @@ export function ConfigDetailSheet({
                 Covers {config.coveragePeriod.start} –{' '}
                 {config.coveragePeriod.end}
               </p>
+              {nextRun && (
+                <p className="pl-6 text-xs text-muted-foreground">
+                  Next run: {nextRun}
+                </p>
+              )}
+              {isRetrying && (
+                <p className="pl-6 text-xs text-amber-600 dark:text-amber-500">
+                  Jira was unreachable — retrying (attempt{' '}
+                  {config.schedule.attempt}). Nothing has been logged yet.
+                </p>
+              )}
             </div>
 
             <Separator />

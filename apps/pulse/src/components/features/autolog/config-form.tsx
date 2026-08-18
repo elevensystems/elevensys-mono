@@ -3,11 +3,10 @@
 import { useCallback, useState } from 'react';
 
 import { Button } from '@workspace/ui/components/button';
-import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
 import { NativeSelect } from '@workspace/ui/components/native-select';
 import { Spinner } from '@workspace/ui/components/spinner';
-import { PlusCircle, Save } from 'lucide-react';
+import { Clock, MessageSquare, PlusCircle, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { WorkEntriesFrame } from '@/components/features/timesheet/work-entries-frame';
@@ -21,7 +20,13 @@ import type {
   AutologConfig,
   CreateAutologConfigPayload,
 } from '@/types/autolog';
-import { DAY_NAMES, HOUR_OPTIONS } from '@/types/autolog';
+import {
+  browserTimezone,
+  formatNextRun,
+  formatScheduleSlot,
+  formatScheduleWeekday,
+  notificationEmail,
+} from '@/types/autolog';
 import type {
   JiraProject,
   TimesheetSettings,
@@ -40,6 +45,8 @@ interface ConfigFormProps {
    * action buttons aligned to the top right instead of a bottom action bar.
    */
   header?: React.ReactNode;
+  /** Adds a Cancel button next to Save — for the modal, which has no back nav. */
+  showCancelButton?: boolean;
 }
 
 // Autolog is still in development — saving is disabled until the backend is ready.
@@ -66,6 +73,7 @@ export function ConfigForm({
   onSave,
   onCancel,
   header,
+  showCancelButton = false,
 }: ConfigFormProps) {
   const [isSaving, setIsSaving] = useState(false);
 
@@ -85,20 +93,19 @@ export function ConfigForm({
     toWorkEntries(editing)
   );
 
-  // Schedule
+  // Schedule — frequency is the only thing the user picks. The backend derives
+  // the run instant from it, their timezone, and a stable per-user offset.
   const [scheduleType, setScheduleType] = useState<'weekly' | 'monthly'>(
     editing?.schedule.type ?? 'weekly'
   );
-  const [dayOfWeek, setDayOfWeek] = useState(editing?.schedule.dayOfWeek ?? 5);
-  const [dayOfMonth, setDayOfMonth] = useState(
-    editing?.schedule.dayOfMonth ?? 1
-  );
-  const [hour, setHour] = useState(editing?.schedule.hour ?? 9);
 
-  // Email
-  const [email, setEmail] = useState(
-    editing?.email ?? `${settings.username}@fpt.com`
-  );
+  // Only meaningful while the frequency still matches what was saved; once the
+  // user switches it, the old instant describes a schedule that no longer applies.
+  const savedSlot =
+    editing && editing.schedule.type === scheduleType ? editing.schedule : null;
+
+  // Teams recipient — derived from the username, never hand-entered.
+  const email = notificationEmail(settings.username);
 
   // Issues for WorkEntryRow
   const { issues, issuesByKey, isLoadingIssues } = useProjectIssues({
@@ -142,10 +149,10 @@ export function ConfigForm({
       return;
     }
 
-    const schedule =
-      scheduleType === 'weekly'
-        ? { type: 'weekly' as const, dayOfWeek, hour }
-        : { type: 'monthly' as const, dayOfMonth, hour };
+    const schedule = {
+      type: scheduleType,
+      timezone: browserTimezone(),
+    };
 
     const tickets = validEntries.map(e => ({
       issueKey: e.issueKey,
@@ -178,6 +185,11 @@ export function ConfigForm({
           Autolog is still in development.
         </p>
       )}
+      {showCancelButton && (
+        <Button variant="outline" onClick={onCancel} disabled={isSaving}>
+          Cancel
+        </Button>
+      )}
       <Button onClick={handleSubmit} disabled={isSaving || !SAVE_ENABLED}>
         {isSaving ? (
           <>
@@ -200,7 +212,7 @@ export function ConfigForm({
   );
 
   return (
-    <div className="space-y-8">
+    <div className="min-w-0 space-y-8">
       {header && (
         <div className="flex items-start justify-between gap-4">
           {header}
@@ -238,19 +250,21 @@ export function ConfigForm({
       </div>
 
       {/* Tickets */}
-      <div className="space-y-3">
+      <div className="min-w-0 space-y-3">
         <Label className="text-sm font-medium">Tickets</Label>
-        <WorkEntriesFrame
-          entries={entries}
-          issues={issues}
-          issuesByKey={issuesByKey}
-          isLoadingIssues={isLoadingIssues}
-          onUpdate={updateEntry}
-          onRemove={removeEntry}
-          onAdd={addEntry}
-          addDisabled={!selectedProject}
-          rowsDisabled={!selectedProject}
-        />
+        <div className="min-w-0 overflow-x-auto">
+          <WorkEntriesFrame
+            entries={entries}
+            issues={issues}
+            issuesByKey={issuesByKey}
+            isLoadingIssues={isLoadingIssues}
+            onUpdate={updateEntry}
+            onRemove={removeEntry}
+            onAdd={addEntry}
+            addDisabled={!selectedProject}
+            rowsDisabled={!selectedProject}
+          />
+        </div>
       </div>
 
       {/* Schedule */}
@@ -269,67 +283,56 @@ export function ConfigForm({
               <option value="monthly">Monthly</option>
             </NativeSelect>
           </div>
+        </div>
 
-          {scheduleType === 'weekly' ? (
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">
-                Day of week
-              </Label>
-              <NativeSelect
-                value={String(dayOfWeek)}
-                onChange={e => setDayOfWeek(Number(e.target.value))}
-              >
-                {DAY_NAMES.map((name, i) => (
-                  <option key={i} value={i}>
-                    {name}
-                  </option>
-                ))}
-              </NativeSelect>
-            </div>
-          ) : (
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">
-                Day of month
-              </Label>
-              <Input
-                type="number"
-                min={1}
-                max={28}
-                value={dayOfMonth}
-                onChange={e => setDayOfMonth(Number(e.target.value))}
-              />
-              <p className="text-xs text-muted-foreground">Max 28</p>
-            </div>
-          )}
-
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Time (UTC)</Label>
-            <NativeSelect
-              value={String(hour)}
-              onChange={e => setHour(Number(e.target.value))}
-            >
-              {HOUR_OPTIONS.map(opt => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </NativeSelect>
+        <div className="flex items-start gap-2 rounded-md border bg-muted/40 px-3 py-2">
+          <Clock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+          <div className="space-y-0.5 text-xs text-muted-foreground">
+            {savedSlot ? (
+              <>
+                <p className="text-foreground">
+                  Runs{' '}
+                  {scheduleType === 'weekly'
+                    ? `every ${formatScheduleWeekday(savedSlot) ?? 'Friday'}`
+                    : 'on the last working day of each month'}{' '}
+                  at {formatScheduleSlot(savedSlot)}.
+                </p>
+                {formatNextRun(savedSlot) && (
+                  <p>Next run: {formatNextRun(savedSlot)}.</p>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="text-foreground">
+                  We pick the best time for you — the{' '}
+                  {scheduleType === 'weekly'
+                    ? 'end of each week'
+                    : 'last working day of each month'}
+                  , after work hours in your timezone
+                  {browserTimezone() ? ` (${browserTimezone()})` : ''}.
+                </p>
+                <p>
+                  Running late in the period gives you the most chance to log
+                  manually first, and avoids the weekend, when Jira goes down
+                  for maintenance.
+                </p>
+              </>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Email */}
+      {/* Teams notifications */}
       <div className="space-y-2">
-        <Label className="text-sm font-medium">Notification Email</Label>
+        <Label className="text-sm font-medium">Teams Notifications</Label>
+        <div className="flex items-center gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm">
+          <MessageSquare className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <span className="truncate">{email}</span>
+        </div>
         <p className="text-xs text-muted-foreground">
-          Confirmation emails will be sent here after each autolog run.
+          After each autolog run, Flow bot sends you a summary in Microsoft
+          Teams at this address.
         </p>
-        <Input
-          type="email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          placeholder="your.name@fpt.com"
-        />
       </div>
 
       {/* Actions */}

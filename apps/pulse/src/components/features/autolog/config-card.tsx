@@ -13,7 +13,7 @@ import { cn } from '@workspace/ui/lib/utils';
 import { Calendar, Clock } from 'lucide-react';
 
 import type { AutologConfig } from '@/types/autolog';
-import { DAY_NAMES } from '@/types/autolog';
+import { formatScheduleSlot, formatScheduleWeekday } from '@/types/autolog';
 
 interface ConfigCardProps {
   config: AutologConfig;
@@ -40,13 +40,14 @@ export const RUN_STATUS_CONFIG: Record<
 
 export function formatSchedule(config: AutologConfig): string {
   const { schedule } = config;
-  const hourStr = `${String(schedule.hour).padStart(2, '0')}:00 UTC`;
-  if (schedule.type === 'weekly') {
-    return `Every ${DAY_NAMES[schedule.dayOfWeek ?? 5]} at ${hourStr}`;
-  }
-  const day = schedule.dayOfMonth ?? 1;
-  const suffix = day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : 'th';
-  return `Monthly on the ${day}${suffix} at ${hourStr}`;
+  const at = formatScheduleSlot(schedule);
+  const period =
+    schedule.type === 'weekly'
+      ? `Every ${formatScheduleWeekday(schedule) ?? 'Friday'}`
+      : 'Monthly on the last working day';
+
+  // A config that has not been scheduled yet still renders something sensible.
+  return at ? `${period} at ${at}` : period;
 }
 
 export function ConfigCard({ config, onClick }: ConfigCardProps) {

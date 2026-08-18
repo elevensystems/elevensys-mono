@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 
-import { useRouter } from 'next/navigation';
-
 import { Banner } from '@workspace/ui/components/banner';
 import { Button } from '@workspace/ui/components/button';
 import { Card, CardContent, CardHeader } from '@workspace/ui/components/card';
@@ -12,6 +10,7 @@ import { PlusCircle } from 'lucide-react';
 
 import { ConfigCard } from '@/components/features/autolog/config-card';
 import { ConfigDetailSheet } from '@/components/features/autolog/config-detail-sheet';
+import { NewConfigDialog } from '@/components/features/autolog/new-config-dialog';
 import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
 import MainLayout from '@/components/layouts/main-layout';
 import { ToolPageHeader } from '@/components/layouts/tool-page-header';
@@ -20,19 +19,25 @@ import { useTimesheetSettings } from '@/hooks/use-timesheet-settings';
 import type { AutologConfig } from '@/types/autolog';
 
 export default function AutologPage() {
-  const router = useRouter();
   const { settings, isConfigured, isLoaded } = useTimesheetSettings();
-  const { configs, isLoading, deleteConfig, runConfig, canAddMore } =
-    useAutolog({
-      username: settings.username,
-      token: settings.token,
-      isConfigured,
-    });
+  const {
+    configs,
+    isLoading,
+    createConfig,
+    deleteConfig,
+    runConfig,
+    canAddMore,
+  } = useAutolog({
+    username: settings.username,
+    token: settings.token,
+    isConfigured,
+  });
 
   const [selectedConfig, setSelectedConfig] = useState<AutologConfig | null>(
     null
   );
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [newConfigOpen, setNewConfigOpen] = useState(false);
 
   const handleCardClick = (config: AutologConfig) => {
     setSelectedConfig(config);
@@ -55,7 +60,7 @@ export default function AutologPage() {
             />
             {isLoaded && isConfigured && (
               <Button
-                onClick={() => router.push('/autolog/new')}
+                onClick={() => setNewConfigOpen(true)}
                 disabled={!canAddMore}
               >
                 <PlusCircle />
@@ -131,6 +136,14 @@ export default function AutologPage() {
         onOpenChange={setSheetOpen}
         onDelete={deleteConfig}
         onRun={runConfig}
+      />
+
+      <NewConfigDialog
+        open={newConfigOpen}
+        onOpenChange={setNewConfigOpen}
+        settings={settings}
+        isConfigured={isConfigured}
+        onSave={createConfig}
       />
     </MainLayout>
   );
