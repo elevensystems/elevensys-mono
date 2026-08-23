@@ -6,6 +6,7 @@ import { Button } from '@workspace/ui/components/button';
 import { Label } from '@workspace/ui/components/label';
 import { NativeSelect } from '@workspace/ui/components/native-select';
 import { Spinner } from '@workspace/ui/components/spinner';
+import { Tabs, TabsList, TabsTrigger } from '@workspace/ui/components/tabs';
 import { Clock, MessageSquare, PlusCircle, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -50,7 +51,7 @@ interface ConfigFormProps {
 }
 
 // Autolog is still in development — saving is disabled until the backend is ready.
-const SAVE_ENABLED = false;
+const SAVE_ENABLED = true;
 
 function toWorkEntries(config?: AutologConfig): WorkEntry[] {
   if (!config?.tickets.length) {
@@ -220,33 +221,54 @@ export function ConfigForm({
         </div>
       )}
 
-      {/* Project */}
-      <div className="space-y-2">
-        <Label className="text-sm font-medium">Project</Label>
-        <NativeSelect
-          value={selectedProject?.id ?? ''}
-          onChange={e => {
-            const p = projects.find(x => x.id === e.target.value);
-            setSelectedProject(p ?? null);
-            setEntries(p ? loadSavedEntries(p.id) : [createDefaultEntry()]);
-          }}
-          disabled={isLoadingProjects || !!editing}
-        >
-          <option value="">
-            {isLoadingProjects ? 'Loading projects...' : 'Choose a project'}
-          </option>
-          {projects.map(p => (
-            <option key={p.id} value={p.id}>
-              [{p.key}] {p.name}
+      {/* Project + frequency */}
+      <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-[1fr_auto]">
+        <div className="min-w-0 space-y-2">
+          <Label className="text-sm font-medium">Project</Label>
+          <NativeSelect
+            value={selectedProject?.id ?? ''}
+            onChange={e => {
+              const p = projects.find(x => x.id === e.target.value);
+              setSelectedProject(p ?? null);
+              setEntries(p ? loadSavedEntries(p.id) : [createDefaultEntry()]);
+            }}
+            disabled={isLoadingProjects || !!editing}
+          >
+            <option value="">
+              {isLoadingProjects ? 'Loading projects...' : 'Choose a project'}
             </option>
-          ))}
-        </NativeSelect>
-        {editing && (
-          <p className="text-xs text-muted-foreground">
-            Project cannot be changed. Delete and recreate to use a different
-            project.
-          </p>
-        )}
+            {projects.map(p => (
+              <option key={p.id} value={p.id}>
+                [{p.key}] {p.name}
+              </option>
+            ))}
+          </NativeSelect>
+          {editing && (
+            <p className="text-xs text-muted-foreground">
+              Project cannot be changed. Delete and recreate to use a different
+              project.
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Frequency</Label>
+          <Tabs
+            value={scheduleType}
+            onValueChange={value =>
+              setScheduleType(value as 'weekly' | 'monthly')
+            }
+          >
+            <TabsList className="w-full sm:w-auto">
+              <TabsTrigger value="weekly" className="px-4">
+                Weekly
+              </TabsTrigger>
+              <TabsTrigger value="monthly" className="px-4">
+                Monthly
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
       {/* Tickets */}
@@ -270,21 +292,6 @@ export function ConfigForm({
       {/* Schedule */}
       <div className="space-y-3">
         <Label className="text-sm font-medium">Schedule</Label>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Frequency</Label>
-            <NativeSelect
-              value={scheduleType}
-              onChange={e =>
-                setScheduleType(e.target.value as 'weekly' | 'monthly')
-              }
-            >
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-            </NativeSelect>
-          </div>
-        </div>
-
         <div className="flex items-start gap-2 rounded-md border bg-muted/40 px-3 py-2">
           <Clock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
           <div className="space-y-0.5 text-xs text-muted-foreground">
