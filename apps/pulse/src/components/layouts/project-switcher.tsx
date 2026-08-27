@@ -12,9 +12,18 @@ import {
   ComboboxItem,
   ComboboxList,
 } from '@workspace/ui/components/combobox';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@workspace/ui/components/tooltip';
+import { Info } from 'lucide-react';
 
 import { useProjects } from '@/hooks/use-projects';
-import { PROJECT_SEARCH_PARAM } from '@/hooks/use-selected-project';
+import {
+  PROJECT_SEARCH_PARAM,
+  useSelectedProject,
+} from '@/hooks/use-selected-project';
 import { useTimesheetSettings } from '@/hooks/use-timesheet-settings';
 import type { JiraProject } from '@/types/timesheet';
 
@@ -40,6 +49,9 @@ const PROJECT_SCOPED_ROUTES = [
   '/absences',
   '/worklog-management',
 ];
+
+/** How long the unprompted tip stays up before it gets out of the way. */
+const TIP_AUTO_HIDE_MS = 10_000;
 
 export function isProjectScopedRoute(pathname: string) {
   return PROJECT_SCOPED_ROUTES.some(
@@ -68,6 +80,14 @@ export function ProjectSwitcher() {
   const { settings, isConfigured } = useTimesheetSettings();
   const { projects, isLoading, selectedProject, setSelectedProject } =
     useProjects({ settings, isConfigured, globalSelection: true });
+
+  /**
+   * Read only for `isLoaded`. It comes from the same store as
+   * `selectedProject`, so once it is true the selection above is the remembered
+   * one rather than the null server snapshot — which is what keeps the tip
+   * below from flashing at users who already have a project.
+   */
+  const { isLoaded } = useSelectedProject();
 
   const urlKey = searchParams.get(PROJECT_SEARCH_PARAM);
 
@@ -117,16 +137,69 @@ export function ProjectSwitcher() {
     writeUrl(selectedProject.key);
   }, [urlKey, selectedProject, writeUrl]);
 
+  /** Set once the tip has had its turn — by timing out, or by the user. */
+  const [isTipSpent, setIsTipSpent] = React.useState(false);
+  /** A tip the user opened themselves: no timer, it follows the pointer. */
+  const [isTipOpenedByUser, setIsTipOpenedByUser] = React.useState(false);
+
+  /**
+   * The unprompted tip waits for a real answer to "is a project selected?":
+   * before the store loads, and while the list is still arriving, the selection
+   * is empty for everyone.
+   */
+  const isTipOffered =
+    isLoaded && isConfigured && !isLoading && !selectedProject && !isTipSpent;
+
+  React.useEffect(() => {
+    if (!isTipOffered) return;
+
+    const timer = window.setTimeout(
+      () => setIsTipSpent(true),
+      TIP_AUTO_HIDE_MS
+    );
+    return () => window.clearTimeout(timer);
+  }, [isTipOffered]);
+
+  // Radix drives this from hover, focus and click on the trigger. Closing that
+  // way also spends the unprompted tip: the user has seen it and moved on.
+  const handleTipOpenChange = React.useCallback((open: boolean) => {
+    setIsTipOpenedByUser(open);
+    if (!open) setIsTipSpent(true);
+  }, []);
+
   const handleSelect = React.useCallback(
     (value: JiraProject | null) => {
       setSelectedProject(value);
       writeUrl(value?.key ?? null);
+      setIsTipSpent(true);
     },
     [setSelectedProject, writeUrl]
   );
 
   return (
     <div className="flex items-center gap-2">
+      <Tooltip
+        open={isTipOffered || isTipOpenedByUser}
+        onOpenChange={handleTipOpenChange}
+      >
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            aria-label="About the project selector"
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Info className="size-4" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" align="start" className="max-w-xs">
+          <p className="font-medium">Tips</p>
+          <p>
+            Now you only need to select{' '}
+            <span className="font-medium">the project once here</span>. No need
+            to switch on each page.
+          </p>
+        </TooltipContent>
+      </Tooltip>
       <label
         htmlFor="global-project-select"
         className="text-muted-foreground hidden text-sm sm:block"

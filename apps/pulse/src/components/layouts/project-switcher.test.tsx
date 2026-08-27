@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import type { JiraProject } from '@/types/timesheet';
@@ -41,6 +41,17 @@ jest.mock('@/hooks/use-projects', () => ({
   }),
 }));
 
+// Only `isLoaded` is read from here; `PROJECT_SEARCH_PARAM` comes from the same
+// module and must survive the mock.
+jest.mock('@/hooks/use-selected-project', () => ({
+  ...jest.requireActual('@/hooks/use-selected-project'),
+  useSelectedProject: () => ({
+    selectedProject: mockSelectedProject,
+    setSelectedProject: mockSetSelectedProject,
+    isLoaded: true,
+  }),
+}));
+
 // --- Fixtures ---
 
 const ALPHA: JiraProject = { id: '1', key: 'ALPHA', name: 'Alpha Project' };
@@ -53,11 +64,17 @@ const BETA: JiraProject = { id: '2', key: 'BETA', name: 'Beta Project' };
  */
 const storedCopy = (project: JiraProject): JiraProject => ({ ...project });
 
-const getInput = () =>
-  screen.getByRole('combobox') as HTMLInputElement;
+const getInput = () => screen.getByRole('combobox') as HTMLInputElement;
 
 const getClearButton = () =>
   document.querySelector<HTMLButtonElement>('[data-slot="combobox-clear"]')!;
+
+/**
+ * Radix renders tooltip content twice — the positioned copy and a
+ * visually hidden one for screen readers — so this asserts on the count
+ * rather than on a single node.
+ */
+const getTip = () => screen.queryAllByText(/only need to select/i);
 
 beforeEach(() => {
   mockReplace.mockClear();
@@ -65,6 +82,10 @@ beforeEach(() => {
   mockSearchParams = new URLSearchParams();
   mockProjects = [];
   mockSelectedProject = null;
+});
+
+afterEach(() => {
+  jest.useRealTimers();
 });
 
 describe('isProjectScopedRoute', () => {
@@ -202,5 +223,53 @@ describe('ProjectSwitcher', () => {
     expect(mockReplace).toHaveBeenCalledWith('/absences?project=ALPHA', {
       scroll: false,
     });
+  });
+
+  // --- Project tip ---
+
+  it('shows the tip while no project is selected', () => {
+    mockProjects = [ALPHA, BETA];
+
+    render(<ProjectSwitcher />);
+
+    expect(getTip()).not.toHaveLength(0);
+  });
+
+  it('hides the tip when a project is already selected', () => {
+    mockProjects = [ALPHA, BETA];
+    mockSelectedProject = storedCopy(ALPHA);
+    mockSearchParams = new URLSearchParams('project=ALPHA');
+
+    render(<ProjectSwitcher />);
+
+    expect(getTip()).toHaveLength(0);
+  });
+
+  it('hides the tip after ten seconds', () => {
+    jest.useFakeTimers();
+    mockProjects = [ALPHA, BETA];
+
+    render(<ProjectSwitcher />);
+    expect(getTip()).not.toHaveLength(0);
+
+    act(() => {
+      jest.advanceTimersByTime(10_000);
+    });
+
+    expect(getTip()).toHaveLength(0);
+  });
+
+  it('hides the tip once a project is selected', async () => {
+    const user = userEvent.setup();
+    mockProjects = [ALPHA, BETA];
+
+    render(<ProjectSwitcher />);
+    expect(getTip()).not.toHaveLength(0);
+
+    await user.click(getInput());
+    await user.click(await screen.findByText('Beta Project'));
+
+    expect(mockSetSelectedProject).toHaveBeenCalledWith(BETA);
+    expect(getTip()).toHaveLength(0);
   });
 });
