@@ -51,7 +51,7 @@ const PROJECT_SCOPED_ROUTES = [
 ];
 
 /** How long the unprompted tip stays up before it gets out of the way. */
-const TIP_AUTO_HIDE_MS = 10_000;
+const TIP_AUTO_HIDE_MS = 5_000;
 
 export function isProjectScopedRoute(pathname: string) {
   return PROJECT_SCOPED_ROUTES.some(
@@ -191,13 +191,14 @@ export function ProjectSwitcher() {
             <Info className="size-4" />
           </button>
         </TooltipTrigger>
-        <TooltipContent side="bottom" align="start" className="max-w-xs">
-          <p className="font-medium">Tips</p>
-          <p>
-            Now you only need to select{' '}
-            <span className="font-medium">the project once here</span>. No need
-            to switch on each page.
-          </p>
+        <TooltipContent
+          side="bottom"
+          align="start"
+          className="max-w-56 leading-snug"
+        >
+          <span className="font-medium">Tips: </span>
+          Select <span className="font-medium">the project once here</span>. No
+          need to switch on each page.
         </TooltipContent>
       </Tooltip>
       <label

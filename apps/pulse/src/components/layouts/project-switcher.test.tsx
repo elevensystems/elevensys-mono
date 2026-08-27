@@ -74,7 +74,7 @@ const getClearButton = () =>
  * visually hidden one for screen readers — so this asserts on the count
  * rather than on a single node.
  */
-const getTip = () => screen.queryAllByText(/only need to select/i);
+const getTip = () => screen.queryAllByText(/the project once here/i);
 
 beforeEach(() => {
   mockReplace.mockClear();
@@ -245,7 +245,7 @@ describe('ProjectSwitcher', () => {
     expect(getTip()).toHaveLength(0);
   });
 
-  it('hides the tip after ten seconds', () => {
+  it('hides the tip after five seconds', () => {
     jest.useFakeTimers();
     mockProjects = [ALPHA, BETA];
 
@@ -253,7 +253,7 @@ describe('ProjectSwitcher', () => {
     expect(getTip()).not.toHaveLength(0);
 
     act(() => {
-      jest.advanceTimersByTime(10_000);
+      jest.advanceTimersByTime(5_000);
     });
 
     expect(getTip()).toHaveLength(0);
