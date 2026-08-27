@@ -51,10 +51,16 @@ jest.mock('./date-chip-list', () => ({
 // 2/Jan/26 Fri, 3/Jan/26 Sat, 4/Jan/26 Sun, 5/Jan/26 Mon
 const API_DATES = '2/Jan/26,3/Jan/26,4/Jan/26,5/Jan/26';
 
+type CardProps = React.ComponentProps<typeof MissingWorklogsCard>;
+
+// `onSelectedDatesChange` is returned separately rather than as part of the
+// props object: spreading `overrides` over it would widen its type to a
+// union and lose the jest.Mock surface the assertions read.
 function renderCard(
-  overrides: Partial<React.ComponentProps<typeof MissingWorklogsCard>> = {}
+  overrides: Partial<Omit<CardProps, 'onSelectedDatesChange'>> = {}
 ) {
-  const props = {
+  const onSelectedDatesChange = jest.fn();
+  const props: CardProps = {
     selectedProjectId: 'PROJ',
     warningFromDate: '2026-01-01',
     warningToDate: '2026-01-31',
@@ -64,16 +70,16 @@ function renderCard(
     onSearchWarnings: jest
       .fn()
       .mockResolvedValue({ dates: API_DATES, count: 4 }),
-    selectedDates: [] as Date[],
-    onSelectedDatesChange: jest.fn(),
-    parsedDates: [] as string[],
+    selectedDates: [],
+    parsedDates: [],
     onClearAllDates: jest.fn(),
     includeWeekends: false,
     onIncludeWeekendsChange: jest.fn(),
     ...overrides,
+    onSelectedDatesChange,
   };
   render(<MissingWorklogsCard {...props} />);
-  return props;
+  return { onSelectedDatesChange };
 }
 
 beforeEach(() => {
@@ -85,12 +91,12 @@ beforeEach(() => {
 
 it('keeps weekends returned by the API when include weekends is off', async () => {
   const user = userEvent.setup();
-  const props = renderCard({ includeWeekends: false });
+  const { onSelectedDatesChange } = renderCard({ includeWeekends: false });
 
   await user.click(screen.getByRole('button', { name: /find dates/i }));
 
-  expect(props.onSelectedDatesChange).toHaveBeenCalledTimes(1);
-  const dates = props.onSelectedDatesChange.mock.calls[0][0] as Date[];
+  expect(onSelectedDatesChange).toHaveBeenCalledTimes(1);
+  const dates = onSelectedDatesChange.mock.calls[0][0] as Date[];
   expect(dates.map(d => d.toDateString())).toEqual([
     'Fri Jan 02 2026',
     'Sat Jan 03 2026',
@@ -101,7 +107,7 @@ it('keeps weekends returned by the API when include weekends is off', async () =
 
 it('skips dates the API returns in an unparseable format', async () => {
   const user = userEvent.setup();
-  const props = renderCard({
+  const { onSelectedDatesChange } = renderCard({
     onSearchWarnings: jest
       .fn()
       .mockResolvedValue({ dates: '2/Jan/26,not-a-date', count: 2 }),
@@ -109,7 +115,7 @@ it('skips dates the API returns in an unparseable format', async () => {
 
   await user.click(screen.getByRole('button', { name: /find dates/i }));
 
-  const dates = props.onSelectedDatesChange.mock.calls[0][0] as Date[];
+  const dates = onSelectedDatesChange.mock.calls[0][0] as Date[];
   expect(dates).toHaveLength(1);
 });
 
