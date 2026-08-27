@@ -69,6 +69,13 @@ export function MissingWorklogsCard({
 }: MissingWorklogsCardProps) {
   const [manualDateKeys, setManualDateKeys] = useState<Set<string>>(new Set());
 
+  // Weekends found by "Find Dates" stay selectable so they can be toggled
+  // off in the calendar; only unselected weekends are blocked from manual
+  // picking while the checkbox is off.
+  const isUnselectedWeekend = (date: Date) =>
+    isWeekend(date) &&
+    !selectedDates.some(d => toDateKey(d) === toDateKey(date));
+
   const handleRemoveDate = (date: Date) => {
     onSelectedDatesChange(
       selectedDates.filter(d => d.getTime() !== date.getTime())
@@ -107,16 +114,15 @@ export function MissingWorklogsCard({
     const result = await onSearchWarnings();
     if (result === null) return;
 
+    // The API already decides which dates are missing, weekends included.
+    // "Include weekends" only governs manual picking, so the result is kept
+    // exactly as returned.
     const dates = result.dates
       .split(',')
       .map(s => s.trim())
       .filter(Boolean)
       .map(parseApiDate)
-      .filter((d): d is Date => {
-        if (d === null) return false;
-        if (!includeWeekends && isWeekend(d)) return false;
-        return true;
-      });
+      .filter((d): d is Date => d !== null);
     onSelectedDatesChange(dates);
     setManualDateKeys(new Set());
     if (dates.length > 0) {
@@ -183,7 +189,9 @@ export function MissingWorklogsCard({
                       mode="multiple"
                       selected={selectedDates}
                       onSelect={handleCalendarSelect}
-                      disabled={includeWeekends ? undefined : isWeekend}
+                      disabled={
+                        includeWeekends ? undefined : isUnselectedWeekend
+                      }
                       numberOfMonths={3}
                       showOutsideDays={false}
                     />
