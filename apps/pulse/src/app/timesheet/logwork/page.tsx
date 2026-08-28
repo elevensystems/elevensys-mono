@@ -86,7 +86,7 @@ export default function LogWorkPage() {
       : [createDefaultEntry()]
   );
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
-  const [includeWeekends, setIncludeWeekends] = useState(false);
+  const [includeWeekends, setIncludeWeekends] = useState(true);
   const [errors, setErrors] = useState<ValidationErrors>({
     global: {},
     rows: new Map(),
