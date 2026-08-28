@@ -167,6 +167,7 @@ export function MissingWorklogsCard({
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="flex-1 sm:flex-none">
                       <CalendarPlus />
+                      Add manually
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent
