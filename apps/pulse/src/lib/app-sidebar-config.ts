@@ -42,9 +42,9 @@ export const appSidebarData: {
           icon: Clock,
           items: [
             { title: 'Log Work', url: '/timesheet/logwork' },
-            { title: 'My Worklogs', url: '/timesheet/my-worklogs' },
             { title: 'Project Worklogs', url: '/timesheet/project-worklogs' },
             { title: 'Missing Worklogs', url: '/timesheet/missing-worklogs' },
+            { title: 'My Worklogs', url: '/timesheet/my-worklogs' },
           ],
         },
         { title: 'Absences', url: '/absences', icon: CalendarX, badge: 'New' },
