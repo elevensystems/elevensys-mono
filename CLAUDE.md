@@ -618,6 +618,10 @@ pnpm turbo dev --filter=elevensys-web
 - Don't store sensitive data in client-side state
 - Don't install shared UI dependencies in individual apps (put them in `packages/ui`)
 
+## Git Commits
+
+- DO NOT include Co-Authored-By trailers in git commit messages.
+
 ## Testing
 
 | Category          | Technology                                       |
