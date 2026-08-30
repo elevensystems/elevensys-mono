@@ -7,7 +7,7 @@ codebase.
 
 **Elevensys Mono** is a Turborepo monorepo containing multiple Next.js applications and shared
 packages. It provides AI-powered productivity tools and an admin dashboard. Built with Next.js 16
-(App Router), React 19, and TypeScript 5, using pnpm workspaces for dependency management.
+(App Router), React 19, and TypeScript 7, using pnpm workspaces for dependency management.
 
 ### Monorepo Structure
 
@@ -54,7 +54,7 @@ pnpm --filter elevensys-web test:coverage
 | Monorepo        | Turborepo + pnpm workspaces        |
 | Framework       | Next.js 16 (App Router, Turbopack) |
 | UI Library      | React 19                           |
-| Language        | TypeScript 5 (strict mode)         |
+| Language        | TypeScript 7 (strict mode)         |
 | Styling         | Tailwind CSS v4                    |
 | Components      | shadcn/ui + Radix UI primitives    |
 | Icons           | lucide-react                       |
@@ -64,6 +64,26 @@ pnpm --filter elevensys-web test:coverage
 | Notifications   | sonner                             |
 | Forms           | @tanstack/react-form               |
 | Package Manager | pnpm 10                            |
+
+### TypeScript 7 toolchain
+
+`tsc` is TypeScript 7 (the native compiler) and `tsc6` is TypeScript 6, installed side by side:
+
+```json
+"@typescript/native": "npm:typescript@^7.0.2",
+"typescript": "npm:@typescript/typescript6@^6.0.2"
+```
+
+The `typescript` name is aliased to the 6.0 package because typescript-eslint cannot load the TS 7
+API yet ([#10940](https://github.com/typescript-eslint/typescript-eslint/issues/10940)) — it throws
+at import time on TS >= 7. Anything resolving `typescript` as a module (ESLint, editors) gets the
+6.0 API; `pnpm type-check` runs the real TS 7 binary.
+
+`@typescript/typescript6` ships `bin/tsc6`, not `bin/tsc`, which Next's CLI type-check path
+requires, so every app sets `experimental.useTypeScriptCli: false` to type-check through the TS API
+during `next build`. Drop that flag (and the alias) once typescript-eslint supports TS 7.
+
+`baseUrl` was removed in TS 7 — use `paths` instead.
 
 ## Directory Structure
 
