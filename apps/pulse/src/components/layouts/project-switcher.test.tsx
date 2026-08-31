@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { act, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import type { JiraProject } from '@/types/timesheet';
@@ -69,12 +69,7 @@ const getInput = () => screen.getByRole('combobox') as HTMLInputElement;
 const getClearButton = () =>
   document.querySelector<HTMLButtonElement>('[data-slot="combobox-clear"]')!;
 
-/**
- * Radix renders tooltip content twice — the positioned copy and a
- * visually hidden one for screen readers — so this asserts on the count
- * rather than on a single node.
- */
-const getTip = () => screen.queryAllByText(/the project once here/i);
+const queryTip = () => screen.queryByText(/Pick your project once/i);
 
 beforeEach(() => {
   mockReplace.mockClear();
@@ -82,10 +77,6 @@ beforeEach(() => {
   mockSearchParams = new URLSearchParams();
   mockProjects = [];
   mockSelectedProject = null;
-});
-
-afterEach(() => {
-  jest.useRealTimers();
 });
 
 describe('isProjectScopedRoute', () => {
@@ -232,7 +223,7 @@ describe('ProjectSwitcher', () => {
 
     render(<ProjectSwitcher />);
 
-    expect(getTip()).not.toHaveLength(0);
+    expect(queryTip()).toBeInTheDocument();
   });
 
   it('hides the tip when a project is already selected', () => {
@@ -242,34 +233,55 @@ describe('ProjectSwitcher', () => {
 
     render(<ProjectSwitcher />);
 
-    expect(getTip()).toHaveLength(0);
+    expect(queryTip()).not.toBeInTheDocument();
   });
 
-  it('hides the tip after five seconds', () => {
-    jest.useFakeTimers();
+  it('steps aside while the project list is open', async () => {
+    const user = userEvent.setup();
     mockProjects = [ALPHA, BETA];
 
     render(<ProjectSwitcher />);
-    expect(getTip()).not.toHaveLength(0);
+    expect(queryTip()).toBeInTheDocument();
 
-    act(() => {
-      jest.advanceTimersByTime(5_000);
-    });
+    await user.click(getInput());
 
-    expect(getTip()).toHaveLength(0);
+    expect(queryTip()).not.toBeInTheDocument();
+  });
+
+  it('offers the tip again once the selection is cleared', async () => {
+    const user = userEvent.setup();
+    mockProjects = [ALPHA, BETA];
+    mockSelectedProject = storedCopy(ALPHA);
+    mockSearchParams = new URLSearchParams('project=ALPHA');
+
+    const { rerender } = render(<ProjectSwitcher />);
+    expect(queryTip()).not.toBeInTheDocument();
+
+    await user.click(getClearButton());
+
+    mockSelectedProject = null;
+    rerender(<ProjectSwitcher />);
+
+    expect(queryTip()).toBeInTheDocument();
   });
 
   it('hides the tip once a project is selected', async () => {
     const user = userEvent.setup();
     mockProjects = [ALPHA, BETA];
 
-    render(<ProjectSwitcher />);
-    expect(getTip()).not.toHaveLength(0);
+    const { rerender } = render(<ProjectSwitcher />);
+    expect(queryTip()).toBeInTheDocument();
 
     await user.click(getInput());
     await user.click(await screen.findByText('Beta Project'));
 
     expect(mockSetSelectedProject).toHaveBeenCalledWith(BETA);
-    expect(getTip()).toHaveLength(0);
+
+    // The store is mocked, so stand in for the write landing back in the
+    // component — that selection is what retires the tip for good.
+    mockSelectedProject = BETA;
+    rerender(<ProjectSwitcher />);
+
+    expect(queryTip()).not.toBeInTheDocument();
   });
 });

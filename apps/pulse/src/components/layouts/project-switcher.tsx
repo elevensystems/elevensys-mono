@@ -13,11 +13,12 @@ import {
   ComboboxList,
 } from '@workspace/ui/components/combobox';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@workspace/ui/components/tooltip';
-import { Info } from 'lucide-react';
+  Popover,
+  PopoverAnchor,
+  PopoverArrow,
+  PopoverContent,
+} from '@workspace/ui/components/popover';
+import { cn } from '@workspace/ui/lib/utils';
 
 import { useProjects } from '@/hooks/use-projects';
 import {
@@ -49,9 +50,6 @@ const PROJECT_SCOPED_ROUTES = [
   '/absences',
   '/worklog-management',
 ];
-
-/** How long the unprompted tip stays up before it gets out of the way. */
-const TIP_AUTO_HIDE_MS = 5_000;
 
 export function isProjectScopedRoute(pathname: string) {
   return PROJECT_SCOPED_ROUTES.some(
@@ -137,106 +135,105 @@ export function ProjectSwitcher() {
     writeUrl(selectedProject.key);
   }, [urlKey, selectedProject, writeUrl]);
 
-  /** Set once the tip has had its turn — by timing out, or by the user. */
-  const [isTipSpent, setIsTipSpent] = React.useState(false);
-  /** A tip the user opened themselves: no timer, it follows the pointer. */
-  const [isTipOpenedByUser, setIsTipOpenedByUser] = React.useState(false);
+  /**
+   * The tip and the project list occupy the same spot under the field, so the
+   * list wins while it is open — the tip is a nudge toward that list, not
+   * something to click through.
+   */
+  const [isListOpen, setIsListOpen] = React.useState(false);
 
   /**
-   * The unprompted tip waits for a real answer to "is a project selected?":
-   * before the store loads, and while the list is still arriving, the selection
-   * is empty for everyone.
+   * There is no dismiss: the tip describes the one thing still missing, so it
+   * stands until a project is picked and returns if the field is cleared.
+   *
+   * It waits for a real answer to "is a project selected?" first — before the
+   * store loads, and while the list is still arriving, the selection is empty
+   * for everyone.
    */
-  const isTipOffered =
-    isLoaded && isConfigured && !isLoading && !selectedProject && !isTipSpent;
-
-  React.useEffect(() => {
-    if (!isTipOffered) return;
-
-    const timer = window.setTimeout(
-      () => setIsTipSpent(true),
-      TIP_AUTO_HIDE_MS
-    );
-    return () => window.clearTimeout(timer);
-  }, [isTipOffered]);
-
-  // Radix drives this from hover, focus and click on the trigger. Closing that
-  // way also spends the unprompted tip: the user has seen it and moved on.
-  const handleTipOpenChange = React.useCallback((open: boolean) => {
-    setIsTipOpenedByUser(open);
-    if (!open) setIsTipSpent(true);
-  }, []);
+  const isTipOpen =
+    isLoaded && isConfigured && !isLoading && !selectedProject && !isListOpen;
 
   const handleSelect = React.useCallback(
     (value: JiraProject | null) => {
       setSelectedProject(value);
       writeUrl(value?.key ?? null);
-      setIsTipSpent(true);
     },
     [setSelectedProject, writeUrl]
   );
 
   return (
     <div className="flex items-center gap-2">
-      <Tooltip
-        open={isTipOffered || isTipOpenedByUser}
-        onOpenChange={handleTipOpenChange}
-      >
-        <TooltipTrigger asChild>
-          <button
-            type="button"
-            aria-label="About the project selector"
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Info className="size-4" />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent
-          side="bottom"
-          align="start"
-          className="max-w-56 leading-snug"
-        >
-          <span className="font-medium">Tips: </span>
-          Select <span className="font-medium">the project once here</span>. No
-          need to switch on each page.
-        </TooltipContent>
-      </Tooltip>
       <label
         htmlFor="global-project-select"
         className="text-muted-foreground hidden text-sm sm:block"
       >
         Project
       </label>
-      {/* The input is intentionally uncontrolled: Base UI seeds it from
-          `value`, filters `items` by what is typed, and restores the selected
-          label on close. Controlling it pins the text to the selection and
-          makes the field unsearchable. */}
-      <Combobox
-        items={projects}
-        value={selectedProject}
-        onValueChange={handleSelect}
-        itemToStringLabel={projectLabel}
-        isItemEqualToValue={isSameProject}
-      >
-        <ComboboxInput
-          id="global-project-select"
-          placeholder={isLoading ? 'Loading projects...' : 'Select project...'}
-          className="w-[220px] lg:w-[280px]"
-          disabled={!isConfigured || isLoading}
-          loading={isLoading}
-          showClear
-        />
-        <ComboboxContent>
-          <ComboboxList>
-            {(project: JiraProject) => (
-              <ComboboxItem key={project.id} value={project}>
-                <span className="font-medium shrink-0">{project.name}</span>
-              </ComboboxItem>
-            )}
-          </ComboboxList>
-          <ComboboxEmpty>No projects found</ComboboxEmpty>
-        </ComboboxContent>
-      </Combobox>
+      {/* The coachmark hangs off the field itself rather than off an icon
+          beside it: what it is pointing at is the control, and a hint the user
+          has to hunt for is not a hint. */}
+      <Popover open={isTipOpen}>
+        <PopoverAnchor>
+          {/* The input is intentionally uncontrolled: Base UI seeds it from
+              `value`, filters `items` by what is typed, and restores the
+              selected label on close. Controlling it pins the text to the
+              selection and makes the field unsearchable. */}
+          <Combobox
+            items={projects}
+            value={selectedProject}
+            onValueChange={handleSelect}
+            onOpenChange={setIsListOpen}
+            itemToStringLabel={projectLabel}
+            isItemEqualToValue={isSameProject}
+          >
+            <ComboboxInput
+              id="global-project-select"
+              placeholder={
+                isLoading ? 'Loading projects...' : 'Select project...'
+              }
+              className={cn(
+                'w-[220px] lg:w-[280px]',
+                // Spotlight: while the tip is up, the field it describes is
+                // lifted out of the header chrome.
+                isTipOpen && 'ring-foreground/70 rounded-md ring-2'
+              )}
+              disabled={!isConfigured || isLoading}
+              loading={isLoading}
+              showClear
+            />
+            <ComboboxContent>
+              <ComboboxList>
+                {(project: JiraProject) => (
+                  <ComboboxItem key={project.id} value={project}>
+                    <span className="font-medium shrink-0">{project.name}</span>
+                  </ComboboxItem>
+                )}
+              </ComboboxList>
+              <ComboboxEmpty>No projects found</ComboboxEmpty>
+            </ComboboxContent>
+          </Combobox>
+        </PopoverAnchor>
+        <PopoverContent
+          side="bottom"
+          align="start"
+          alignOffset={-4}
+          sideOffset={10}
+          // The card appears unbidden and holds nothing to click, so it neither
+          // takes the caret from whatever the user was doing nor stands between
+          // the pointer and the field it is pointing at.
+          onOpenAutoFocus={event => event.preventDefault()}
+          className="bg-foreground text-background pointer-events-none w-80 rounded-xl border-0 p-4 shadow-lg"
+        >
+          <PopoverArrow className="fill-foreground" />
+          <p className="text-[15px] leading-6 font-semibold">
+            Pick your project once
+          </p>
+          <p className="text-background/70 mt-1.5 text-sm leading-6">
+            Choose one here and every page follows along, no need to set it
+            again.
+          </p>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
