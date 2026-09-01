@@ -17,10 +17,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@flags-sdk/global-config": "^0.3.1",
-    "@flags-sdk/vercel": "^1.2.1",
     "@workspace/ui": "workspace:*",
-    "flags": "^4.0.5",
     "lucide-react": "^0.545.0",
     "next": "^16.3.3",
     "next-themes": "^0.4.6",

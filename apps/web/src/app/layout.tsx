@@ -2,12 +2,12 @@ import type { Metadata } from 'next';
 import { Ubuntu, Ubuntu_Mono } from 'next/font/google';
 
 import { Toaster } from '@workspace/ui/components/sonner';
-import { resolveScheduledAnnouncement } from '@workspace/ui/lib/site-announcement';
+import { getSiteAnnouncement } from '@workspace/ui/lib/site-announcement-server';
 
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/contexts/auth-context';
 import { FlagsProvider } from '@/contexts/flags-context';
-import { appSiteBannerFlag, sidebarToolsFlag, siteBannerFlag } from '@/flags';
+import { sidebarToolsFlag } from '@/flags';
 import { getUserFromSession } from '@/lib/auth';
 import { APP_DESCRIPTION, APP_NAME } from '@/lib/constants';
 import '@/styles/globals.css';
@@ -47,14 +47,9 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const user = await getUserFromSession();
-  // An app-specific announcement wins; an empty one falls back to the global.
-  // The schedule window is applied here, server-side, rather than inside the
-  // client `SiteBanner` — see resolveScheduledAnnouncement for why.
-  const announcement =
-    (await appSiteBannerFlag()) || (await siteBannerFlag()) || '';
   const flags = {
     'sidebar-tools': String((await sidebarToolsFlag()) ?? ''),
-    'site-banner': resolveScheduledAnnouncement(String(announcement)),
+    'site-banner': await getSiteAnnouncement('web'),
   };
 
   return (

@@ -312,6 +312,10 @@ import type { AuthUser } from '@/types/auth';
 
 // Always use 'use client' directive for client components
 
+// Always use 'use client' directive for client components
+
+// Always use 'use client' directive for client components
+
 // Define interfaces above component
 interface MyComponentProps {
   title: string;
@@ -433,7 +437,7 @@ moved to the app root: `/`, `/timesheet/logwork`, `/timesheet/my-worklogs`,
 - **Providers**: `ThemeProvider` → `FlagsProvider` — no Cognito
 - **Auth**: Jira PAT saved in `localStorage` via `/config`, sent as a `Bearer` header to
   `/api/jira/*` proxy routes (forwarded to `API_BASE_URL`)
-- **Env**: `API_BASE_URL` (validated in `src/env.ts`); optional `FLAGS` for the site banner
+- **Env**: `API_BASE_URL` (validated in `src/env.ts`); optional `GLOBAL_CONFIG` for the site banner
 - Shared timesheet components live in `src/components/features/timesheet/`; page-private components
   stay in each route's `_components/`
 
@@ -801,9 +805,9 @@ within seconds; no deploy, no dashboard, no hand-written JSON.
 
 ### Storage: Vercel Global Config
 
-The announcement lives in a Vercel **Global Config** store (formerly Edge Config), read through
-`@flags-sdk/global-config` so the Flags SDK call sites are unchanged, and written by admin through
-the Vercel REST API.
+The announcement lives in a Vercel **Global Config** store (formerly Edge Config), read with
+`@vercel/global-config` and written by admin through the Vercel REST API. It is not a feature flag:
+no Flags SDK, no adapter, no flag declaration — just two keys in a Global Config item.
 
 ```jsonc
 // Global Config item "flags" — values are JSON strings, or "" to hide
@@ -818,21 +822,22 @@ the Vercel REST API.
 ```
 
 An app-specific announcement wins; an empty one falls back to the global value. `sidebar-tools` (web
-only) still lives in Vercel Flags — only the announcement moved.
+only) is the one remaining Vercel Flag, so `src/flags.ts` and `FLAGS` exist in `apps/web` alone.
 
 ### Shared pieces (`@workspace/ui`)
 
-| File                            | Exports                                                     |
-| ------------------------------- | ----------------------------------------------------------- |
-| `lib/site-announcement.ts`      | `SiteAnnouncement`, `parseAnnouncementBanner()`,            |
-|                                 | `resolveScheduledAnnouncement()`, `isAnnouncementActive()`, |
-|                                 | `SITE_BANNER_APPS`, `siteBannerKey()`                       |
-| `components/flags-provider.tsx` | `FlagsProvider`, `useFlags()`, `FlagsRecord`                |
-| `components/site-banner.tsx`    | `SiteBanner` — parses the flag, renders `Banner`            |
+| File                              | Exports                                                     |
+| --------------------------------- | ----------------------------------------------------------- |
+| `lib/site-announcement.ts`        | `SiteAnnouncement`, `parseAnnouncementBanner()`,            |
+|                                   | `resolveScheduledAnnouncement()`, `isAnnouncementActive()`, |
+|                                   | `SITE_BANNER_APPS`, `siteBannerKey()`                       |
+| `lib/site-announcement-server.ts` | `getSiteAnnouncement(app)` — the Global Config read         |
+| `components/flags-provider.tsx`   | `FlagsProvider`, `useFlags()`, `FlagsRecord`                |
+| `components/site-banner.tsx`      | `SiteBanner` — parses the value, renders `Banner`           |
 
-`SiteBanner` reads the flag from `useFlags()`, so apps just render it; pass `value` to drive it from
-another source (the admin preview does this). The banner is not dismissible — it stays visible until
-cleared or updated. (`Banner` still supports `onDismiss` for other, non-site-wide uses.)
+`SiteBanner` reads the value from `useFlags()`, so apps just render it; pass `value` to drive it
+from another source (the admin preview does this). The banner is not dismissible — it stays visible
+until cleared or updated. (`Banner` still supports `onDismiss` for other, non-site-wide uses.)
 
 ### Announcement value
 
@@ -857,29 +862,29 @@ Malformed JSON logs to `console.error` and hides the banner rather than breaking
 
 ### Wiring in an app
 
-1. Declare both flags in `src/flags.ts` — `siteBannerFlag` (`site-banner`) and `appSiteBannerFlag`
-   (`site-banner:<app>`), both on `globalConfigAdapter()`
-2. Resolve precedence and the schedule in the root layout:
+1. Read it in the root layout and hand it to `FlagsProvider`:
 
    ```ts
-   const announcement = (await appSiteBannerFlag()) || (await siteBannerFlag()) || '';
-   const flags = { 'site-banner': resolveScheduledAnnouncement(String(announcement)) };
+   const flags = { 'site-banner': await getSiteAnnouncement('pulse') };
    ```
 
-3. Render `<SiteBanner />` in `main-layout.tsx` just below the sticky header
+2. Render `<SiteBanner />` in `main-layout.tsx` just below the sticky header
 
-Each `MainLayout` accepts a `banner` prop: omit it for the flag-driven banner, or pass `null` to
+`getSiteAnnouncement()` does the whole job: app key first, global key as fallback, schedule window
+applied. Add the app to `SITE_BANNER_APPS` so admin can target it.
+
+Each `MainLayout` accepts a `banner` prop: omit it for the Global Config value, or pass `null` to
 suppress it on a given page.
 
-> The schedule window is applied **server-side in the layout**, not inside the client `SiteBanner`.
-> Evaluating it during render on both server and client risks a hydration mismatch when a bound
-> falls between the two. The trade-off: an already-open page picks up a scheduled start on its next
-> navigation or reload, not on a timer.
+> The schedule window is applied **server-side while the layout renders**, not inside the client
+> `SiteBanner`. Evaluating it during render on both server and client risks a hydration mismatch
+> when a bound falls between the two. The trade-off: an already-open page picks up a scheduled start
+> on its next navigation or reload, not on a timer.
 
-> `globalConfigAdapter()` throws at module-evaluation time when no store is connected, which would
-> fail the build. Each `src/flags.ts` therefore attaches the adapter only when `GLOBAL_CONFIG` or
-> `EDGE_CONFIG` is present and falls back to the flag's default otherwise — so apps without a store
-> still build, with the banner simply hidden.
+> A missing store is not an error: `getSiteAnnouncement()` returns `''` when neither `GLOBAL_CONFIG`
+> nor `EDGE_CONFIG` is set (the SDK throws on an undefined connection string) and also when the read
+> itself fails, so an app without a store — or an unreachable Global Config — still renders, with
+> the banner simply hidden.
 
 ### Editing it (apps/admin)
 

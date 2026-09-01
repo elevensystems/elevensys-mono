@@ -1,5 +1,10 @@
 {
   "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // `site-announcement-server.ts` reads `process.env`; apps get the Node
+    // globals from `next-env.d.ts`, this package has to ask for them.
+    "types": ["node"]
+  },
   "include": ["src"],
   "exclude": ["node_modules"]
 }
