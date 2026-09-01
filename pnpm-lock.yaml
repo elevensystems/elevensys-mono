@@ -32,15 +32,21 @@ importers:
       '@base-ui/react':
         specifier: ^1.1.0
         version: 1.4.0(@date-fns/tz@1.4.1)(@types/react@19.2.14)(date-fns@4.1.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@flags-sdk/global-config':
+        specifier: ^0.3.1
+        version: 0.3.1(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))
       '@flags-sdk/vercel':
         specifier: ^1.2.1
-        version: 1.3.0(flags@4.0.6(next@16.3.3(@babel/core@7.29.0)(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(next@16.3.3(@babel/core@7.29.0)(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))
+        version: 1.3.0(flags@4.0.6(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@tanstack/react-form':
         specifier: ^1.28.3
         version: 1.29.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@vercel/global-config':
+        specifier: ^1.5.1
+        version: 1.5.1(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))
       '@workspace/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -52,7 +58,7 @@ importers:
         version: 4.1.0
       flags:
         specifier: ^4.0.5
-        version: 4.0.6(next@16.3.3(@babel/core@7.29.0)(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+        version: 4.0.6(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       jsonc-parser:
         specifier: ^3.3.1
         version: 3.3.1
@@ -147,15 +153,18 @@ importers:
 
   apps/insight:
     dependencies:
+      '@flags-sdk/global-config':
+        specifier: ^0.3.1
+        version: 0.3.1(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))
       '@flags-sdk/vercel':
         specifier: ^1.2.1
-        version: 1.3.0(flags@4.0.6(next@16.3.3(@babel/core@7.29.0)(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(next@16.3.3(@babel/core@7.29.0)(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))
+        version: 1.3.0(flags@4.0.6(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))
       '@workspace/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       flags:
         specifier: ^4.0.5
-        version: 4.0.6(next@16.3.3(@babel/core@7.29.0)(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+        version: 4.0.6(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       lucide-react:
         specifier: ^0.545.0
         version: 0.545.0(react@19.2.5)
@@ -238,9 +247,12 @@ importers:
 
   apps/pulse:
     dependencies:
+      '@flags-sdk/global-config':
+        specifier: ^0.3.1
+        version: 0.3.1(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))
       '@flags-sdk/vercel':
         specifier: ^1.2.1
-        version: 1.3.0(flags@4.0.6(next@16.3.3(@babel/core@7.29.0)(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(next@16.3.3(@babel/core@7.29.0)(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))
+        version: 1.3.0(flags@4.0.6(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))
       '@tanstack/react-form':
         specifier: ^1.28.3
         version: 1.29.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -249,7 +261,7 @@ importers:
         version: link:../../packages/ui
       flags:
         specifier: ^4.0.5
-        version: 4.0.6(next@16.3.3(@babel/core@7.29.0)(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+        version: 4.0.6(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       lucide-react:
         specifier: ^0.545.0
         version: 0.545.0(react@19.2.5)
@@ -335,9 +347,12 @@ importers:
       '@base-ui/react':
         specifier: ^1.1.0
         version: 1.4.0(@date-fns/tz@1.4.1)(@types/react@19.2.14)(date-fns@4.1.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@flags-sdk/global-config':
+        specifier: ^0.3.1
+        version: 0.3.1(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))
       '@flags-sdk/vercel':
         specifier: ^1.2.1
-        version: 1.3.0(flags@4.0.6(next@16.3.3(@babel/core@7.29.0)(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(next@16.3.3(@babel/core@7.29.0)(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))
+        version: 1.3.0(flags@4.0.6(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -355,7 +370,7 @@ importers:
         version: 4.1.0
       flags:
         specifier: ^4.0.5
-        version: 4.0.6(next@16.3.3(@babel/core@7.29.0)(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+        version: 4.0.6(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       jsonc-parser:
         specifier: ^3.3.1
         version: 3.3.1
@@ -1026,6 +1041,9 @@ packages:
   '@eslint/plugin-kit@0.4.1':
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@flags-sdk/global-config@0.3.1':
+    resolution: {integrity: sha512-yu2Y9/9Ecy1gKPDm7dQGcmFoxfIeOZLDlL6swhBVg4Eh/Nu1vxrBLdyBOO+lc8rHHIPknDaBLlhiOaPs7UKChQ==}
 
   '@flags-sdk/vercel@1.3.0':
     resolution: {integrity: sha512-IGwC8ye94+CnOYDxIdic1f2wZLbJQ67zXacD3J1/UWErcPdjtfp44RG23Qb9WujJ2VJbB8bzLdZ6R89nALtDeg==}
@@ -2891,6 +2909,21 @@ packages:
       '@aws-sdk/credential-provider-web-identity': '*'
     peerDependenciesMeta:
       '@aws-sdk/credential-provider-web-identity':
+        optional: true
+
+  '@vercel/global-config-fs@0.1.0':
+    resolution: {integrity: sha512-xxMUwf96H/qKTA4Az+uh3xlVWkwnN3z400P5gex0uUsU8pe99njopYVyKVoUTfu8gN9xbHqaigWaIBr1+lufMg==}
+
+  '@vercel/global-config@1.5.1':
+    resolution: {integrity: sha512-PUJaoyMGuSLdKnBgYIqeH1i6U3G+5noLvvJLqI8IPP5+P0b2Q5EcBBraFRh6ctNY/yTpb40klyLYyE3X0OPmKQ==}
+    engines: {node: '>=14.6'}
+    peerDependencies:
+      '@opentelemetry/api': ^1.7.0
+      next: '>=1'
+    peerDependenciesMeta:
+      '@opentelemetry/api':
+        optional: true
+      next:
         optional: true
 
   '@vercel/oidc@3.2.0':
@@ -6556,10 +6589,17 @@ snapshots:
       '@eslint/core': 0.17.0
       levn: 0.4.1
 
-  '@flags-sdk/vercel@1.3.0(flags@4.0.6(next@16.3.3(@babel/core@7.29.0)(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(next@16.3.3(@babel/core@7.29.0)(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))':
+  '@flags-sdk/global-config@0.3.1(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))':
     dependencies:
-      '@vercel/flags-core': 1.4.0(next@16.3.3(@babel/core@7.29.0)(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))
-      flags: 4.0.6(next@16.3.3(@babel/core@7.29.0)(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@vercel/global-config': 1.5.1(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))
+    transitivePeerDependencies:
+      - '@opentelemetry/api'
+      - next
+
+  '@flags-sdk/vercel@1.3.0(flags@4.0.6(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))':
+    dependencies:
+      '@vercel/flags-core': 1.4.0(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))
+      flags: 4.0.6(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-web-identity'
       - '@openfeature/server-sdk'
@@ -8369,7 +8409,7 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.11.1':
     optional: true
 
-  '@vercel/flags-core@1.4.0(next@16.3.3(@babel/core@7.29.0)(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))':
+  '@vercel/flags-core@1.4.0(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))':
     dependencies:
       '@vercel/functions': 3.4.3
       jose: 5.2.1
@@ -8382,6 +8422,14 @@ snapshots:
   '@vercel/functions@3.4.3':
     dependencies:
       '@vercel/oidc': 3.2.0
+
+  '@vercel/global-config-fs@0.1.0': {}
+
+  '@vercel/global-config@1.5.1(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))':
+    dependencies:
+      '@vercel/global-config-fs': 0.1.0
+    optionalDependencies:
+      next: 16.3.3(@babel/core@7.29.0)(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
 
   '@vercel/oidc@3.2.0': {}
 
@@ -9553,7 +9601,7 @@ snapshots:
       locate-path: 6.0.0
       path-exists: 4.0.0
 
-  flags@4.0.6(next@16.3.3(@babel/core@7.29.0)(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5):
+  flags@4.0.6(next@16.3.3(@types/node@20.19.39)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5):
     dependencies:
       '@edge-runtime/cookies': 5.0.2
       jose: 5.10.0

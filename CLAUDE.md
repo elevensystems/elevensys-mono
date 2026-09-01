@@ -310,6 +310,8 @@ import type { AuthUser } from '@/types/auth';
 
 // Always use 'use client' directive for client components
 
+// Always use 'use client' directive for client components
+
 // Define interfaces above component
 interface MyComponentProps {
   title: string;
@@ -534,9 +536,19 @@ NEXT_PUBLIC_APP_URL=
 # External APIs
 API_BASE_URL=         # Base URL for backend API (e.g. https://api.elevensys.dev)
 
-# Vercel Flags (all apps) — injected by the Vercel Flags integration.
-# Optional: when unset, every flag falls back to its default value.
+# Vercel Flags (web only, for `sidebar-tools`) — injected by the Vercel Flags
+# integration. Optional: when unset, the flag falls back to its default value.
 FLAGS=
+
+# Vercel Global Config (all apps) — injected as EDGE_CONFIG when a store is
+# connected to the project. Holds the site announcement banner.
+# Optional: when unset, the banner is simply hidden.
+GLOBAL_CONFIG=
+
+# Site banner editor (apps/admin only) — needed to WRITE the announcement.
+# Never expose these to the client.
+VERCEL_API_TOKEN=
+VERCEL_TEAM_ID=      # only on a team-scoped store
 ```
 
 Access pattern:
@@ -782,25 +794,47 @@ calendar day in the range.
 
 ## Site Announcement Banner (all apps)
 
-A site-wide announcement/maintenance banner, driven by the `site-banner` feature flag and shared by
-every app (`web`, `admin`, `insight`, `pulse`). Editing the flag is all it takes to show or hide it
-— no deploy required.
+A site-wide announcement/maintenance banner shared by every app (`web`, `admin`, `insight`,
+`pulse`). Staff edit it from **`apps/admin` at `/flags/site-banner`** — a form with a live preview,
+per-app targeting, an optional schedule window, presets, and a change log. Saving takes effect
+within seconds; no deploy, no dashboard, no hand-written JSON.
+
+### Storage: Vercel Global Config
+
+The announcement lives in a Vercel **Global Config** store (formerly Edge Config), read through
+`@flags-sdk/global-config` so the Flags SDK call sites are unchanged, and written by admin through
+the Vercel REST API.
+
+```jsonc
+// Global Config item "flags" — values are JSON strings, or "" to hide
+{
+  "site-banner": "", // global fallback
+  "site-banner:web": "",
+  "site-banner:admin": "",
+  "site-banner:insight": "",
+  "site-banner:pulse": "{\"state\":\"warning\",\"message\":\"…\"}",
+}
+// Global Config item "site-banner-history" — last 20 changes, newest first
+```
+
+An app-specific announcement wins; an empty one falls back to the global value. `sidebar-tools` (web
+only) still lives in Vercel Flags — only the announcement moved.
 
 ### Shared pieces (`@workspace/ui`)
 
-| File                            | Exports                                          |
-| ------------------------------- | ------------------------------------------------ |
-| `lib/site-announcement.ts`      | `SiteAnnouncement`, `parseAnnouncementBanner()`  |
-| `components/flags-provider.tsx` | `FlagsProvider`, `useFlags()`, `FlagsRecord`     |
-| `components/site-banner.tsx`    | `SiteBanner` — parses the flag, renders `Banner` |
+| File                            | Exports                                                     |
+| ------------------------------- | ----------------------------------------------------------- |
+| `lib/site-announcement.ts`      | `SiteAnnouncement`, `parseAnnouncementBanner()`,            |
+|                                 | `resolveScheduledAnnouncement()`, `isAnnouncementActive()`, |
+|                                 | `SITE_BANNER_APPS`, `siteBannerKey()`                       |
+| `components/flags-provider.tsx` | `FlagsProvider`, `useFlags()`, `FlagsRecord`                |
+| `components/site-banner.tsx`    | `SiteBanner` — parses the flag, renders `Banner`            |
 
-`SiteBanner` reads the flag from `useFlags()`, so apps just render it. The banner is not
-dismissible — it stays visible for every user until the flag is cleared or updated. (`Banner` still
-supports an `onDismiss` prop for other, non-site-wide uses; `SiteBanner` simply never passes it.)
+`SiteBanner` reads the flag from `useFlags()`, so apps just render it; pass `value` to drive it from
+another source (the admin preview does this). The banner is not dismissible — it stays visible until
+cleared or updated. (`Banner` still supports `onDismiss` for other, non-site-wide uses.)
 
-### Flag value
-
-Set the `site-banner` flag to a JSON object; an empty string hides the banner.
+### Announcement value
 
 ```json
 {
@@ -808,30 +842,66 @@ Set the `site-banner` flag to a JSON object; an empty string hides the banner.
   "title": "Scheduled maintenance",
   "message": "Jira sync is paused Sat 2-4am UTC.",
   "actionLabel": "Status page",
-  "actionHref": "https://status.elevensys.dev"
+  "actionHref": "https://status.elevensys.dev",
+  "startsAt": "2026-09-05T02:00:00.000Z",
+  "endsAt": "2026-09-05T04:00:00.000Z"
 }
 ```
 
 - `state`: `info` | `success` | `warning` | `error` (defaults to `info`)
 - `message` is required; a missing or blank message hides the banner
 - `actionLabel`/`actionHref` are only used as a pair
+- `startsAt`/`endsAt` are optional ISO instants; outside the window the banner is hidden
 
 Malformed JSON logs to `console.error` and hides the banner rather than breaking the page.
 
 ### Wiring in an app
 
-1. Declare the flag in `src/flags.ts` (see any app for the pattern)
-2. Resolve it in the root layout and pass it down:
-   `<FlagsProvider flags={{ 'site-banner': String((await siteBannerFlag()) ?? '') }}>`
+1. Declare both flags in `src/flags.ts` — `siteBannerFlag` (`site-banner`) and `appSiteBannerFlag`
+   (`site-banner:<app>`), both on `globalConfigAdapter()`
+2. Resolve precedence and the schedule in the root layout:
+
+   ```ts
+   const announcement = (await appSiteBannerFlag()) || (await siteBannerFlag()) || '';
+   const flags = { 'site-banner': resolveScheduledAnnouncement(String(announcement)) };
+   ```
+
 3. Render `<SiteBanner />` in `main-layout.tsx` just below the sticky header
 
 Each `MainLayout` accepts a `banner` prop: omit it for the flag-driven banner, or pass `null` to
 suppress it on a given page.
 
-> `vercelAdapter()` throws at module-evaluation time when `FLAGS` is unset, which would fail the
-> build. Each `src/flags.ts` therefore attaches the adapter only when `process.env.FLAGS` is present
-> and falls back to the flag's default value otherwise — so apps without the Vercel Flags
-> integration provisioned still build, with the banner simply hidden.
+> The schedule window is applied **server-side in the layout**, not inside the client `SiteBanner`.
+> Evaluating it during render on both server and client risks a hydration mismatch when a bound
+> falls between the two. The trade-off: an already-open page picks up a scheduled start on its next
+> navigation or reload, not on a timer.
+
+> `globalConfigAdapter()` throws at module-evaluation time when no store is connected, which would
+> fail the build. Each `src/flags.ts` therefore attaches the adapter only when `GLOBAL_CONFIG` or
+> `EDGE_CONFIG` is present and falls back to the flag's default otherwise — so apps without a store
+> still build, with the banner simply hidden.
+
+### Editing it (apps/admin)
+
+| File                                 | Role                                       |
+| ------------------------------------ | ------------------------------------------ |
+| `app/flags/site-banner/page.tsx`     | Staff-gated page; reads the current values |
+| `app/flags/site-banner/_components/` | Form (with live preview) and change log    |
+| `app/api/flags/site-banner/route.ts` | `GET` snapshot, `POST` save                |
+| `lib/global-config-admin.ts`         | Vercel REST reads/writes (`server-only`)   |
+| `lib/site-banner-schema.ts`          | zod schemas, presets, serialization        |
+
+Access is already handled by `proxy.ts`, which gates every non-public path on
+`COGNITO_REQUIRED_GROUP` (default `staff`).
+
+Reads go through the Vercel REST API rather than the Global Config SDK: the API is consistent with
+writes, so the editor shows what was just saved instead of waiting out replication. Writes are
+read-merge-write with no locking — last write wins, which the change log makes visible.
+
+> **Do not call `form.reset(values)` in these forms.** `useForm` re-applies its options on every
+> render, overwriting the `defaultValues` that `reset` sets, so the passed values are silently
+> discarded. Load values with `form.setFieldValue(..., { dontUpdateMeta: true })` instead — see
+> `applyValues` in `site-banner-form.tsx`. Argument-less `form.reset()` is fine.
 
 ## Performance Considerations
 

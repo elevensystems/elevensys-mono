@@ -3,9 +3,10 @@ import { Ubuntu, Ubuntu_Mono } from 'next/font/google';
 
 import { FlagsProvider } from '@workspace/ui/components/flags-provider';
 import { Toaster } from '@workspace/ui/components/sonner';
+import { resolveScheduledAnnouncement } from '@workspace/ui/lib/site-announcement';
 
 import { ThemeProvider } from '@/components/theme-provider';
-import { siteBannerFlag } from '@/flags';
+import { appSiteBannerFlag, siteBannerFlag } from '@/flags';
 import '@/styles/globals.css';
 
 const ubuntu = Ubuntu({
@@ -42,8 +43,13 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // An app-specific announcement wins; an empty one falls back to the global.
+  // The schedule window is applied here, server-side, rather than inside the
+  // client `SiteBanner` — see resolveScheduledAnnouncement for why.
+  const announcement =
+    (await appSiteBannerFlag()) || (await siteBannerFlag()) || '';
   const flags = {
-    'site-banner': String((await siteBannerFlag()) ?? ''),
+    'site-banner': resolveScheduledAnnouncement(String(announcement)),
   };
 
   return (
