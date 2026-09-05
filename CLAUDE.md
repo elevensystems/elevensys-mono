@@ -306,34 +306,6 @@ import type { AuthUser } from '@/types/auth';
 
 // Always use 'use client' directive for client components
 
-// Always use 'use client' directive for client components
-
-// Always use 'use client' directive for client components
-
-// Always use 'use client' directive for client components
-
-// Always use 'use client' directive for client components
-
-// Always use 'use client' directive for client components
-
-// Always use 'use client' directive for client components
-
-// Always use 'use client' directive for client components
-
-// Always use 'use client' directive for client components
-
-// Always use 'use client' directive for client components
-
-// Always use 'use client' directive for client components
-
-// Always use 'use client' directive for client components
-
-// Always use 'use client' directive for client components
-
-// Always use 'use client' directive for client components
-
-// Always use 'use client' directive for client components
-
 // Define interfaces above component
 interface MyComponentProps {
   title: string;
@@ -855,9 +827,9 @@ migration, and no cross-feature write contention, since a save merges only its o
 to manage, and a feature announcement can never bury an outage notice. An entry with no `savedAt`
 sorts last in its tier.
 
-`sidebar-tools` (web only) is the one real Vercel Flag, so `src/flags.ts`, `FLAGS`, and the `flags`
-Global Config item belong to `apps/web` alone. **Never write the `flags` item from the banner
-editor** — that is what the old format did, and it would drop `sidebar-tools`.
+There are no Vercel Flags left in this repo — no Flags SDK, no adapter, no `FLAGS` env var. Tool
+visibility, the last thing modelled as one, is now its own Global Config item (see **Tool
+Visibility** below).
 
 ### Shared pieces (`@workspace/ui`)
 

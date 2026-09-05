@@ -6,7 +6,7 @@
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**"],
-      "env": ["FLAGS", "FLAGS_SECRET", "NEXT_PUBLIC_APP_URL", "API_BASE_URL", "COGNITO_DOMAIN", "COGNITO_CLIENT_ID", "COGNITO_SCOPES", "COOKIE_DOMAIN"]
+      "env": ["NEXT_PUBLIC_APP_URL", "API_BASE_URL", "COGNITO_DOMAIN", "COGNITO_CLIENT_ID", "COGNITO_SCOPES", "COOKIE_DOMAIN", "GLOBAL_CONFIG", "EDGE_CONFIG"]
     },
     "lint": {
       "dependsOn": ["^lint"],
