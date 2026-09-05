@@ -38,7 +38,10 @@ export const STATE_LABELS: Record<SiteAnnouncementState, string> = {
 /** Form state. Every field is a string so inputs stay controlled. */
 export interface SiteBannerFormValues {
   target: SiteBannerTarget;
-  /** Which announcement in the target's list is being edited. */
+  /**
+   * Which announcement in the target's list is being edited, or `''` for a
+   * draft that has never been saved — it gets its id on submit.
+   */
   id: string;
   enabled: boolean;
   state: SiteAnnouncementState;
@@ -81,7 +84,7 @@ function isUsableHref(href: string): boolean {
 export const siteBannerFormSchema = z
   .object({
     target: z.enum(TARGET_VALUES),
-    id: z.string().min(1),
+    id: z.string(),
     enabled: z.boolean(),
     state: z.enum(SITE_BANNER_STATES),
     title: z.string(),
@@ -148,7 +151,13 @@ export const siteBannerRequestSchema = z.object({
   announcement: announcementSchema.nullable(),
 });
 
-/** A fresh id for an announcement being added. */
+/**
+ * A fresh id for an announcement being added.
+ *
+ * Call this when the save happens, never while building form values:
+ * `useForm` re-applies its options on every render, so an id generated inside
+ * `defaultValues` would differ each time and drive an infinite update loop.
+ */
 export function newAnnouncementId(): string {
   return crypto.randomUUID();
 }
@@ -208,19 +217,22 @@ export function toAnnouncement(
 
 /**
  * Stored announcement → form values, for loading an existing one. Without an
- * announcement the form is a blank draft for a new banner, which gets a fresh
- * id so saving appends rather than overwriting.
+ * announcement the form is a blank draft for a new banner, whose empty `id`
+ * means "assign one on save", so saving appends rather than overwriting.
+ *
+ * Pure by contract: it feeds `useForm`'s `defaultValues`, which React
+ * re-evaluates on every render, so a value that changed between calls would
+ * loop forever.
  */
 export function toFormValues(
   target: SiteBannerTarget,
   announcement: SiteAnnouncement | null | undefined
 ): SiteBannerFormValues {
-  if (!announcement)
-    return { target, id: newAnnouncementId(), ...EMPTY_FORM_VALUES };
+  if (!announcement) return { target, id: '', ...EMPTY_FORM_VALUES };
 
   return {
     target,
-    id: announcement.id ?? newAnnouncementId(),
+    id: announcement.id ?? '',
     enabled: true,
     state: announcement.state,
     title: announcement.title ?? '',

@@ -138,12 +138,15 @@ describe('toFormValues', () => {
     expect(toFormValues('web', null).enabled).toBe(false);
   });
 
-  it('gives each new draft its own id, so saving appends', () => {
-    const first = toFormValues('web', undefined).id;
-    const second = toFormValues('web', undefined).id;
+  it('leaves a new draft without an id, so saving appends', () => {
+    expect(toFormValues('web', undefined).id).toBe('');
+  });
 
-    expect(first).toBeTruthy();
-    expect(first).not.toBe(second);
+  it('is pure — it feeds defaultValues, re-evaluated on every render', () => {
+    // An id generated here would differ each render and loop forever.
+    expect(toFormValues('web', undefined)).toEqual(
+      toFormValues('web', undefined)
+    );
   });
 
   it('keeps the id of an existing announcement, so saving replaces it', () => {

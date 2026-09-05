@@ -943,6 +943,12 @@ read-merge-write with no locking — last write wins, which the change log makes
 > discarded. Load values with `form.setFieldValue(..., { dontUpdateMeta: true })` instead — see
 > `applyValues` in `site-banner-form.tsx`. Argument-less `form.reset()` is fine.
 
+> **Keep whatever builds `defaultValues` pure.** Same cause: it is re-evaluated every render, so a
+> value that differs between calls — a `crypto.randomUUID()`, a `new Date()` — updates the store,
+> which re-renders, which generates another one: "Maximum update depth exceeded". `toFormValues`
+> therefore leaves a new draft's `id` empty and the id is assigned on submit. A test in
+> `site-banner-form.test.tsx` re-renders 30 times to catch a regression.
+
 ## Tool Visibility (apps/web)
 
 Which of the nine tools appear in `apps/web`. Staff edit it from **`apps/admin` at

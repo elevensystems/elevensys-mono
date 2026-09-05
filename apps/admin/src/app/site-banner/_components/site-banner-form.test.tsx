@@ -222,6 +222,17 @@ describe('SiteBannerForm', () => {
     );
   });
 
+  it('does not loop when re-rendered with no banner saved', () => {
+    // `useForm` re-applies its options every render, so anything unstable in
+    // `toFormValues` drives "Maximum update depth exceeded".
+    const { rerender } = render(<SiteBannerForm snapshot={makeSnapshot()} />);
+    for (let i = 0; i < 30; i += 1) {
+      rerender(<SiteBannerForm snapshot={makeSnapshot()} />);
+    }
+
+    expect(screen.getByLabelText('Message')).toBeInTheDocument();
+  });
+
   // --- Managing several banners on one target ---
   it('lists every banner already posted for the selected target', async () => {
     const user = userEvent.setup();

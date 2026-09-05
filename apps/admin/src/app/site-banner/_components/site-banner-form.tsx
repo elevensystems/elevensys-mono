@@ -48,6 +48,7 @@ import {
   SITE_BANNER_TARGETS,
   STATE_LABELS,
   TARGET_LABELS,
+  newAnnouncementId,
   siteBannerFormSchema,
   toAnnouncement,
   toFormValues,
@@ -66,7 +67,12 @@ export function SiteBannerForm({ snapshot }: SiteBannerFormProps) {
     defaultValues: toFormValues('all', snapshot.values.all?.[0]),
     validators: { onSubmit: siteBannerFormSchema },
     onSubmit: async ({ value }) => {
-      await save(value.target, value.id, toAnnouncement(value));
+      // A draft carries no id until now; saving is what assigns one.
+      await save(
+        value.target,
+        value.id || newAnnouncementId(),
+        toAnnouncement(value)
+      );
     },
   });
 
