@@ -833,6 +833,43 @@ suppress it on a given page.
 > and falls back to the flag's default value otherwise — so apps without the Vercel Flags
 > integration provisioned still build, with the banner simply hidden.
 
+## Vercel Deployments — Selective (Scoped) Builds
+
+Each app (`web`, `admin`, `insight`, `pulse`) is its own Vercel Project (`elevensys-mono-web`,
+`elevensys-mono-admin`, `elevensys-mono-insight`, `elevensys-mono-pulse`), all linked to this same
+GitHub repo with **Root Directory** set to the matching `apps/*` folder. Without extra config,
+every push/PR triggers a build in **all four** projects, even when only one app changed.
+
+Each app's `vercel.json` sets an `ignoreCommand` that runs
+[`turbo-ignore`](https://vercel.com/docs/monorepos/turborepo) before install:
+
+```json
+// apps/web/vercel.json
+{
+  "ignoreCommand": "npx turbo-ignore elevensys-web --fallback=HEAD^1"
+}
+```
+
+`turbo-ignore` uses Turborepo's dependency graph (not a naive path diff) to check whether the
+named workspace — or anything it depends on — changed between `HEAD` and the SHA of that
+project's last successful deployment (`VERCEL_GIT_PREVIOUS_SHA`, injected automatically once an
+Ignored Build Step is configured). It exits `0` (skip the build) when the workspace is unaffected,
+or `1` (proceed) when it is. `--fallback=HEAD^1` covers the first build for a project / after
+changing this setting, when there's no previous deployment to diff against.
+
+Because it walks the graph, a change to `packages/ui` (or any other shared dependency) still
+triggers builds in every app that depends on it — only truly unrelated apps get skipped. A change
+to `apps/pulse/**` alone builds only `elevensys-mono-pulse`; `web`, `admin`, and `insight` show as
+**Ignored** in the Vercel dashboard for that commit.
+
+**Adding a new app**: give it its own Vercel Project with Root Directory `apps/<name>`, then add
+`apps/<name>/vercel.json` with `"ignoreCommand": "npx turbo-ignore <package-name> --fallback=HEAD^1"`
+(`<package-name>` = the `name` field in that app's `package.json`).
+
+> A per-project **Ignored Build Step** command set in the Vercel dashboard (Project Settings → Git)
+> overrides the `vercel.json` value — if scoped builds ever stop working, check the dashboard
+> setting isn't shadowing this file.
+
 ## Performance Considerations
 
 - **Turbopack**: Enabled for faster dev/build (Next.js 16 feature)
