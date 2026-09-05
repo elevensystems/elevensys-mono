@@ -30,7 +30,7 @@ interface MainLayoutProps {
   className?: string;
   /**
    * Announcement banner rendered flush under the sticky header. Defaults to
-   * the flag-driven `SiteBanner`; pass `null` to suppress it.
+   * the announcement from Global Config; pass `null` to suppress it.
    */
   banner?: ReactNode;
 }

@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import { Ubuntu, Ubuntu_Mono } from 'next/font/google';
 
-import { FlagsProvider } from '@workspace/ui/components/flags-provider';
+import { SiteAnnouncementProvider } from '@workspace/ui/components/site-announcement-provider';
 import { Toaster } from '@workspace/ui/components/sonner';
+import { getSiteAnnouncements } from '@workspace/ui/lib/site-announcement-server';
 
 import { ThemeProvider } from '@/components/theme-provider';
-import { siteBannerFlag } from '@/flags';
 import '@/styles/globals.css';
 
 const ubuntu = Ubuntu({
@@ -42,9 +42,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const flags = {
-    'site-banner': String((await siteBannerFlag()) ?? ''),
-  };
+  const announcements = await getSiteAnnouncements('pulse');
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -55,10 +53,10 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <FlagsProvider flags={flags}>
+          <SiteAnnouncementProvider announcements={announcements}>
             {children}
             <Toaster position="bottom-right" />
-          </FlagsProvider>
+          </SiteAnnouncementProvider>
         </ThemeProvider>
       </body>
     </html>

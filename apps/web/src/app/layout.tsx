@@ -1,14 +1,16 @@
 import type { Metadata } from 'next';
 import { Ubuntu, Ubuntu_Mono } from 'next/font/google';
 
+import { SiteAnnouncementProvider } from '@workspace/ui/components/site-announcement-provider';
 import { Toaster } from '@workspace/ui/components/sonner';
+import { getSiteAnnouncements } from '@workspace/ui/lib/site-announcement-server';
 
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/contexts/auth-context';
-import { FlagsProvider } from '@/contexts/flags-context';
-import { sidebarToolsFlag, siteBannerFlag } from '@/flags';
+import { VisibleToolsProvider } from '@/contexts/visible-tools-context';
 import { getUserFromSession } from '@/lib/auth';
 import { APP_DESCRIPTION, APP_NAME } from '@/lib/constants';
+import { getVisibleToolPaths } from '@/lib/sidebar-tools-server';
 import '@/styles/globals.css';
 
 const ubuntu = Ubuntu({
@@ -46,10 +48,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const user = await getUserFromSession();
-  const flags = {
-    'sidebar-tools': String((await sidebarToolsFlag()) ?? ''),
-    'site-banner': String((await siteBannerFlag()) ?? ''),
-  };
+  const announcements = await getSiteAnnouncements('web');
+  const visibleTools = await getVisibleToolPaths();
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -61,10 +61,12 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider user={user}>
-            <FlagsProvider flags={flags}>
-              {children}
-              <Toaster position="bottom-right" />
-            </FlagsProvider>
+            <VisibleToolsProvider value={visibleTools}>
+              <SiteAnnouncementProvider announcements={announcements}>
+                {children}
+                <Toaster position="bottom-right" />
+              </SiteAnnouncementProvider>
+            </VisibleToolsProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

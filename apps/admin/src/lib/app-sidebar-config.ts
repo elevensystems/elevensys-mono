@@ -1,5 +1,11 @@
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, Link as LinkIcon, ScrollText } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Link as LinkIcon,
+  Megaphone,
+  ScrollText,
+  Wrench,
+} from 'lucide-react';
 
 export interface NavSubItem {
   title: string;
@@ -21,6 +27,8 @@ export const appSidebarData: {
   navMain: [
     { title: 'Dashboard', url: '/', icon: LayoutDashboard },
     { title: 'Urlify', url: '/urlify', icon: LinkIcon },
+    { title: 'Site Banner', url: '/site-banner', icon: Megaphone },
+    { title: 'Tools Visibility', url: '/tools-visibility', icon: Wrench },
     {
       title: 'Audit',
       url: '/audit',

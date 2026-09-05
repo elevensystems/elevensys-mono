@@ -3,20 +3,17 @@ import type React from 'react';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 
-import { sidebarToolsFlag } from '@/flags';
-import { getVisibleToolPaths } from '@/lib/flags-utils';
+import { getVisibleToolPaths } from '@/lib/sidebar-tools-server';
 
 export default async function ToolsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [visibleTools, headersList] = await Promise.all([
-    sidebarToolsFlag(),
+  const [allowedPaths, headersList] = await Promise.all([
+    getVisibleToolPaths(),
     headers(),
   ]);
-
-  const allowedPaths = getVisibleToolPaths(visibleTools);
 
   // null means show all tools — skip the check.
   if (allowedPaths !== null) {

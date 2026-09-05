@@ -8,6 +8,15 @@ const serverSchema = z.object({
   COGNITO_REQUIRED_GROUP: z.string().min(1).default('staff'),
   NEXT_PUBLIC_APP_URL: z.string().min(1),
   COOKIE_DOMAIN: z.string().optional(),
+
+  // Site banner editor. All optional so the app still boots without a Global
+  // Config store; the editor reports the missing pieces instead of crashing.
+  // Vercel injects EDGE_CONFIG when a store is connected; GLOBAL_CONFIG is the
+  // newer name for the same connection string.
+  GLOBAL_CONFIG: z.string().optional(),
+  EDGE_CONFIG: z.string().optional(),
+  VERCEL_API_TOKEN: z.string().optional(),
+  VERCEL_TEAM_ID: z.string().optional(),
 });
 
 export const env = serverSchema.parse({
@@ -18,4 +27,8 @@ export const env = serverSchema.parse({
   COGNITO_REQUIRED_GROUP: process.env.COGNITO_REQUIRED_GROUP,
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   COOKIE_DOMAIN: process.env.COOKIE_DOMAIN,
+  GLOBAL_CONFIG: process.env.GLOBAL_CONFIG,
+  EDGE_CONFIG: process.env.EDGE_CONFIG,
+  VERCEL_API_TOKEN: process.env.VERCEL_API_TOKEN,
+  VERCEL_TEAM_ID: process.env.VERCEL_TEAM_ID,
 });

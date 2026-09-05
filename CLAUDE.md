@@ -123,7 +123,7 @@ elevensys-mono/
 │   │   │   │   └── theme-provider.tsx
 │   │   │   ├── contexts/
 │   │   │   │   ├── auth-context.tsx    # Auth state via React Context
-│   │   │   │   └── flags-context.tsx   # Feature flags
+│   │   │   │   └── visible-tools-context.tsx  # Which tools the sidebar shows
 │   │   │   ├── hooks/              # Custom hooks (use-action-feedback, use-url-history)
 │   │   │   ├── lib/                # Utilities, configs, schemas
 │   │   │   ├── types/              # Shared type definitions
@@ -306,10 +306,6 @@ import type { AuthUser } from '@/types/auth';
 
 // Always use 'use client' directive for client components
 
-// Always use 'use client' directive for client components
-
-// Always use 'use client' directive for client components
-
 // Define interfaces above component
 interface MyComponentProps {
   title: string;
@@ -405,8 +401,9 @@ The main web application with developer tools and authentication. Single-brand (
 
 - **Font**: Ubuntu (via `next/font/google`)
 - **Auth**: AWS Cognito OAuth2 (PKCE) with `AuthProvider` context
-- **Feature flags**: `FlagsProvider` wrapping `@flags-sdk/vercel`
-- **Providers chain**: `ThemeProvider` → `AuthProvider` → `FlagsProvider`
+- **Tool visibility**: `VisibleToolsProvider`, fed from Global Config (see below)
+- **Providers chain**: `ThemeProvider` → `AuthProvider` → `VisibleToolsProvider` →
+  `SiteAnnouncementProvider`
 - **Proxy**: `src/proxy.ts` refreshes Cognito tokens and forwards `x-pathname` to layouts
 
 > The Jira timesheet feature previously hosted here (`/timesheet/*`, `/api/jira/*`) now lives
@@ -428,10 +425,10 @@ moved to the app root: `/`, `/timesheet/logwork`, `/timesheet/my-worklogs`,
 
 - **Font**: Ubuntu (via `next/font/google`)
 - **Port**: 3004 (`next dev -p 3004`)
-- **Providers**: `ThemeProvider` → `FlagsProvider` — no Cognito
+- **Providers**: `ThemeProvider` → `SiteAnnouncementProvider` — no Cognito
 - **Auth**: Jira PAT saved in `localStorage` via `/config`, sent as a `Bearer` header to
   `/api/jira/*` proxy routes (forwarded to `API_BASE_URL`)
-- **Env**: `API_BASE_URL` (validated in `src/env.ts`); optional `FLAGS` for the site banner
+- **Env**: `API_BASE_URL` (validated in `src/env.ts`); optional `GLOBAL_CONFIG` for the site banner
 - Shared timesheet components live in `src/components/features/timesheet/`; page-private components
   stay in each route's `_components/`
 
@@ -534,9 +531,15 @@ NEXT_PUBLIC_APP_URL=
 # External APIs
 API_BASE_URL=         # Base URL for backend API (e.g. https://api.elevensys.dev)
 
-# Vercel Flags (all apps) — injected by the Vercel Flags integration.
-# Optional: when unset, every flag falls back to its default value.
-FLAGS=
+# Vercel Global Config (all apps) — injected as EDGE_CONFIG when a store is
+# connected to the project. Holds the site announcement banner.
+# Optional: when unset, the banner is simply hidden.
+GLOBAL_CONFIG=
+
+# Site banner editor (apps/admin only) — needed to WRITE the announcement.
+# Never expose these to the client.
+VERCEL_API_TOKEN=
+VERCEL_TEAM_ID=      # only on a team-scoped store
 ```
 
 Access pattern:
@@ -782,56 +785,226 @@ calendar day in the range.
 
 ## Site Announcement Banner (all apps)
 
-A site-wide announcement/maintenance banner, driven by the `site-banner` feature flag and shared by
-every app (`web`, `admin`, `insight`, `pulse`). Editing the flag is all it takes to show or hide it
-— no deploy required.
+Site-wide announcement/maintenance banners shared by every app (`web`, `admin`, `insight`, `pulse`).
+Staff edit them from **`apps/admin` at `/site-banner`** — a form with a live preview, per-app
+targeting, an optional schedule window, presets, and a change log. Saving takes effect within
+seconds; no deploy, no dashboard, no hand-written JSON.
+
+**An app can show several banners at once**: every announcement targeted at all apps, plus every one
+targeted at that app. They stack most urgent first.
+
+### Storage: Vercel Global Config
+
+The announcement lives in a Vercel **Global Config** store (formerly Edge Config), read with
+`@vercel/global-config` and written by admin through the Vercel REST API. It is not a feature flag:
+no Flags SDK, no adapter, no flag declaration — just plain JSON in two items.
+
+**One item per config feature, named after the feature.** Values are real objects, not JSON strings,
+and a target with no announcement is simply absent — "off" and "absent" are the same state.
+
+```jsonc
+// Global Config item "site-banner"
+{
+  "all": null,                 // global fallback; absent or null = off
+  "pulse": { "state": "warning", "message": "…" }
+}
+
+// Global Config item "config-audit" — last 20 changes across every config
+// feature, newest first, each tagged with `feature`. Named `config-audit`, not
+// `audit`: apps/admin already has an unrelated audit feature backed by the API.
+[{ "at": "…", "by": "…", "feature": "site-banner", "target": "pulse",
+   "action": "save", "summary": "…" }]
+```
+
+The two lists add up rather than one replacing the other. A second config feature gets its own
+top-level item (`"maintenance"`, `"rate-limits"`) plus its own `feature` tag in `config-audit` — no
+migration, and no cross-feature write contention, since a save merges only its own item.
+
+### Stacking order
+
+`sortAnnouncements()` orders every banner an app shows: **most urgent first** (`error` → `warning` →
+`success`/`info`, which share a tier), then **most recently saved** within a tier. Nothing for staff
+to manage, and a feature announcement can never bury an outage notice. An entry with no `savedAt`
+sorts last in its tier.
+
+There are no Vercel Flags left in this repo — no Flags SDK, no adapter, no `FLAGS` env var. Tool
+visibility, the last thing modelled as one, is now its own Global Config item (see **Tool
+Visibility** below).
 
 ### Shared pieces (`@workspace/ui`)
 
-| File                            | Exports                                          |
-| ------------------------------- | ------------------------------------------------ |
-| `lib/site-announcement.ts`      | `SiteAnnouncement`, `parseAnnouncementBanner()`  |
-| `components/flags-provider.tsx` | `FlagsProvider`, `useFlags()`, `FlagsRecord`     |
-| `components/site-banner.tsx`    | `SiteBanner` — parses the flag, renders `Banner` |
+| File                                        | Exports                                               |
+| ------------------------------------------- | ----------------------------------------------------- |
+| `lib/site-announcement.ts`                  | `SiteAnnouncement`, `announcementSchema`,             |
+|                                             | `parseAnnouncement()`, `resolveScheduled()`,          |
+|                                             | `isAnnouncementActive()`, `SITE_BANNER_APPS`,         |
+|                                             | `SITE_BANNER_ITEM_KEY`, `SiteBannerConfig`            |
+| `lib/site-announcement-server.ts`           | `getSiteAnnouncement(app)` — the Global Config read   |
+| `components/site-announcement-provider.tsx` | `SiteAnnouncementProvider`, `useSiteAnnouncement()`   |
+| `components/site-banner.tsx`                | `SiteBanner` — renders `Banner` from the announcement |
 
-`SiteBanner` reads the flag from `useFlags()`, so apps just render it. The banner is not
-dismissible — it stays visible for every user until the flag is cleared or updated. (`Banner` still
-supports an `onDismiss` prop for other, non-site-wide uses; `SiteBanner` simply never passes it.)
+One zod schema (`announcementSchema`) validates every entry everywhere: on read in
+`getSiteAnnouncements`, on write in the admin API route, and per-entry in the editor's snapshot
+read. One malformed entry is dropped without taking the rest of the list with it. `SiteBanner` does
+no parsing or sorting — what reaches the client is already validated and ordered, so zod stays out
+of the reader apps' client bundles.
 
-### Flag value
+`SiteBanner` takes the list from `useSiteAnnouncements()`, so apps just render it; pass
+`announcements` to drive it from another source (the admin preview does this). Banners are not
+dismissible — they stay visible until cleared or updated. (`Banner` still supports `onDismiss` for
+other, non-site-wide uses.)
 
-Set the `site-banner` flag to a JSON object; an empty string hides the banner.
+### Announcement value
 
 ```json
 {
+  "id": "9f1c…",
+  "savedAt": "2026-09-04T09:12:00.000Z",
   "state": "warning",
   "title": "Scheduled maintenance",
   "message": "Jira sync is paused Sat 2-4am UTC.",
   "actionLabel": "Status page",
-  "actionHref": "https://status.elevensys.dev"
+  "actionHref": "https://status.elevensys.dev",
+  "startsAt": "2026-09-05T02:00:00.000Z",
+  "endsAt": "2026-09-05T04:00:00.000Z"
 }
 ```
 
-- `state`: `info` | `success` | `warning` | `error` (defaults to `info`)
+- `id` addresses one announcement in a target's list; `savedAt` breaks ties in stacking order. Both
+  are stamped server-side on every write and are never taken from the client. Both are optional on
+  read: a hand-written entry without them still renders.
+- `state`: `info` | `success` | `warning` | `error` (an unrecognized value falls back to `info`)
 - `message` is required; a missing or blank message hides the banner
-- `actionLabel`/`actionHref` are only used as a pair
+- `actionLabel`/`actionHref` are only used as a pair — an unmatched half is dropped
+- `startsAt`/`endsAt` are optional ISO instants; outside the window the banner is hidden, and an
+  unparseable bound is ignored rather than hiding the banner
 
-Malformed JSON logs to `console.error` and hides the banner rather than breaking the page.
+A value the schema rejects logs to `console.error` and is dropped from the stack rather than
+breaking the page or hiding the other banners.
 
 ### Wiring in an app
 
-1. Declare the flag in `src/flags.ts` (see any app for the pattern)
-2. Resolve it in the root layout and pass it down:
-   `<FlagsProvider flags={{ 'site-banner': String((await siteBannerFlag()) ?? '') }}>`
-3. Render `<SiteBanner />` in `main-layout.tsx` just below the sticky header
+1. Read them in the root layout and hand them to the provider:
 
-Each `MainLayout` accepts a `banner` prop: omit it for the flag-driven banner, or pass `null` to
+   ```tsx
+   const announcements = await getSiteAnnouncements('pulse');
+   // …
+   <SiteAnnouncementProvider announcements={announcements}>
+   ```
+
+2. Render `<SiteBanner />` in `main-layout.tsx` just below the sticky header
+
+`getSiteAnnouncements()` does the whole job: `all` plus the app's own list, schedule window applied,
+sorted. Add the app to `SITE_BANNER_APPS` so admin can target it.
+
+Each `MainLayout` accepts a `banner` prop: omit it for the Global Config value, or pass `null` to
 suppress it on a given page.
 
-> `vercelAdapter()` throws at module-evaluation time when `FLAGS` is unset, which would fail the
-> build. Each `src/flags.ts` therefore attaches the adapter only when `process.env.FLAGS` is present
-> and falls back to the flag's default value otherwise — so apps without the Vercel Flags
-> integration provisioned still build, with the banner simply hidden.
+> `apps/web` also wraps `VisibleToolsProvider` for tool visibility. The other three apps have
+> neither — only the announcement provider.
+
+> The schedule window is applied **server-side while the layout renders**, not inside the client
+> `SiteBanner`. Evaluating it during render on both server and client risks a hydration mismatch
+> when a bound falls between the two. The trade-off: an already-open page picks up a scheduled start
+> on its next navigation or reload, not on a timer.
+
+> A missing store is not an error: `getSiteAnnouncements()` returns `[]` when neither
+> `GLOBAL_CONFIG` nor `EDGE_CONFIG` is set (the SDK throws on an undefined connection string) and
+> also when the read itself fails, so an app without a store — or an unreachable Global Config —
+> still renders, with no banners shown.
+
+### Editing it (apps/admin)
+
+| File                           | Role                                       |
+| ------------------------------ | ------------------------------------------ |
+| `app/site-banner/page.tsx`     | Staff-gated page; reads the current values |
+| `app/site-banner/_components/` | Form (with live preview) and change log    |
+| `app/api/site-banner/route.ts` | `GET` snapshot, `POST` save                |
+| `lib/global-config-admin.ts`   | Vercel REST reads/writes (`server-only`)   |
+| `lib/site-banner-schema.ts`    | Form schema, presets, form↔announcement    |
+
+Access is already handled by `proxy.ts`, which gates every non-public path on
+`COGNITO_REQUIRED_GROUP` (default `staff`).
+
+The editor shows one target's banners as a list; picking one opens it in the form, **Add banner**
+starts a fresh draft, and each save writes exactly one announcement addressed by `id` — an existing
+id is replaced in place, a new one is appended, and a `null` announcement removes it. Saving one
+banner never disturbs the others on that target.
+
+Unlike the apps' read, the editor keeps scheduled announcements that are not showing yet — staff
+need to see and edit them before they go live.
+
+Reads go through the Vercel REST API rather than the Global Config SDK: the API is consistent with
+writes, so the editor shows what was just saved instead of waiting out replication. Writes are
+read-merge-write with no locking — last write wins, which the change log makes visible.
+
+> **Do not call `form.reset(values)` in these forms.** `useForm` re-applies its options on every
+> render, overwriting the `defaultValues` that `reset` sets, so the passed values are silently
+> discarded. Load values with `form.setFieldValue(..., { dontUpdateMeta: true })` instead — see
+> `applyValues` in `site-banner-form.tsx`. Argument-less `form.reset()` is fine.
+
+## Tool Visibility (apps/web)
+
+Which of the nine tools appear in `apps/web`. Staff edit it from **`apps/admin` at
+`/tools-visibility`** — a checkbox per tool. Like the site banner, it lives in Global Config and
+takes effect within seconds, with no deploy.
+
+This used to be the `sidebar-tools` Vercel Flag. It was never really a feature flag, and it was the
+last one — removing it took the Flags SDK, `FLAGS`/`FLAGS_SECRET`, and the Flags Explorer route with
+it.
+
+```jsonc
+// Global Config item "sidebar-tools"
+["/tools/passly", "/tools/urlify"]
+
+// absent → every tool is visible, including tools added later
+// []     → no tools
+```
+
+**Absent is not the same as listing every tool.** Both show all nine today, but the moment a tenth
+ships, an explicit list hides it while an absent item shows it. The editor's "show every tool,
+including ones added later" switch chooses between them: on, the save deletes the item.
+
+**Every failure shows all tools.** A missing store, an unreachable Global Config, or a malformed
+value all resolve to `null`. Hiding the whole toolset over a config read would be the worse failure,
+so `getVisibleToolPaths()` fails open.
+
+### The pieces
+
+| File                                              | Role                                                                   |
+| ------------------------------------------------- | ---------------------------------------------------------------------- |
+| `packages/ui/src/lib/tools.ts`                    | `TOOLS` catalogue, `parseVisibleToolPaths()`, `SIDEBAR_TOOLS_ITEM_KEY` |
+| `apps/web/src/lib/sidebar-tools-server.ts`        | `getVisibleToolPaths()` — the Global Config read                       |
+| `apps/web/src/contexts/visible-tools-context.tsx` | `VisibleToolsProvider`, `useVisibleTools()`                            |
+| `apps/web/src/app/tools/layout.tsx`               | 404s a tool page that is not on the allowlist                          |
+| `apps/admin/src/app/tools-visibility/`            | The editor page and form                                               |
+| `apps/admin/src/lib/tools-visibility-admin.ts`    | Read/write the item                                                    |
+
+`TOOLS` is shared because both apps need the same list: web renders it in the sidebar (adding its
+own icons and `isPro` flags in `app-sidebar-config.ts`), and the admin editor renders one checkbox
+per entry. **Add a new tool to `packages/ui/src/lib/tools.ts` and give it an icon in `TOOL_ICONS`**
+— the sidebar and the editor both pick it up.
+
+A stored path no longer in `TOOLS` matches nothing and is dropped on the next save, so retiring a
+tool needs no migration.
+
+## Shared Global Config plumbing (apps/admin)
+
+Two features now write to the same store, so the Vercel REST machinery lives in
+`apps/admin/src/lib/global-config-client.ts` (`server-only`): `vercelApi()`, `readItems()`,
+`readAudit()`, `writeConfigItem()`, `isGlobalConfigConfigured()`, `GlobalConfigError`. Each feature
+keeps its own read/write on top (`global-config-admin.ts`, `tools-visibility-admin.ts`).
+
+`writeConfigItem()` writes **one feature's item plus the shared `config-audit` log** in a single
+PATCH, so one feature's save can never disturb another's config. Passing `undefined` as the value
+deletes the item. Both `*-admin.test.ts` files pin that isolation.
+
+`config-audit` entries carry `feature` (and an optional `target`), and `ChangeLog`
+(`src/components/features/change-log.tsx`) renders whichever slice an editor asks for.
+
+> `HISTORY_LIMIT` and `ConfigAuditEntry` live in `src/types/config-audit.ts`, not in
+> `global-config-client.ts` — `ChangeLog` reaches the client bundle, and importing anything from a
+> `server-only` module there fails the build.
 
 ## Performance Considerations
 
