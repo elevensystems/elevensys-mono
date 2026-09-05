@@ -123,7 +123,7 @@ elevensys-mono/
 │   │   │   │   └── theme-provider.tsx
 │   │   │   ├── contexts/
 │   │   │   │   ├── auth-context.tsx    # Auth state via React Context
-│   │   │   │   └── flags-context.tsx   # Feature flags
+│   │   │   │   └── visible-tools-context.tsx  # Which tools the sidebar shows
 │   │   │   ├── hooks/              # Custom hooks (use-action-feedback, use-url-history)
 │   │   │   ├── lib/                # Utilities, configs, schemas
 │   │   │   ├── types/              # Shared type definitions
@@ -328,6 +328,12 @@ import type { AuthUser } from '@/types/auth';
 
 // Always use 'use client' directive for client components
 
+// Always use 'use client' directive for client components
+
+// Always use 'use client' directive for client components
+
+// Always use 'use client' directive for client components
+
 // Define interfaces above component
 interface MyComponentProps {
   title: string;
@@ -423,8 +429,9 @@ The main web application with developer tools and authentication. Single-brand (
 
 - **Font**: Ubuntu (via `next/font/google`)
 - **Auth**: AWS Cognito OAuth2 (PKCE) with `AuthProvider` context
-- **Feature flags**: `FlagsProvider` wrapping `@flags-sdk/vercel`
-- **Providers chain**: `ThemeProvider` → `AuthProvider` → `FlagsProvider`
+- **Tool visibility**: `VisibleToolsProvider`, fed from Global Config (see below)
+- **Providers chain**: `ThemeProvider` → `AuthProvider` → `VisibleToolsProvider` →
+  `SiteAnnouncementProvider`
 - **Proxy**: `src/proxy.ts` refreshes Cognito tokens and forwards `x-pathname` to layouts
 
 > The Jira timesheet feature previously hosted here (`/timesheet/*`, `/api/jira/*`) now lives
@@ -446,7 +453,7 @@ moved to the app root: `/`, `/timesheet/logwork`, `/timesheet/my-worklogs`,
 
 - **Font**: Ubuntu (via `next/font/google`)
 - **Port**: 3004 (`next dev -p 3004`)
-- **Providers**: `ThemeProvider` → `FlagsProvider` — no Cognito
+- **Providers**: `ThemeProvider` → `SiteAnnouncementProvider` — no Cognito
 - **Auth**: Jira PAT saved in `localStorage` via `/config`, sent as a `Bearer` header to
   `/api/jira/*` proxy routes (forwarded to `API_BASE_URL`)
 - **Env**: `API_BASE_URL` (validated in `src/env.ts`); optional `GLOBAL_CONFIG` for the site banner
@@ -551,10 +558,6 @@ NEXT_PUBLIC_APP_URL=
 
 # External APIs
 API_BASE_URL=         # Base URL for backend API (e.g. https://api.elevensys.dev)
-
-# Vercel Flags (web only, for `sidebar-tools`) — injected by the Vercel Flags
-# integration. Optional: when unset, the flag falls back to its default value.
-FLAGS=
 
 # Vercel Global Config (all apps) — injected as EDGE_CONFIG when a store is
 # connected to the project. Holds the site announcement banner.
@@ -925,9 +928,8 @@ sorted. Add the app to `SITE_BANNER_APPS` so admin can target it.
 Each `MainLayout` accepts a `banner` prop: omit it for the Global Config value, or pass `null` to
 suppress it on a given page.
 
-> `apps/web` also wraps `FlagsProvider` (its own, in `src/contexts/flags-context.tsx`) for
-> `sidebar-tools`. The other three apps have no feature flags at all — only the announcement
-> provider.
+> `apps/web` also wraps `VisibleToolsProvider` for tool visibility. The other three apps have
+> neither — only the announcement provider.
 
 > The schedule window is applied **server-side while the layout renders**, not inside the client
 > `SiteBanner`. Evaluating it during render on both server and client risks a hydration mismatch
@@ -968,6 +970,69 @@ read-merge-write with no locking — last write wins, which the change log makes
 > render, overwriting the `defaultValues` that `reset` sets, so the passed values are silently
 > discarded. Load values with `form.setFieldValue(..., { dontUpdateMeta: true })` instead — see
 > `applyValues` in `site-banner-form.tsx`. Argument-less `form.reset()` is fine.
+
+## Tool Visibility (apps/web)
+
+Which of the nine tools appear in `apps/web`. Staff edit it from **`apps/admin` at
+`/tools-visibility`** — a checkbox per tool. Like the site banner, it lives in Global Config and
+takes effect within seconds, with no deploy.
+
+This used to be the `sidebar-tools` Vercel Flag. It was never really a feature flag, and it was the
+last one — removing it took the Flags SDK, `FLAGS`/`FLAGS_SECRET`, and the Flags Explorer route with
+it.
+
+```jsonc
+// Global Config item "sidebar-tools"
+["/tools/passly", "/tools/urlify"]
+
+// absent → every tool is visible, including tools added later
+// []     → no tools
+```
+
+**Absent is not the same as listing every tool.** Both show all nine today, but the moment a tenth
+ships, an explicit list hides it while an absent item shows it. The editor's "show every tool,
+including ones added later" switch chooses between them: on, the save deletes the item.
+
+**Every failure shows all tools.** A missing store, an unreachable Global Config, or a malformed
+value all resolve to `null`. Hiding the whole toolset over a config read would be the worse failure,
+so `getVisibleToolPaths()` fails open.
+
+### The pieces
+
+| File                                              | Role                                                                   |
+| ------------------------------------------------- | ---------------------------------------------------------------------- |
+| `packages/ui/src/lib/tools.ts`                    | `TOOLS` catalogue, `parseVisibleToolPaths()`, `SIDEBAR_TOOLS_ITEM_KEY` |
+| `apps/web/src/lib/sidebar-tools-server.ts`        | `getVisibleToolPaths()` — the Global Config read                       |
+| `apps/web/src/contexts/visible-tools-context.tsx` | `VisibleToolsProvider`, `useVisibleTools()`                            |
+| `apps/web/src/app/tools/layout.tsx`               | 404s a tool page that is not on the allowlist                          |
+| `apps/admin/src/app/tools-visibility/`            | The editor page and form                                               |
+| `apps/admin/src/lib/tools-visibility-admin.ts`    | Read/write the item                                                    |
+
+`TOOLS` is shared because both apps need the same list: web renders it in the sidebar (adding its
+own icons and `isPro` flags in `app-sidebar-config.ts`), and the admin editor renders one checkbox
+per entry. **Add a new tool to `packages/ui/src/lib/tools.ts` and give it an icon in `TOOL_ICONS`**
+— the sidebar and the editor both pick it up.
+
+A stored path no longer in `TOOLS` matches nothing and is dropped on the next save, so retiring a
+tool needs no migration.
+
+## Shared Global Config plumbing (apps/admin)
+
+Two features now write to the same store, so the Vercel REST machinery lives in
+`apps/admin/src/lib/global-config-client.ts` (`server-only`): `vercelApi()`, `readItems()`,
+`readAudit()`, `writeConfigItem()`, `isGlobalConfigConfigured()`, `GlobalConfigError`. Each feature
+keeps its own read/write on top (`global-config-admin.ts`, `tools-visibility-admin.ts`).
+
+`writeConfigItem()` writes **one feature's item plus the shared `config-audit` log** in a single
+PATCH, so one feature's save can never disturb another's config. Passing `undefined` as the value
+deletes the item. Both `*-admin.test.ts` files pin that isolation.
+
+`config-audit` entries carry `feature` (and an optional `target`), and `ChangeLog`
+(`src/components/features/change-log.tsx`) renders whichever slice an editor asks for.
+
+> `HISTORY_LIMIT` and `ConfigAuditEntry` live in `src/types/config-audit.ts`, not in
+> `global-config-client.ts` — `ChangeLog` reaches the client bundle, and importing anything from a
+> `server-only` module there fails the build.
 
 ## Performance Considerations
 

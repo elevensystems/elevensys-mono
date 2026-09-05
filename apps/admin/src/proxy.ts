@@ -8,9 +8,7 @@ import {
   userFromPayload,
 } from '@/lib/auth';
 
-// `/.well-known/` carries the Flags Explorer discovery endpoint, which
-// authenticates itself with FLAGS_SECRET and must not hit the login redirect.
-const PUBLIC_PATH_PREFIXES = ['/login', '/api/auth/', '/.well-known/'];
+const PUBLIC_PATH_PREFIXES = ['/login', '/api/auth/'];
 
 const isPublicPath = (pathname: string): boolean => {
   return PUBLIC_PATH_PREFIXES.some(prefix => pathname.startsWith(prefix));

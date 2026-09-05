@@ -6,11 +6,15 @@ import {
   CardTitle,
 } from '@workspace/ui/components/card';
 
-import { HISTORY_LIMIT, TARGET_LABELS } from '@/lib/site-banner-schema';
-import type { SiteBannerHistoryEntry } from '@/types/site-banner';
+import { type ConfigAuditEntry, HISTORY_LIMIT } from '@/types/config-audit';
 
-interface BannerHistoryProps {
-  entries: SiteBannerHistoryEntry[];
+interface ChangeLogProps {
+  entries: ConfigAuditEntry[];
+  /**
+   * Display names for `entry.target`, for a feature that has more than one
+   * slice. Omit it for a feature that does not.
+   */
+  targetLabels?: Record<string, string>;
 }
 
 const formatter = new Intl.DateTimeFormat(undefined, {
@@ -23,7 +27,8 @@ function formatTimestamp(at: string): string {
   return Number.isNaN(date.getTime()) ? at : formatter.format(date);
 }
 
-export function BannerHistory({ entries }: BannerHistoryProps) {
+/** Recent edits to one config feature, newest first. */
+export function ChangeLog({ entries, targetLabels }: ChangeLogProps) {
   return (
     <Card>
       <CardHeader>
@@ -41,7 +46,7 @@ export function BannerHistory({ entries }: BannerHistoryProps) {
           <ul className="divide-y">
             {entries.map(entry => (
               <li
-                key={`${entry.at}-${entry.target}`}
+                key={`${entry.at}-${entry.target ?? ''}`}
                 className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3 first:pt-0 last:pb-0"
               >
                 <div className="min-w-0">
@@ -49,8 +54,11 @@ export function BannerHistory({ entries }: BannerHistoryProps) {
                     {entry.summary}
                   </p>
                   <p className="text-muted-foreground text-xs">
-                    {entry.action === 'clear' ? 'Cleared' : 'Saved'} for{' '}
-                    {TARGET_LABELS[entry.target] ?? entry.target} by {entry.by}
+                    {entry.action === 'clear' ? 'Cleared' : 'Saved'}
+                    {entry.target
+                      ? ` for ${targetLabels?.[entry.target] ?? entry.target}`
+                      : ''}{' '}
+                    by {entry.by}
                   </p>
                 </div>
                 <time

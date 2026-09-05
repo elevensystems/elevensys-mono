@@ -40,7 +40,7 @@ import type { SiteAnnouncement } from '@workspace/ui/lib/site-announcement';
 import { cn } from '@workspace/ui/lib/utils';
 import { toast } from 'sonner';
 
-import { BannerHistory } from '@/app/site-banner/_components/banner-history';
+import { ChangeLog } from '@/components/features/change-log';
 import type { SiteBannerFormValues } from '@/lib/site-banner-schema';
 import {
   SITE_BANNER_PRESETS,
@@ -551,7 +551,7 @@ export function SiteBannerForm({ snapshot }: SiteBannerFormProps) {
           </CardContent>
         </Card>
 
-        <BannerHistory entries={current.history} />
+        <ChangeLog entries={current.history} targetLabels={TARGET_LABELS} />
       </div>
 
       <div className="space-y-6">

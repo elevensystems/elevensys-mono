@@ -21,7 +21,7 @@ import { NavSecondary } from '@/components/layouts/nav-secondary';
 import { NavTools } from '@/components/layouts/nav-tools';
 import { NavUser } from '@/components/layouts/nav-user';
 import { SupportModal } from '@/components/layouts/support-modal';
-import { getVisibleToolPaths, useFlags } from '@/contexts/flags-context';
+import { useVisibleTools } from '@/contexts/visible-tools-context';
 import { appSidebarData } from '@/lib/app-sidebar-config';
 import { APP_NAME } from '@/lib/constants';
 import type { AuthUser } from '@/types/auth';
@@ -37,12 +37,11 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
 export function AppSidebar({ user, ...props }: AppSidebarProps) {
   const [isSupportModalOpen, setIsSupportModalOpen] = React.useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = React.useState(false);
-  const flags = useFlags();
+  const visiblePaths = useVisibleTools();
   const tools = React.useMemo(() => {
-    const visiblePaths = getVisibleToolPaths(flags);
     if (visiblePaths === null) return appSidebarData.tools;
     return appSidebarData.tools.filter(tool => visiblePaths.includes(tool.url));
-  }, [flags]);
+  }, [visiblePaths]);
 
   const handleNavAction = (action?: string) => {
     if (action === 'support') {

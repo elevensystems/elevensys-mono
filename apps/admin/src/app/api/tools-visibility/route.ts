@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { z } from 'zod';
+
 import { getUserFromSession } from '@/lib/auth';
-import {
-  readSiteBannerSnapshot,
-  writeSiteBannerValue,
-} from '@/lib/global-config-admin';
 import { GlobalConfigError } from '@/lib/global-config-client';
-import { siteBannerRequestSchema } from '@/lib/site-banner-schema';
+import {
+  readToolsVisibilitySnapshot,
+  writeToolsVisibility,
+} from '@/lib/tools-visibility-admin';
+
+/** `null` shows every tool, including ones added later. */
+const requestSchema = z.object({
+  visible: z.array(z.string().min(1)).nullable(),
+});
 
 function handleError(error: unknown) {
   if (error instanceof GlobalConfigError) {
@@ -15,7 +21,7 @@ function handleError(error: unknown) {
       { status: error.status }
     );
   }
-  console.error('site-banner error:', error);
+  console.error('tools-visibility error:', error);
   return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
 }
 
@@ -26,7 +32,7 @@ export async function GET() {
   }
 
   try {
-    return NextResponse.json(await readSiteBannerSnapshot());
+    return NextResponse.json(await readToolsVisibilitySnapshot());
   } catch (error) {
     return handleError(error);
   }
@@ -38,7 +44,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const parsed = siteBannerRequestSchema.safeParse(await request.json());
+  const parsed = requestSchema.safeParse(await request.json());
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.issues[0]?.message ?? 'Invalid request body.' },
@@ -47,13 +53,12 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const snapshot = await writeSiteBannerValue({
-      target: parsed.data.target,
-      id: parsed.data.id,
-      announcement: parsed.data.announcement,
-      by: user.name || user.email || user.sub,
-    });
-    return NextResponse.json(snapshot);
+    return NextResponse.json(
+      await writeToolsVisibility({
+        visible: parsed.data.visible,
+        by: user.name || user.email || user.sub,
+      })
+    );
   } catch (error) {
     return handleError(error);
   }

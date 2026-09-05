@@ -1,7 +1,7 @@
 /**
  * The one behaviour worth pinning here: a save must touch only this feature's
- * Global Config item. The previous format rebuilt the shared `flags` item on
- * every write, which would silently drop `apps/web`'s `sidebar-tools` flag.
+ * Global Config item. An older format rebuilt a shared `flags` item on every
+ * write, which would silently drop a neighbouring feature's config.
  */
 import { writeSiteBannerValue } from '@/lib/global-config-admin';
 
@@ -21,7 +21,7 @@ const ANNOUNCEMENT = { state: 'warning', message: 'Heads up' } as const;
 
 /** Items already in the store, including one owned by another feature. */
 const EXISTING_ITEMS = [
-  { key: 'flags', value: { 'sidebar-tools': '["/tools/passly"]' } },
+  { key: 'sidebar-tools', value: ['/tools/passly'] },
   {
     key: 'site-banner',
     value: {
@@ -61,7 +61,7 @@ function writtenItems(fetchMock: jest.Mock) {
 }
 
 describe('writeSiteBannerValue', () => {
-  it('writes only the site-banner and audit items, never `flags`', async () => {
+  it("writes only its own item and the audit log, never another feature's", async () => {
     const fetchMock = mockStore();
 
     await writeSiteBannerValue({

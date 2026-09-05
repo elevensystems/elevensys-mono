@@ -1,3 +1,4 @@
+import { TOOLS, type ToolPath } from '@workspace/ui/lib/tools';
 import {
   Braces,
   CaseSensitive,
@@ -6,6 +7,7 @@ import {
   Languages,
   LifeBuoy,
   Link as LinkIcon,
+  type LucideIcon,
   Music4,
   Package,
   ScanSearch,
@@ -15,6 +17,32 @@ import {
 
 import type { ToolConfig } from '@/lib/tools-config';
 import type { AuthUser } from '@/types/auth';
+
+/**
+ * Presentation for each tool. Names and URLs come from the shared `TOOLS`
+ * catalogue so `apps/admin` renders the same list; only the parts the sidebar
+ * needs live here.
+ */
+const TOOL_ICONS: Record<ToolPath, LucideIcon> = {
+  '/tools/json-diffinity': Braces,
+  '/tools/json-objectify': Sparkles,
+  '/tools/json-lens': ScanSearch,
+  '/tools/caseify': CaseSensitive,
+  '/tools/urlify': LinkIcon,
+  '/tools/translately': Languages,
+  '/tools/npm-converter': Package,
+  '/tools/passly': Key,
+  '/tools/beatly': Music4,
+};
+
+const PRO_TOOLS = new Set<ToolPath>(['/tools/translately']);
+
+const tools: ToolConfig[] = TOOLS.map(tool => ({
+  name: tool.name,
+  url: tool.url,
+  icon: TOOL_ICONS[tool.url],
+  ...(PRO_TOOLS.has(tool.url) ? { isPro: true } : {}),
+}));
 
 /**
  * Sidebar navigation and tools configuration
@@ -40,52 +68,5 @@ export const appSidebarData = {
       onClick: 'feedback',
     },
   ],
-  tools: [
-    {
-      name: 'JSON Diffinity',
-      url: '/tools/json-diffinity',
-      icon: Braces,
-    },
-    {
-      name: 'JSON Objectify',
-      url: '/tools/json-objectify',
-      icon: Sparkles,
-    },
-    {
-      name: 'JSON Lens',
-      url: '/tools/json-lens',
-      icon: ScanSearch,
-    },
-    {
-      name: 'Caseify',
-      url: '/tools/caseify',
-      icon: CaseSensitive,
-    },
-    {
-      name: 'Urlify',
-      url: '/tools/urlify',
-      icon: LinkIcon,
-    },
-    {
-      name: 'Translately',
-      url: '/tools/translately',
-      icon: Languages,
-      isPro: true,
-    },
-    {
-      name: 'NPM Converter',
-      url: '/tools/npm-converter',
-      icon: Package,
-    },
-    {
-      name: 'Passly',
-      url: '/tools/passly',
-      icon: Key,
-    },
-    {
-      name: 'Beatly',
-      url: '/tools/beatly',
-      icon: Music4,
-    },
-  ] satisfies ToolConfig[],
+  tools,
 };

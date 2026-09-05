@@ -20,9 +20,6 @@ const TARGET_VALUES = ['all', ...SITE_BANNER_APPS] as const;
 /** Every target the editor can write, in display order. */
 export const SITE_BANNER_TARGETS: SiteBannerTarget[] = [...TARGET_VALUES];
 
-/** Newest-first audit log length. Keeps the Global Config item small. */
-export const HISTORY_LIMIT = 20;
-
 export const TARGET_LABELS: Record<SiteBannerTarget, string> = {
   all: 'All apps',
   web: 'Web',

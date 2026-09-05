@@ -7,10 +7,10 @@ import { getSiteAnnouncements } from '@workspace/ui/lib/site-announcement-server
 
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/contexts/auth-context';
-import { FlagsProvider } from '@/contexts/flags-context';
-import { sidebarToolsFlag } from '@/flags';
+import { VisibleToolsProvider } from '@/contexts/visible-tools-context';
 import { getUserFromSession } from '@/lib/auth';
 import { APP_DESCRIPTION, APP_NAME } from '@/lib/constants';
+import { getVisibleToolPaths } from '@/lib/sidebar-tools-server';
 import '@/styles/globals.css';
 
 const ubuntu = Ubuntu({
@@ -48,8 +48,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const user = await getUserFromSession();
-  const flags = { 'sidebar-tools': String((await sidebarToolsFlag()) ?? '') };
   const announcements = await getSiteAnnouncements('web');
+  const visibleTools = await getVisibleToolPaths();
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -61,12 +61,12 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider user={user}>
-            <FlagsProvider flags={flags}>
+            <VisibleToolsProvider value={visibleTools}>
               <SiteAnnouncementProvider announcements={announcements}>
                 {children}
                 <Toaster position="bottom-right" />
               </SiteAnnouncementProvider>
-            </FlagsProvider>
+            </VisibleToolsProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
