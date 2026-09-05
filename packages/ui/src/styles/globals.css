@@ -40,6 +40,8 @@
   --border: var(--neutral-200);
   --input: var(--neutral-200);
   --ring: var(--neutral-400);
+  /* Inset panel one step off the card — preview strips, segmented tracks */
+  --surface: var(--neutral-50);
 
   /* Status — solid (badges, buttons, dots) */
   --success: oklch(0.6 0.14 155);
@@ -83,6 +85,30 @@
   --banner-warning-fg: oklch(0.48 0.092 77.7);
   --banner-error-bg: oklch(0.888 0.05 22.7);
   --banner-error-fg: oklch(0.398 0.16 22.3);
+  --banner-promo-bg: oklch(0.889 0.055 305.5);
+  --banner-promo-fg: oklch(0.398 0.16 303.5);
+  /*
+   * Rainbow wash for the promo banner's title. Same five hues as the
+   * `--color-*` accent above, in the same order `RainbowButton` sweeps them
+   * (26 → 140 → 251 → 220 → 302), so the two read as one rainbow rather than
+   * two — but re-tuned, because those stops are built to glow behind a border
+   * and are far too light to survive as text.
+   *
+   * Held at a constant lightness so no word in a title looks bolder than its
+   * neighbours; the vividness comes from chroma, pushed to the sRGB gamut edge
+   * of each hue (which is why the numbers differ per stop). L 0.53 is the
+   * ceiling that still clears 3:1 on the pale purple tint — going lighter
+   * reads as washed out, not brighter, because the contrast is what carries
+   * the colour.
+   */
+  --banner-promo-title: linear-gradient(
+    90deg,
+    oklch(0.53 0.19 26),
+    oklch(0.53 0.16 140),
+    oklch(0.53 0.19 251),
+    oklch(0.53 0.13 220),
+    oklch(0.53 0.24 302)
+  );
 
   /* Token (colored label/chip) — light mode */
   --token-default-bg: oklch(0.955 0 0);
@@ -135,6 +161,7 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: var(--neutral-500);
+  --surface: oklch(0.235 0 0);
 
   --success: oklch(0.7 0.14 155);
   --success-foreground: oklch(0.145 0 0);
@@ -163,6 +190,17 @@
   --banner-warning-fg: oklch(0.872 0.15 88.8);
   --banner-error-bg: oklch(0.375 0.034 21.5);
   --banner-error-fg: oklch(0.876 0.066 24.3);
+  --banner-promo-bg: oklch(0.375 0.045 305.5);
+  --banner-promo-fg: oklch(0.876 0.075 303.5);
+  /* Same five hues, lifted to clear 4.4:1 on the deep purple tint. */
+  --banner-promo-title: linear-gradient(
+    90deg,
+    oklch(0.82 0.12 26),
+    oklch(0.82 0.17 140),
+    oklch(0.82 0.11 251),
+    oklch(0.82 0.1 220),
+    oklch(0.82 0.14 302)
+  );
 
   /* Token (colored label/chip) — dark mode */
   --token-default-bg: oklch(0.3 0 0);
@@ -218,6 +256,7 @@
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
+  --color-surface: var(--surface);
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
@@ -275,6 +314,8 @@
   --color-banner-warning-fg: var(--banner-warning-fg);
   --color-banner-error-bg: var(--banner-error-bg);
   --color-banner-error-fg: var(--banner-error-fg);
+  --color-banner-promo-bg: var(--banner-promo-bg);
+  --color-banner-promo-fg: var(--banner-promo-fg);
 
   --color-token-default-bg: var(--token-default-bg);
   --color-token-default-fg: var(--token-default-fg);

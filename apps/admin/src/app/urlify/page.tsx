@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 
 import MainLayout from '@/components/layouts/main-layout';
+import { PageShell } from '@/components/layouts/page-shell';
 import { apiFetch } from '@/lib/api-fetch';
 import { getAccessToken } from '@/lib/auth';
 import type { ShortenedUrl } from '@/types/urlify';
@@ -44,13 +45,13 @@ export default async function UrlifyPage({ searchParams }: PageProps) {
 
   return (
     <MainLayout>
-      <section className="container mx-auto px-2 py-8">
+      <PageShell>
         <UrlifyTable
           initialUrls={urls}
           initialLimit={limit}
           nextCursor={nextCursor}
         />
-      </section>
+      </PageShell>
     </MainLayout>
   );
 }

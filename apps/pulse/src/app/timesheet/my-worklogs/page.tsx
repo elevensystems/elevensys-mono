@@ -5,8 +5,8 @@ import { useEffect, useMemo } from 'react';
 import { Button } from '@workspace/ui/components/button';
 import { Checkbox } from '@workspace/ui/components/checkbox';
 import { DateRangePicker } from '@workspace/ui/components/date-range-picker';
-import { Frame, FrameHeader, FramePanel } from '@workspace/ui/components/frame';
 import { NativeSelect } from '@workspace/ui/components/native-select';
+import { Panel, PanelBody, PanelHeader } from '@workspace/ui/components/panel';
 import { Skeleton } from '@workspace/ui/components/skeleton';
 import { Spinner } from '@workspace/ui/components/spinner';
 import { Search } from 'lucide-react';
@@ -123,9 +123,9 @@ export default function MyWorklogsPage() {
 
           {isConfigured && <TokenExpiredAlert authError={authError} />}
 
-          <Frame dense>
+          <Panel>
             {/* Filters */}
-            <FrameHeader className="gap-3">
+            <PanelHeader>
               <FilterBar>
                 <DateRangePicker
                   aria-label="Date Range"
@@ -161,12 +161,12 @@ export default function MyWorklogsPage() {
                   {isLoading ? 'Searching…' : 'Search'}
                 </Button>
               </FilterBar>
-            </FrameHeader>
+            </PanelHeader>
 
-            {/* Results — flush inside the frame, keeping its radius. Select all
-                and bulk delete sit in the panel's own toolbar, directly above
+            {/* Results. Select all and bulk delete sit in the body's own
+                toolbar, directly above
                 the rows they act on. */}
-            <FramePanel rounded className="gap-0 overflow-hidden p-0">
+            <PanelBody>
               {!isLoading && worklogs.length > 0 && (
                 <div className="flex min-h-10 flex-wrap items-center justify-between gap-2 border-b px-3 py-2">
                   <div className="flex items-center gap-2">
@@ -238,8 +238,8 @@ export default function MyWorklogsPage() {
                     onEdit={openEditModal}
                   />
                 ))}
-            </FramePanel>
-          </Frame>
+            </PanelBody>
+          </Panel>
 
           <EditWorklogModal
             worklog={editingWorklog}

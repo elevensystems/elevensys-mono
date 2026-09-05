@@ -7,6 +7,7 @@ import {
   CircleX,
   Info,
   type LucideIcon,
+  Sparkles,
   TriangleAlert,
   X,
 } from 'lucide-react';
@@ -18,6 +19,7 @@ const bannerVariants = cva('flex w-full gap-3 font-sans transition-colors', {
       success: 'bg-banner-success-bg text-banner-success-fg',
       warning: 'bg-banner-warning-bg text-banner-warning-fg',
       error: 'bg-banner-error-bg text-banner-error-fg',
+      promo: 'bg-banner-promo-bg text-banner-promo-fg',
     },
     flush: {
       true: 'rounded-none px-6 py-4',
@@ -38,6 +40,7 @@ const STATE_ICONS: Record<
   success: CircleCheckBig,
   warning: TriangleAlert,
   error: CircleX,
+  promo: Sparkles,
 };
 
 interface BannerAction {
@@ -69,6 +72,19 @@ function Banner({
   const Icon = STATE_ICONS[state ?? 'info'];
   const urgent = state === 'error' || state === 'warning';
   const centered = Boolean(action);
+  const headingClasses = 'text-[15px] leading-[1.35] font-semibold';
+  // A promo has nothing urgent to say, so it gets the one flourish in the set:
+  // its heading is painted with the rainbow wash instead of the banner's own
+  // foreground. `text-transparent` is what lets the gradient show through, so
+  // the two classes only ever go on together.
+  //
+  // Only a real title, never a message standing in for one. The wash trades
+  // some contrast for colour, which a few words carry and a paragraph does
+  // not — a promo written without a title keeps the solid foreground.
+  const rainbow =
+    state === 'promo' && title
+      ? 'w-fit bg-[image:var(--banner-promo-title)] bg-clip-text text-transparent'
+      : undefined;
   const actionClasses =
     'shrink-0 whitespace-nowrap rounded-sm bg-[color-mix(in_oklab,currentColor_12%,transparent)] px-4 py-2 text-sm font-medium text-inherit transition-colors hover:bg-[color-mix(in_oklab,currentColor_20%,transparent)]';
 
@@ -95,7 +111,7 @@ function Banner({
           <>
             <div
               data-slot="banner-title"
-              className="text-[15px] leading-[1.35] font-semibold"
+              className={cn(headingClasses, rainbow)}
             >
               {title}
             </div>
@@ -107,10 +123,7 @@ function Banner({
             </div>
           </>
         ) : (
-          <div
-            data-slot="banner-title"
-            className="text-[15px] leading-[1.35] font-semibold"
-          >
+          <div data-slot="banner-title" className={headingClasses}>
             {message}
           </div>
         )}

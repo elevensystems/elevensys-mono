@@ -8,7 +8,7 @@ import { Calendar } from '@workspace/ui/components/calendar';
 import { Checkbox } from '@workspace/ui/components/checkbox';
 import { DateRangePicker } from '@workspace/ui/components/date-range-picker';
 import { FieldMessage } from '@workspace/ui/components/field-message';
-import { Frame, FrameHeader, FramePanel } from '@workspace/ui/components/frame';
+import { Panel, PanelBody, PanelHeader } from '@workspace/ui/components/panel';
 import {
   Popover,
   PopoverContent,
@@ -135,7 +135,7 @@ export function MissingWorklogsCard({
   };
 
   return (
-    /* The frame is the validated control: the error ring stays on it
+    /* The panel is the validated control: the error ring stays on it
        and the message sits in the tinted strip below. */
     <FieldMessage
       state="error"
@@ -144,88 +144,83 @@ export function MissingWorklogsCard({
       controlClassName="rounded-xl border-0 bg-background"
       showIcon
     >
-      <Frame dense className={cn(dateError && 'border-destructive')}>
-        <FrameHeader className="gap-3">
+      <Panel className={cn(dateError && 'border-destructive')}>
+        <PanelHeader>
           {/* The project comes from the header switcher, so the range picker
               and its two fill actions are all this row carries. */}
-          <div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <DateRangePicker
-                id="warning-date-range"
-                from={warningFromDate}
-                to={warningToDate}
-                onRangeChange={(from, to) => {
-                  onWarningFromDateChange(from);
-                  onWarningToDateChange(to);
-                }}
-                className="w-full sm:w-64"
-              />
-              {/* Find Dates and Add manually are two ways to fill the same
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center">
+            <DateRangePicker
+              id="warning-date-range"
+              from={warningFromDate}
+              to={warningToDate}
+              onRangeChange={(from, to) => {
+                onWarningFromDateChange(from);
+                onWarningToDateChange(to);
+              }}
+              className="w-full sm:w-64"
+            />
+            {/* Find Dates and Add manually are two ways to fill the same
                   list of selected dates, so they share one group */}
-              <ButtonGroup className="w-full sm:ml-auto sm:w-fit">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="flex-1 sm:flex-none">
-                      <CalendarPlus />
-                      Add manually
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    className="w-auto p-0"
-                    align="end"
-                    sideOffset={8}
-                  >
-                    <div className="p-3 border-b">
-                      <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
-                        <Checkbox
-                          checked={includeWeekends}
-                          onCheckedChange={checked =>
-                            onIncludeWeekendsChange(checked === true)
-                          }
-                        />
-                        Include weekends
-                      </label>
-                    </div>
-                    <Calendar
-                      mode="multiple"
-                      selected={selectedDates}
-                      onSelect={handleCalendarSelect}
-                      disabled={
-                        includeWeekends ? undefined : isUnselectedWeekend
-                      }
-                      numberOfMonths={3}
-                      showOutsideDays={false}
-                    />
-                  </PopoverContent>
-                </Popover>
-
-                <Button
-                  onClick={handleSearchClick}
-                  disabled={
-                    isSearchingWarnings ||
-                    !selectedProjectId ||
-                    !warningFromDate ||
-                    !warningToDate
-                  }
-                  className="flex-1 sm:flex-none"
-                  title={
-                    !selectedProjectId
-                      ? 'Choose a project in the header first'
-                      : undefined
-                  }
+            <ButtonGroup className="w-full sm:ml-auto sm:w-fit">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="flex-1 sm:flex-none">
+                    <CalendarPlus />
+                    Add manually
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-auto p-0"
+                  align="end"
+                  sideOffset={8}
                 >
-                  {isSearchingWarnings ? <Spinner /> : <Search />}
-                  {isSearchingWarnings ? 'Searching' : 'Find Dates'}
-                </Button>
-              </ButtonGroup>
-            </div>
-          </div>
-        </FrameHeader>
+                  <div className="p-3 border-b">
+                    <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+                      <Checkbox
+                        checked={includeWeekends}
+                        onCheckedChange={checked =>
+                          onIncludeWeekendsChange(checked === true)
+                        }
+                      />
+                      Include weekends
+                    </label>
+                  </div>
+                  <Calendar
+                    mode="multiple"
+                    selected={selectedDates}
+                    onSelect={handleCalendarSelect}
+                    disabled={includeWeekends ? undefined : isUnselectedWeekend}
+                    numberOfMonths={3}
+                    showOutsideDays={false}
+                  />
+                </PopoverContent>
+              </Popover>
 
-        {/* Selected dates — flush inside the frame, keeping its radius.
-              Clear all sits in the panel's own toolbar, directly above the
+              <Button
+                onClick={handleSearchClick}
+                disabled={
+                  isSearchingWarnings ||
+                  !selectedProjectId ||
+                  !warningFromDate ||
+                  !warningToDate
+                }
+                className="flex-1 sm:flex-none"
+                title={
+                  !selectedProjectId
+                    ? 'Choose a project in the header first'
+                    : undefined
+                }
+              >
+                {isSearchingWarnings ? <Spinner /> : <Search />}
+                {isSearchingWarnings ? 'Searching' : 'Find Dates'}
+              </Button>
+            </ButtonGroup>
+          </div>
+        </PanelHeader>
+
+        {/* Selected dates. Clear all sits in the body's own toolbar, directly above the
               chips it acts on, rather than floating between the two blocks. */}
-        <FramePanel rounded className="gap-0 overflow-hidden p-0">
+        <PanelBody>
           <div className="flex min-h-10 flex-wrap items-center justify-between gap-2 border-b px-3 py-2">
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-muted-foreground">
@@ -256,8 +251,8 @@ export function MissingWorklogsCard({
               onRemove={handleRemoveDate}
             />
           </div>
-        </FramePanel>
-      </Frame>
+        </PanelBody>
+      </Panel>
     </FieldMessage>
   );
 }

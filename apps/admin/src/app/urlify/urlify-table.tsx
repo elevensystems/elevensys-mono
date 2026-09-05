@@ -16,6 +16,13 @@ import {
   DialogTitle,
 } from '@workspace/ui/components/dialog';
 import {
+  Panel,
+  PanelActions,
+  PanelBody,
+  PanelHeader,
+  PanelTitle,
+} from '@workspace/ui/components/panel';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -40,6 +47,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { PageHeader } from '@/components/layouts/page-header';
 import { type ShortenedUrl, getUrlStatus } from '@/types/urlify';
 
 const PAGE_SIZES = [5, 10, 20, 50] as const;
@@ -205,11 +213,11 @@ export function UrlifyTable({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Urlify</h1>
-        </div>
-        <div className="flex items-center gap-2">
+      <PageHeader
+        className="mb-2"
+        title="Urlify"
+        description="Shortened URLs — open, paginate, and delete."
+        actions={
           <Button
             variant="outline"
             size="sm"
@@ -218,105 +226,120 @@ export function UrlifyTable({
           >
             <RefreshCw className="size-4" /> Refresh
           </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            disabled={selected.size === 0}
-            onClick={() => setBulkDeleteOpen(true)}
-          >
-            <Trash2 className="size-4" /> Delete
-            {selected.size > 0 ? ` (${selected.size})` : ''}
-          </Button>
-        </div>
-      </div>
+        }
+      />
 
-      <div className="overflow-hidden rounded-lg border">
-        <Table>
-          <TableHeader className="bg-muted/50">
-            <TableRow>
-              <TableHead className="w-10">
-                <Checkbox
-                  checked={checkedValue}
-                  onCheckedChange={toggleAll}
-                  aria-label="Select all"
-                />
-              </TableHead>
-              <TableHead>Short Code</TableHead>
-              <TableHead>Original URL</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="w-10" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {urls.length === 0 ? (
+      <Panel>
+        <PanelHeader>
+          <PanelTitle>Short URLs</PanelTitle>
+          {/* Bulk delete acts on the selection, so it lives with the rows it
+              deletes rather than in the page title row. */}
+          {selected.size > 0 && (
+            <PanelActions>
+              <span className="text-muted-foreground text-[13px]">
+                {selected.size} selected
+              </span>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setBulkDeleteOpen(true)}
+              >
+                <Trash2 className="size-4" /> Delete
+              </Button>
+            </PanelActions>
+          )}
+        </PanelHeader>
+
+        <PanelBody>
+          <Table>
+            <TableHeader className="bg-muted/50">
               <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="py-8 text-center text-sm text-muted-foreground"
-                >
-                  No URLs found.
-                </TableCell>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={checkedValue}
+                    onCheckedChange={toggleAll}
+                    aria-label="Select all"
+                  />
+                </TableHead>
+                <TableHead>Short Code</TableHead>
+                <TableHead>Original URL</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead className="w-10" />
               </TableRow>
-            ) : (
-              urls.map(url => {
-                const status = getUrlStatus(url);
-                return (
-                  <TableRow key={url.shortCode}>
-                    <TableCell>
-                      <Checkbox
-                        checked={selected.has(url.shortCode)}
-                        onCheckedChange={() => toggleOne(url.shortCode)}
-                        aria-label="Select row"
-                      />
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">
-                      <a
-                        href={url.shortUrl}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        className="inline-flex items-center gap-1 hover:underline"
-                      >
-                        {url.shortCode}
-                        <ExternalLink className="size-3" />
-                      </a>
-                    </TableCell>
-                    <TableCell className="max-w-md truncate">
-                      <span title={url.originalUrl}>{url.originalUrl}</span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={status === 'active' ? 'secondary' : 'outline'}
-                      >
-                        {status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {formatDate(url.createdAt)}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                        disabled={deletingId === url.shortCode}
-                        onClick={() => deleteOne(url.shortCode)}
-                        aria-label="Delete"
-                      >
-                        {deletingId === url.shortCode ? (
-                          <Spinner />
-                        ) : (
-                          <Trash2 />
-                        )}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {urls.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={6}
+                    className="py-8 text-center text-sm text-muted-foreground"
+                  >
+                    No URLs found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                urls.map(url => {
+                  const status = getUrlStatus(url);
+                  return (
+                    <TableRow key={url.shortCode}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selected.has(url.shortCode)}
+                          onCheckedChange={() => toggleOne(url.shortCode)}
+                          aria-label="Select row"
+                        />
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">
+                        <a
+                          href={url.shortUrl}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          className="inline-flex items-center gap-1 hover:underline"
+                        >
+                          {url.shortCode}
+                          <ExternalLink className="size-3" />
+                        </a>
+                      </TableCell>
+                      <TableCell className="max-w-md truncate">
+                        <span title={url.originalUrl}>{url.originalUrl}</span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            status === 'active' ? 'secondary' : 'outline'
+                          }
+                        >
+                          {status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {formatDate(url.createdAt)}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                          disabled={deletingId === url.shortCode}
+                          onClick={() => deleteOne(url.shortCode)}
+                          aria-label="Delete"
+                        >
+                          {deletingId === url.shortCode ? (
+                            <Spinner />
+                          ) : (
+                            <Trash2 />
+                          )}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </PanelBody>
+      </Panel>
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm">

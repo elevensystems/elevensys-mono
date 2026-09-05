@@ -60,10 +60,7 @@ function fetchProjects(
     );
 
     if (!response.ok) {
-      throw new ProjectsFetchError(
-        'Failed to fetch projects',
-        response.status
-      );
+      throw new ProjectsFetchError('Failed to fetch projects', response.status);
     }
 
     const data = await response.json();

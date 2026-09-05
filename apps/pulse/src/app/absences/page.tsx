@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { Button } from '@workspace/ui/components/button';
 import { DateRangePicker } from '@workspace/ui/components/date-range-picker';
-import { Frame, FrameHeader, FramePanel } from '@workspace/ui/components/frame';
+import { Panel, PanelBody, PanelHeader } from '@workspace/ui/components/panel';
 import { Skeleton } from '@workspace/ui/components/skeleton';
 import { Spinner } from '@workspace/ui/components/spinner';
 import {
@@ -123,9 +123,9 @@ export default function AbsencesPage() {
 
           {isConfigured && <TokenExpiredAlert authError={authError} />}
 
-          <Frame dense>
+          <Panel>
             {/* Filters */}
-            <FrameHeader className="gap-3">
+            <PanelHeader>
               <FilterBar>
                 <DateRangePicker
                   aria-label="Date Range"
@@ -155,10 +155,10 @@ export default function AbsencesPage() {
                   {isLoading ? 'Searching…' : 'Search'}
                 </Button>
               </FilterBar>
-            </FrameHeader>
+            </PanelHeader>
 
-            {/* Results — flush inside the frame, keeping its radius. */}
-            <FramePanel rounded className="gap-0 overflow-hidden p-0">
+            {/* Results */}
+            <PanelBody>
               {showTable ? (
                 <Table className="table-fixed">
                   <AbsencesTableHeader />
@@ -202,7 +202,7 @@ export default function AbsencesPage() {
                   </TableBody>
                 </Table>
               ) : (
-                <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
+                <div className="flex flex-col items-center justify-center h-40 text-sm text-muted-foreground">
                   {!selectedProject ? (
                     <p>Choose a project in the header to get started.</p>
                   ) : hasSearched ? (
@@ -215,8 +215,8 @@ export default function AbsencesPage() {
                   )}
                 </div>
               )}
-            </FramePanel>
-          </Frame>
+            </PanelBody>
+          </Panel>
 
           {!isLoading && rows.length > 0 && (
             <TimesheetPagination

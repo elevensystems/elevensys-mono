@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 
 import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
 import { TokenExpiredAlert } from '@/components/features/timesheet/token-expired-alert';
-import { WorkEntriesFrame } from '@/components/features/timesheet/work-entries-frame';
+import { WorkEntriesPanel } from '@/components/features/timesheet/work-entries-panel';
 import MainLayout from '@/components/layouts/main-layout';
 import { ToolPageHeader } from '@/components/layouts/tool-page-header';
 import { useLogWorkSubmission } from '@/hooks/use-log-work-submission';
@@ -414,7 +414,7 @@ export default function LogWorkPage() {
                 controlClassName="rounded-xl border-0 bg-background"
                 showIcon
               >
-                <WorkEntriesFrame
+                <WorkEntriesPanel
                   entries={entries}
                   issues={issues}
                   issuesByKey={issuesByKey}

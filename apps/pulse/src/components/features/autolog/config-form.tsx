@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from '@workspace/ui/components/tabs';
 import { Clock, MessageSquare, PlusCircle, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { WorkEntriesFrame } from '@/components/features/timesheet/work-entries-frame';
+import { WorkEntriesPanel } from '@/components/features/timesheet/work-entries-panel';
 import { useProjectIssues } from '@/hooks/use-project-issues';
 import {
   createDefaultEntry,
@@ -275,7 +275,7 @@ export function ConfigForm({
       <div className="min-w-0 space-y-3">
         <Label className="text-sm font-medium">Tickets</Label>
         <div className="min-w-0 overflow-x-auto">
-          <WorkEntriesFrame
+          <WorkEntriesPanel
             entries={entries}
             issues={issues}
             issuesByKey={issuesByKey}

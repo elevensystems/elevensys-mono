@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { SiteAnnouncement } from '@workspace/ui/lib/site-announcement';
 
@@ -52,6 +52,26 @@ function lastPayload(fetchMock: jest.Mock) {
   };
 }
 
+/** Picks a target from the rail, which every target is always listed in. */
+async function chooseTarget(
+  user: ReturnType<typeof userEvent.setup>,
+  label: string
+) {
+  await user.click(
+    screen.getByRole('radio', { name: new RegExp(`^${label}`) })
+  );
+}
+
+/** The composer's on/off switch, whose label names the current target. */
+function enabledSwitch() {
+  return screen.getByRole('switch', { name: /^Showing on/ });
+}
+
+/** The page header's Publish button — the composer's only submit control. */
+function publishButton() {
+  return screen.getByRole('button', { name: 'Publish' });
+}
+
 /** Finds text inside the rendered preview banner, not the textarea. */
 function findInPreview(text: string) {
   return screen.findByText(
@@ -70,7 +90,7 @@ describe('SiteBannerForm', () => {
   it('starts on the global announcement', () => {
     render(<SiteBannerForm snapshot={makeSnapshot()} />);
 
-    expect(screen.getByLabelText('Show on')).toHaveValue('all');
+    expect(screen.getByText('All apps')).toBeVisible();
     expect(screen.getByLabelText('Message')).toHaveValue('');
   });
 
@@ -80,13 +100,13 @@ describe('SiteBannerForm', () => {
       <SiteBannerForm snapshot={makeSnapshot({ pulse: [PULSE_BANNER] })} />
     );
 
-    await user.selectOptions(screen.getByLabelText('Show on'), 'pulse');
+    await chooseTarget(user, 'Pulse');
 
     expect(screen.getByLabelText('Message')).toHaveValue(
       'The "Find Dates" feature may not work.'
     );
     expect(screen.getByLabelText(/^Title/)).toHaveValue('Jira DC is unstable');
-    expect(screen.getByLabelText('Style')).toHaveValue('warning');
+    expect(screen.getByRole('radio', { name: 'Warning' })).toBeChecked();
   });
 
   it('counts how many banners each target already has', () => {
@@ -98,10 +118,13 @@ describe('SiteBannerForm', () => {
       />
     );
 
+    // Every target is listed with its tally, without anything being opened.
     expect(
-      screen.getByRole('option', { name: /Pulse — 2 live/ })
+      screen.getByRole('radio', { name: /^Pulse 2 banners/ })
     ).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: /^Web$/ })).toBeInTheDocument();
+    expect(
+      screen.getByRole('radio', { name: /^Web Nothing posted/ })
+    ).toBeInTheDocument();
   });
 
   // --- Live preview ---
@@ -123,7 +146,9 @@ describe('SiteBannerForm', () => {
     await user.type(screen.getByLabelText('Message'), 'Not live yet');
 
     expect(await findInPreview('Not live yet')).toBeVisible();
-    expect(screen.getByText(/Draft — saving now would hide/)).toBeVisible();
+    expect(
+      screen.getByText(/Switched off — saving now removes it/)
+    ).toBeVisible();
   });
 
   // --- Presets ---
@@ -131,13 +156,57 @@ describe('SiteBannerForm', () => {
     const user = userEvent.setup();
     render(<SiteBannerForm snapshot={makeSnapshot()} />);
 
-    await user.click(screen.getByRole('button', { name: 'Degraded service' }));
+    await user.click(screen.getByRole('button', { name: 'Degraded' }));
 
     expect(screen.getByLabelText(/^Title/)).toHaveValue(
       'Service is experiencing issues'
     );
-    expect(screen.getByLabelText('Style')).toHaveValue('error');
-    expect(screen.getByLabelText('Show this banner')).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Error' })).toBeChecked();
+    expect(enabledSwitch()).toBeChecked();
+  });
+
+  // --- Timing ---
+  it('goes live on save until a window is asked for', async () => {
+    const user = userEvent.setup();
+    render(<SiteBannerForm snapshot={makeSnapshot()} />);
+
+    expect(screen.getByText('Goes live as soon as you save.')).toBeVisible();
+    expect(screen.queryByLabelText('Starts')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('radio', { name: 'Scheduled window' }));
+
+    expect(screen.getByLabelText('Starts')).toBeVisible();
+    expect(screen.getByLabelText('Ends')).toBeVisible();
+  });
+
+  it('drops a window that was filled in and then switched back off', async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockSave(makeSnapshot());
+
+    render(<SiteBannerForm snapshot={makeSnapshot()} />);
+
+    await user.type(screen.getByLabelText('Message'), 'Something');
+    await user.click(enabledSwitch());
+    await user.click(screen.getByRole('radio', { name: 'Scheduled window' }));
+    fireEvent.change(screen.getByLabelText('Starts'), {
+      target: { value: '2099-09-06T22:00' },
+    });
+    await user.click(screen.getByRole('radio', { name: 'Live now' }));
+    await user.click(publishButton());
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    expect(lastPayload(fetchMock).announcement).not.toHaveProperty('startsAt');
+  });
+
+  // --- Empty target ---
+  it('points at the composer when a target has nothing posted', () => {
+    render(<SiteBannerForm snapshot={makeSnapshot()} />);
+
+    expect(screen.getByText('Nothing posted on All apps')).toBeVisible();
+    // The composer's "Start from:" row is the only place the presets live.
+    expect(screen.getAllByRole('button', { name: 'Maintenance' })).toHaveLength(
+      1
+    );
   });
 
   // --- Saving ---
@@ -148,13 +217,13 @@ describe('SiteBannerForm', () => {
 
     render(<SiteBannerForm snapshot={makeSnapshot()} />);
 
-    await user.selectOptions(screen.getByLabelText('Show on'), 'pulse');
+    await chooseTarget(user, 'Pulse');
     await user.type(
       screen.getByLabelText('Message'),
       'The "Find Dates" feature may not work.'
     );
-    await user.click(screen.getByLabelText('Show this banner'));
-    await user.click(screen.getByRole('button', { name: /Post banner/ }));
+    await user.click(enabledSwitch());
+    await user.click(publishButton());
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
@@ -168,14 +237,47 @@ describe('SiteBannerForm', () => {
     expect(refresh).toHaveBeenCalled();
   });
 
+  it('publishes a banner readers can close when asked to', async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockSave(makeSnapshot());
+
+    render(<SiteBannerForm snapshot={makeSnapshot()} />);
+
+    await user.type(screen.getByLabelText('Message'), 'A new tool has landed');
+    await user.click(screen.getByRole('switch', { name: 'Dismissible' }));
+    await user.click(enabledSwitch());
+    await user.click(publishButton());
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    expect(lastPayload(fetchMock).announcement).toMatchObject({
+      dismissible: true,
+    });
+  });
+
+  it('leaves dismissible out of a banner published without it', async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockSave(makeSnapshot());
+
+    render(<SiteBannerForm snapshot={makeSnapshot()} />);
+
+    await user.type(screen.getByLabelText('Message'), 'Everything is down');
+    await user.click(enabledSwitch());
+    await user.click(publishButton());
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    expect(lastPayload(fetchMock).announcement).not.toHaveProperty(
+      'dismissible'
+    );
+  });
+
   it('refuses to save without a message', async () => {
     const user = userEvent.setup();
     const fetchMock = mockSave(makeSnapshot());
 
     render(<SiteBannerForm snapshot={makeSnapshot()} />);
 
-    await user.click(screen.getByLabelText('Show this banner'));
-    await user.click(screen.getByRole('button', { name: /Post banner/ }));
+    await user.click(enabledSwitch());
+    await user.click(publishButton());
 
     expect(await screen.findByText('Message is required.')).toBeVisible();
     expect(fetchMock).not.toHaveBeenCalled();
@@ -191,8 +293,8 @@ describe('SiteBannerForm', () => {
     render(<SiteBannerForm snapshot={makeSnapshot()} />);
 
     await user.type(screen.getByLabelText('Message'), 'Something');
-    await user.click(screen.getByLabelText('Show this banner'));
-    await user.click(screen.getByRole('button', { name: /Post banner/ }));
+    await user.click(enabledSwitch());
+    await user.click(publishButton());
 
     await waitFor(() =>
       expect(toastError).toHaveBeenCalledWith('Global Config request failed')
@@ -212,8 +314,8 @@ describe('SiteBannerForm', () => {
     render(<SiteBannerForm snapshot={makeSnapshot()} />);
 
     await user.type(screen.getByLabelText('Message'), 'Something');
-    await user.click(screen.getByLabelText('Show this banner'));
-    await user.click(screen.getByRole('button', { name: /Post banner/ }));
+    await user.click(enabledSwitch());
+    await user.click(publishButton());
 
     await waitFor(() =>
       expect(toastError).toHaveBeenCalledWith(
@@ -247,7 +349,7 @@ describe('SiteBannerForm', () => {
       />
     );
 
-    await user.selectOptions(screen.getByLabelText('Show on'), 'pulse');
+    await chooseTarget(user, 'Pulse');
 
     // Scoped to the list buttons: the open banner also shows in the preview.
     expect(
@@ -271,10 +373,34 @@ describe('SiteBannerForm', () => {
       />
     );
 
-    await user.selectOptions(screen.getByLabelText('Show on'), 'pulse');
+    await chooseTarget(user, 'Pulse');
     await user.click(screen.getByRole('button', { name: /Second notice/ }));
 
     expect(screen.getByLabelText(/^Title/)).toHaveValue('Second notice');
+  });
+
+  it('marks which banner the composer has open', async () => {
+    const user = userEvent.setup();
+    render(
+      <SiteBannerForm
+        snapshot={makeSnapshot({
+          pulse: [
+            PULSE_BANNER,
+            { ...PULSE_BANNER, id: 'pulse-2', title: 'Second notice' },
+          ],
+        })}
+      />
+    );
+
+    await chooseTarget(user, 'Pulse');
+    await user.click(screen.getByRole('button', { name: /Second notice/ }));
+
+    expect(
+      screen.getByRole('button', { name: /Second notice/ })
+    ).toHaveAttribute('aria-current', 'true');
+    expect(
+      screen.getByRole('button', { name: /Jira DC is unstable/ })
+    ).toHaveAttribute('aria-current', 'false');
   });
 
   it('posts a new banner under its own id, leaving the existing one alone', async () => {
@@ -285,11 +411,11 @@ describe('SiteBannerForm', () => {
       <SiteBannerForm snapshot={makeSnapshot({ pulse: [PULSE_BANNER] })} />
     );
 
-    await user.selectOptions(screen.getByLabelText('Show on'), 'pulse');
-    await user.click(screen.getByRole('button', { name: 'Add banner' }));
+    await chooseTarget(user, 'Pulse');
+    await user.click(screen.getByRole('button', { name: 'New banner' }));
     await user.type(screen.getByLabelText('Message'), 'A second notice.');
-    await user.click(screen.getByLabelText('Show this banner'));
-    await user.click(screen.getByRole('button', { name: /Post banner/ }));
+    await user.click(enabledSwitch());
+    await user.click(publishButton());
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
@@ -307,8 +433,8 @@ describe('SiteBannerForm', () => {
       <SiteBannerForm snapshot={makeSnapshot({ pulse: [PULSE_BANNER] })} />
     );
 
-    await user.selectOptions(screen.getByLabelText('Show on'), 'pulse');
-    await user.click(screen.getByRole('button', { name: /Save banner/ }));
+    await chooseTarget(user, 'Pulse');
+    await user.click(publishButton());
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     expect(lastPayload(fetchMock).id).toBe('pulse-1');
@@ -322,19 +448,17 @@ describe('SiteBannerForm', () => {
     );
 
     expect(
-      screen.queryByRole('button', { name: 'Delete banner' })
+      screen.queryByRole('button', { name: 'Delete' })
     ).not.toBeInTheDocument();
 
-    await user.selectOptions(screen.getByLabelText('Show on'), 'pulse');
+    await chooseTarget(user, 'Pulse');
 
-    expect(
-      screen.getByRole('button', { name: 'Delete banner' })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
 
     // A fresh draft has nothing to delete yet.
-    await user.click(screen.getByRole('button', { name: 'Add banner' }));
+    await user.click(screen.getByRole('button', { name: 'New banner' }));
     expect(
-      screen.queryByRole('button', { name: 'Delete banner' })
+      screen.queryByRole('button', { name: 'Delete' })
     ).not.toBeInTheDocument();
   });
 
@@ -346,8 +470,8 @@ describe('SiteBannerForm', () => {
       <SiteBannerForm snapshot={makeSnapshot({ pulse: [PULSE_BANNER] })} />
     );
 
-    await user.selectOptions(screen.getByLabelText('Show on'), 'pulse');
-    await user.click(screen.getByRole('button', { name: 'Delete banner' }));
+    await chooseTarget(user, 'Pulse');
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
     await user.click(screen.getByRole('button', { name: 'Delete it' }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());

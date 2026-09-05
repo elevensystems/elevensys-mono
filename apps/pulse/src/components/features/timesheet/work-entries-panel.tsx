@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 
 import { Button } from '@workspace/ui/components/button';
-import { Frame, FrameHeader, FramePanel } from '@workspace/ui/components/frame';
+import { Panel, PanelBody, PanelHeader } from '@workspace/ui/components/panel';
 import { Token } from '@workspace/ui/components/token';
 import { Plus } from 'lucide-react';
 
@@ -12,7 +12,7 @@ import type { JiraIssue, RowErrors, WorkEntry } from '@/types/timesheet';
 
 import { WorkEntryRow } from './work-entry-row';
 
-interface WorkEntriesFrameProps {
+interface WorkEntriesPanelProps {
   entries: WorkEntry[];
   issues: JiraIssue[];
   issuesByKey: Map<string, JiraIssue>;
@@ -31,7 +31,7 @@ interface WorkEntriesFrameProps {
   /** Per-row validation errors, keyed by entry id. */
   rowErrors?: Map<string, RowErrors>;
   onClearRowError?: (id: string, field: keyof RowErrors) => void;
-  /** Extra classes for the Frame (e.g. an error ring). */
+  /** Extra classes for the Panel (e.g. an error ring). */
   className?: string;
 }
 
@@ -40,7 +40,7 @@ interface WorkEntriesFrameProps {
  * and the Autolog config form. Computes the total-hours token from `entries`;
  * callers own the entry state and validation.
  */
-export function WorkEntriesFrame({
+export function WorkEntriesPanel({
   entries,
   issues,
   issuesByKey,
@@ -53,7 +53,7 @@ export function WorkEntriesFrame({
   rowErrors,
   onClearRowError,
   className,
-}: WorkEntriesFrameProps) {
+}: WorkEntriesPanelProps) {
   const totalHours = useMemo(
     () => entries.reduce((sum, e) => sum + (e.hours || 0), 0),
     [entries]
@@ -67,8 +67,8 @@ export function WorkEntriesFrame({
         : 'gray';
 
   return (
-    <Frame dense className={className}>
-      <FrameHeader className="flex-row flex-wrap items-center justify-between gap-3">
+    <Panel className={className}>
+      <PanelHeader className="justify-between">
         {/* Daily target */}
         <div className="flex items-center gap-2.5">
           <span className="text-sm font-semibold">Daily target</span>
@@ -85,10 +85,10 @@ export function WorkEntriesFrame({
           <Plus />
           Add Row
         </Button>
-      </FrameHeader>
+      </PanelHeader>
 
-      {/* Entries table — flush inside the frame, keeping its radius */}
-      <FramePanel rounded className="gap-0 overflow-hidden p-0">
+      {/* Entries table */}
+      <PanelBody>
         {/* Grid header */}
         <div className="grid grid-cols-[40px_230px_1fr_150px_140px_50px] gap-2 px-3 py-2 text-sm font-semibold text-muted-foreground">
           <span>#</span>
@@ -115,7 +115,7 @@ export function WorkEntriesFrame({
             isLastRow={entries.length === 1}
           />
         ))}
-      </FramePanel>
-    </Frame>
+      </PanelBody>
+    </Panel>
   );
 }

@@ -3,6 +3,10 @@
 This document provides comprehensive guidance for AI assistants working with the Elevensys Mono
 codebase.
 
+> **Building or changing a screen? Read @AGENTS.md first.** It holds the UI conventions for every
+> app — page skeleton, where the primary action goes, `Panel` vs `Card`, tokens, layout stability.
+> This file covers architecture, imports, naming, and testing.
+
 ## Project Overview
 
 **Elevensys Mono** is a Turborepo monorepo containing multiple Next.js applications and shared
@@ -173,7 +177,7 @@ elevensys-mono/
 ├── packages/
 │   └── ui/                         # Shared UI package (@workspace/ui)
 │       ├── src/
-│       │   ├── components/         # 42 shadcn/ui components
+│       │   ├── components/         # 57 shadcn/ui components
 │       │   ├── hooks/              # Shared hooks (use-mobile.ts)
 │       │   ├── lib/                # Shared utilities (cn(), hasRole())
 │       │   └── styles/
@@ -303,6 +307,14 @@ import { toast } from 'sonner';
 
 import MainLayout from '@/components/layouts/main-layout';
 import type { AuthUser } from '@/types/auth';
+
+// Always use 'use client' directive for client components
+
+// Always use 'use client' directive for client components
+
+// Always use 'use client' directive for client components
+
+// Always use 'use client' directive for client components
 
 // Always use 'use client' directive for client components
 
@@ -507,7 +519,8 @@ Key variables defined in shared `globals.css`:
 --primary, --primary-foreground
 --secondary, --muted, --accent, --destructive
 --border, --ring
---sidebar-*  /* Sidebar-specific colors */
+--surface     /* Inset panel one step off --card: preview strips, segmented tracks */
+--sidebar-*   /* Sidebar-specific colors */
 ```
 
 ### Dark Mode
@@ -823,9 +836,10 @@ migration, and no cross-feature write contention, since a save merges only its o
 ### Stacking order
 
 `sortAnnouncements()` orders every banner an app shows: **most urgent first** (`error` → `warning` →
-`success`/`info`, which share a tier), then **most recently saved** within a tier. Nothing for staff
-to manage, and a feature announcement can never bury an outage notice. An entry with no `savedAt`
-sorts last in its tier.
+`success`/`info`, which share a tier, → `promo`), then **most recently saved** within a tier.
+Nothing for staff to manage, and a feature announcement can never bury an outage notice — nor can a
+`promo`, which is the least urgent thing an app can say and always sits at the bottom. An entry with
+no `savedAt` sorts last in its tier.
 
 There are no Vercel Flags left in this repo — no Flags SDK, no adapter, no `FLAGS` env var. Tool
 visibility, the last thing modelled as one, is now its own Global Config item (see **Tool
@@ -837,9 +851,11 @@ Visibility** below).
 | ------------------------------------------- | ----------------------------------------------------- |
 | `lib/site-announcement.ts`                  | `SiteAnnouncement`, `announcementSchema`,             |
 |                                             | `parseAnnouncement()`, `resolveScheduled()`,          |
-|                                             | `isAnnouncementActive()`, `SITE_BANNER_APPS`,         |
-|                                             | `SITE_BANNER_ITEM_KEY`, `SiteBannerConfig`            |
+|                                             | `isAnnouncementActive()`, `announcementKey()`,        |
+|                                             | `SITE_BANNER_APPS`, `SITE_BANNER_ITEM_KEY`,           |
+|                                             | `SiteBannerConfig`                                    |
 | `lib/site-announcement-server.ts`           | `getSiteAnnouncement(app)` — the Global Config read   |
+| `lib/banner-dismissal.ts`                   | `useDismissedBanners()`, `dismissBanner()`            |
 | `components/site-announcement-provider.tsx` | `SiteAnnouncementProvider`, `useSiteAnnouncement()`   |
 | `components/site-banner.tsx`                | `SiteBanner` — renders `Banner` from the announcement |
 
@@ -850,9 +866,29 @@ no parsing or sorting — what reaches the client is already validated and order
 of the reader apps' client bundles.
 
 `SiteBanner` takes the list from `useSiteAnnouncements()`, so apps just render it; pass
-`announcements` to drive it from another source (the admin preview does this). Banners are not
-dismissible — they stay visible until cleared or updated. (`Banner` still supports `onDismiss` for
-other, non-site-wide uses.)
+`announcements` to drive it from another source (the admin preview does this, with `preview` so its
+close button is inert).
+
+### Dismissing a banner
+
+A banner stays up until it is cleared or updated **unless it was published as `dismissible`**, which
+staff choose per banner in the composer. Outage and maintenance notices should not be closable, so
+the switch is off by default and the field is written only when it is on — absent and `false` are
+the same state.
+
+Dismissals live in this browser's `localStorage` (`site-banner-dismissed`), never on the server: it
+is a reading preference, not a per-reader record worth keeping in Global Config.
+
+- **What is remembered is one _version_ of a banner.** `announcementKey()` is `id@savedAt`, so
+  editing a banner republishes it to everyone who closed the previous text — an update is how staff
+  say something new. A hand-written entry with no `id`/`savedAt` keys off its message instead.
+- **Dismissed keys are pruned on every dismissal**, down to the banners currently on screen, so the
+  stored list cannot grow without bound.
+- **Nothing is dismissed during hydration.** `useDismissedBanners()` is a `useSyncExternalStore`
+  whose server snapshot is empty, so the markup React hydrates always matches what was rendered; a
+  dismissed banner disappears on the commit after. Storage that is unavailable or holds junk reads
+  as "nothing dismissed" — failing open, the same way the Global Config read does.
+- Closing a banner in one tab closes it in the others (the `storage` event).
 
 ### Announcement value
 
@@ -865,6 +901,7 @@ other, non-site-wide uses.)
   "message": "Jira sync is paused Sat 2-4am UTC.",
   "actionLabel": "Status page",
   "actionHref": "https://status.elevensys.dev",
+  "dismissible": false,
   "startsAt": "2026-09-05T02:00:00.000Z",
   "endsAt": "2026-09-05T04:00:00.000Z"
 }
@@ -873,9 +910,17 @@ other, non-site-wide uses.)
 - `id` addresses one announcement in a target's list; `savedAt` breaks ties in stacking order. Both
   are stamped server-side on every write and are never taken from the client. Both are optional on
   read: a hand-written entry without them still renders.
-- `state`: `info` | `success` | `warning` | `error` (an unrecognized value falls back to `info`)
+- `state`: `info` | `success` | `warning` | `error` | `promo` (an unrecognized value falls back to
+  `info`). `promo` is the marketing style — a purple tint, a sparkle icon, and the one flourish in
+  the set: its title is painted with the `--banner-promo-title` rainbow instead of the banner's
+  foreground. That rainbow is the `--color-*` accent's five hues in `RainbowButton`'s order, held at
+  one lightness per theme so the gradient carries even weight and still clears 3:1. It is applied to
+  a real `title` only — a promo written without one keeps the solid foreground, since the wash
+  trades contrast for colour in a way a few words carry and a paragraph does not
 - `message` is required; a missing or blank message hides the banner
 - `actionLabel`/`actionHref` are only used as a pair — an unmatched half is dropped
+- `dismissible` lets readers close the banner; absent means they cannot (see **Dismissing a
+  banner**)
 - `startsAt`/`endsAt` are optional ISO instants; outside the window the banner is hidden, and an
   unparseable bound is ignored rather than hiding the banner
 
@@ -915,24 +960,61 @@ suppress it on a given page.
 
 ### Editing it (apps/admin)
 
-| File                           | Role                                       |
-| ------------------------------ | ------------------------------------------ |
-| `app/site-banner/page.tsx`     | Staff-gated page; reads the current values |
-| `app/site-banner/_components/` | Form (with live preview) and change log    |
-| `app/api/site-banner/route.ts` | `GET` snapshot, `POST` save                |
-| `lib/global-config-admin.ts`   | Vercel REST reads/writes (`server-only`)   |
-| `lib/site-banner-schema.ts`    | Form schema, presets, form↔announcement    |
+| File                                                  | Role                                            |
+| ----------------------------------------------------- | ----------------------------------------------- |
+| `app/site-banner/page.tsx`                            | Staff-gated page; reads the current values      |
+| `app/site-banner/_components/site-banner-form.tsx`    | Workspace orchestrator, save, composer          |
+| `app/site-banner/_components/banner-target-panel.tsx` | Rail — every target with its tally              |
+| `app/site-banner/_components/banner-picker-panel.tsx` | Rail — the target's banners and empty state     |
+| `app/api/site-banner/route.ts`                        | `GET` snapshot, `POST` save                     |
+| `lib/global-config-admin.ts`                          | Vercel REST reads/writes (`server-only`)        |
+| `lib/site-banner-schema.ts`                           | Form schema, presets, form↔announcement, timing |
+
+The page shell, title row, and panels come from the shared pieces every admin page uses —
+`PageShell`, `PageHeader` (`src/components/layouts/`), and `Panel` (`@workspace/ui`). See
+@AGENTS.md.
 
 Access is already handled by `proxy.ts`, which gates every non-public path on
 `COGNITO_REQUIRED_GROUP` (default `staff`).
 
-The editor shows one target's banners as a list; picking one opens it in the form, **Add banner**
-starts a fresh draft, and each save writes exactly one announcement addressed by `id` — an existing
-id is replaced in place, a new one is appended, and a `null` announcement removes it. Saving one
-banner never disturbs the others on that target.
+The page is a **two-column workspace** running the full admin width (`PageShell` caps it at `100rem`
+so the fields do not stretch into unreadable lines), and the page title row carries the primary
+action (**Publish**, which submits the composer through its `form` attribute) rather than a
+subtitle. **Publish is the only submit control** — the composer's footer used to end with its own
+`Post banner`/`Save banner` button, so one action wore two labels in two places; the footer now
+holds just the on/off switch and, for a posted banner, **Delete**:
+
+- **Left rail** — **Target**, every target listed at once with what is posted on each, and
+  **Banners**, the selected target's banners with their state badge and schedule line, plus **New
+  banner**. A target with nothing posted just says so — the composer is already holding that
+  target's blank draft, so there is nothing to click here.
+- **Right column** — **Compose**: the live preview and style swatches sit _above_ the fields, then
+  title, message, button label and link, then the timing row, the dismissible switch, and the on/off
+  switch. Its header carries the **only** preset row (`Start from:`) — the rail's empty state used
+  to repeat it, which put the same three buttons on screen twice.
+
+**Nothing in the rail expands or collapses.** An earlier version summarized the target in one line
+and expanded it into a picker on demand; opening it moved everything below it down, under the
+cursor. Listing all five targets costs a fixed ~180px and buys a workspace where switching target or
+banner never shifts the fields being typed into. Below `lg` the two columns stack: rail first, then
+the composer.
+
+Each save writes exactly one announcement addressed by `id` — an existing id is replaced in place, a
+new one is appended, and a `null` announcement removes it. Saving one banner never disturbs the
+others on that target.
 
 Unlike the apps' read, the editor keeps scheduled announcements that are not showing yet — staff
 need to see and edit them before they go live.
+
+**Timing is a switch, not two optional dates.** `SiteBannerFormValues.scheduled` drives the
+segmented control; off, `toAnnouncement` drops `startsAt`/`endsAt` entirely rather than merely
+hiding them, so going back to "Live now" actually clears the window. `toFormValues` derives it from
+whether the stored announcement has either bound.
+
+**Liveness is never decided during SSR.** "Now" is a different instant on the server, so `useNow()`
+(a `useSyncExternalStore` over the clock, ticking every 30s) returns `null` until the editor is
+running in the browser, and `describeSchedule`/`summarizeTarget` answer `unknown` for a `null` clock
+rather than risking a hydration mismatch.
 
 Reads go through the Vercel REST API rather than the Global Config SDK: the API is consistent with
 writes, so the editor shows what was just saved instead of waiting out replication. Writes are
@@ -1023,6 +1105,7 @@ deletes the item. Both `*-admin.test.ts` files pin that isolation.
 
 ## Related Documentation
 
+- `AGENTS.md` - UI conventions for every app (read before building a screen)
 - `.github/repo-instructions.md` - Detailed development guidelines
 - `.github/copilot-instructions.md` - Copilot-specific guidelines
 - `.github/nextjs-instructions.md` - Extended Next.js patterns

@@ -13,6 +13,7 @@ export const SITE_ANNOUNCEMENT_STATES = [
   'success',
   'warning',
   'error',
+  'promo',
 ] as const;
 
 export type SiteAnnouncementState = (typeof SITE_ANNOUNCEMENT_STATES)[number];
@@ -35,6 +36,12 @@ const announcementObject = z.object({
   message: z.string().trim().min(1),
   actionLabel: z.string().trim().min(1).optional(),
   actionHref: z.string().trim().min(1).optional(),
+  /**
+   * Whether readers may close the banner. Opt-in per announcement: an outage
+   * notice should stay on screen, so absent means "not dismissible" — the same
+   * state as `false`, which is why it is never written as `false`.
+   */
+  dismissible: z.boolean().optional().catch(undefined),
   /**
    * ISO 8601 instants bounding when the banner shows. An unusable bound is
    * treated as "no bound" rather than hiding the banner outright.
@@ -91,6 +98,20 @@ export function parseAnnouncement(value: unknown): SiteAnnouncement | null {
 }
 
 /**
+ * Identifies one *version* of an announcement, for remembering that a reader
+ * dismissed it.
+ *
+ * `savedAt` is part of the key on purpose: editing a banner is how staff say
+ * something new, so the edited banner comes back even for readers who closed
+ * the previous text. An announcement written by hand, with neither `id` nor
+ * `savedAt`, falls back to its message — still stable, just re-shown whenever
+ * the wording changes.
+ */
+export function announcementKey(announcement: SiteAnnouncement): string {
+  return `${announcement.id ?? announcement.message}@${announcement.savedAt ?? ''}`;
+}
+
+/**
  * Returns `true` when `announcement` should be visible at `now`.
  *
  * A missing bound is open-ended: no `startsAt` means "already started", no
@@ -112,13 +133,15 @@ export function isAnnouncementActive(
 /**
  * How urgent each state is. Banners are stacked most urgent first so a feature
  * announcement can never bury an outage notice. `success` and `info` share a
- * tier — neither is more urgent than the other.
+ * tier — neither is more urgent than the other. `promo` is the least urgent
+ * thing an app can say, so it always sits below everything else.
  */
 const STATE_RANK: Record<SiteAnnouncementState, number> = {
   error: 0,
   warning: 1,
   success: 2,
   info: 2,
+  promo: 3,
 };
 
 /**

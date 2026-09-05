@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation';
 
 import { AuditTable } from '@/components/features/audit/audit-table';
 import MainLayout from '@/components/layouts/main-layout';
+import { PageHeader } from '@/components/layouts/page-header';
+import { PageShell } from '@/components/layouts/page-shell';
 import { getUserFromSession } from '@/lib/auth';
 
 export default async function AuditPage() {
@@ -10,12 +12,10 @@ export default async function AuditPage() {
 
   return (
     <MainLayout>
-      <section className="container mx-auto px-2 py-8">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">Audit Logs</h1>
-        </div>
+      <PageShell>
+        <PageHeader title="Audit Logs" />
         <AuditTable />
-      </section>
+      </PageShell>
     </MainLayout>
   );
 }

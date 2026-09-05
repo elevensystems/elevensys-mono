@@ -163,6 +163,16 @@ describe('sortAnnouncements', () => {
     expect(sorted.map(a => a.state)).toEqual(['error', 'warning', 'info']);
   });
 
+  it('keeps a promo below every other state, however recently saved', () => {
+    const sorted = sortAnnouncements([
+      at('promo', '2026-09-09T00:00:00.000Z'),
+      at('info', '2026-09-01T00:00:00.000Z'),
+      at('error', '2026-09-01T00:00:00.000Z'),
+    ]);
+
+    expect(sorted.map(a => a.state)).toEqual(['error', 'info', 'promo']);
+  });
+
   it('puts the most recently saved first within one tier', () => {
     const sorted = sortAnnouncements([
       at('warning', '2026-09-01T00:00:00.000Z'),

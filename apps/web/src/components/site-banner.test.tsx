@@ -27,6 +27,46 @@ describe('SiteBanner', () => {
     expect(texts[2]).toContain('New feature');
   });
 
+  it('paints only a promo title with the rainbow wash', () => {
+    render(
+      <SiteAnnouncementProvider
+        announcements={[
+          {
+            id: 'a',
+            state: 'promo',
+            title: 'Pro is half price',
+            message: 'Until the end of the month.',
+          },
+          { id: 'b', state: 'info', title: 'Heads up', message: 'New feature' },
+        ]}
+      >
+        <SiteBanner />
+      </SiteAnnouncementProvider>
+    );
+
+    const [promo, info] = Array.from(
+      document.querySelectorAll('[data-slot="banner-title"]')
+    );
+    expect(promo).toHaveClass('bg-clip-text', 'text-transparent');
+    expect(info).not.toHaveClass('text-transparent');
+  });
+
+  it('leaves a promo message standing in for a title unwashed', () => {
+    render(
+      <SiteAnnouncementProvider
+        announcements={[
+          { id: 'a', state: 'promo', message: 'Pro is half price' },
+        ]}
+      >
+        <SiteBanner />
+      </SiteAnnouncementProvider>
+    );
+
+    expect(
+      document.querySelector('[data-slot="banner-title"]')
+    ).not.toHaveClass('text-transparent');
+  });
+
   it('renders nothing when there are no announcements', () => {
     const { container } = render(
       <SiteAnnouncementProvider announcements={[]}>
