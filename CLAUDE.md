@@ -316,6 +316,18 @@ import type { AuthUser } from '@/types/auth';
 
 // Always use 'use client' directive for client components
 
+// Always use 'use client' directive for client components
+
+// Always use 'use client' directive for client components
+
+// Always use 'use client' directive for client components
+
+// Always use 'use client' directive for client components
+
+// Always use 'use client' directive for client components
+
+// Always use 'use client' directive for client components
+
 // Define interfaces above component
 interface MyComponentProps {
   title: string;
@@ -798,51 +810,81 @@ calendar day in the range.
 
 ## Site Announcement Banner (all apps)
 
-A site-wide announcement/maintenance banner shared by every app (`web`, `admin`, `insight`,
-`pulse`). Staff edit it from **`apps/admin` at `/flags/site-banner`** — a form with a live preview,
-per-app targeting, an optional schedule window, presets, and a change log. Saving takes effect
-within seconds; no deploy, no dashboard, no hand-written JSON.
+Site-wide announcement/maintenance banners shared by every app (`web`, `admin`, `insight`, `pulse`).
+Staff edit them from **`apps/admin` at `/site-banner`** — a form with a live preview, per-app
+targeting, an optional schedule window, presets, and a change log. Saving takes effect within
+seconds; no deploy, no dashboard, no hand-written JSON.
+
+**An app can show several banners at once**: every announcement targeted at all apps, plus every one
+targeted at that app. They stack most urgent first.
 
 ### Storage: Vercel Global Config
 
 The announcement lives in a Vercel **Global Config** store (formerly Edge Config), read with
 `@vercel/global-config` and written by admin through the Vercel REST API. It is not a feature flag:
-no Flags SDK, no adapter, no flag declaration — just two keys in a Global Config item.
+no Flags SDK, no adapter, no flag declaration — just plain JSON in two items.
+
+**One item per config feature, named after the feature.** Values are real objects, not JSON strings,
+and a target with no announcement is simply absent — "off" and "absent" are the same state.
 
 ```jsonc
-// Global Config item "flags" — values are JSON strings, or "" to hide
+// Global Config item "site-banner"
 {
-  "site-banner": "", // global fallback
-  "site-banner:web": "",
-  "site-banner:admin": "",
-  "site-banner:insight": "",
-  "site-banner:pulse": "{\"state\":\"warning\",\"message\":\"…\"}",
+  "all": null,                 // global fallback; absent or null = off
+  "pulse": { "state": "warning", "message": "…" }
 }
-// Global Config item "site-banner-history" — last 20 changes, newest first
+
+// Global Config item "config-audit" — last 20 changes across every config
+// feature, newest first, each tagged with `feature`. Named `config-audit`, not
+// `audit`: apps/admin already has an unrelated audit feature backed by the API.
+[{ "at": "…", "by": "…", "feature": "site-banner", "target": "pulse",
+   "action": "save", "summary": "…" }]
 ```
 
-An app-specific announcement wins; an empty one falls back to the global value. `sidebar-tools` (web
-only) is the one remaining Vercel Flag, so `src/flags.ts` and `FLAGS` exist in `apps/web` alone.
+The two lists add up rather than one replacing the other. A second config feature gets its own
+top-level item (`"maintenance"`, `"rate-limits"`) plus its own `feature` tag in `config-audit` — no
+migration, and no cross-feature write contention, since a save merges only its own item.
+
+### Stacking order
+
+`sortAnnouncements()` orders every banner an app shows: **most urgent first** (`error` → `warning` →
+`success`/`info`, which share a tier), then **most recently saved** within a tier. Nothing for staff
+to manage, and a feature announcement can never bury an outage notice. An entry with no `savedAt`
+sorts last in its tier.
+
+`sidebar-tools` (web only) is the one real Vercel Flag, so `src/flags.ts`, `FLAGS`, and the `flags`
+Global Config item belong to `apps/web` alone. **Never write the `flags` item from the banner
+editor** — that is what the old format did, and it would drop `sidebar-tools`.
 
 ### Shared pieces (`@workspace/ui`)
 
-| File                              | Exports                                                     |
-| --------------------------------- | ----------------------------------------------------------- |
-| `lib/site-announcement.ts`        | `SiteAnnouncement`, `parseAnnouncementBanner()`,            |
-|                                   | `resolveScheduledAnnouncement()`, `isAnnouncementActive()`, |
-|                                   | `SITE_BANNER_APPS`, `siteBannerKey()`                       |
-| `lib/site-announcement-server.ts` | `getSiteAnnouncement(app)` — the Global Config read         |
-| `components/flags-provider.tsx`   | `FlagsProvider`, `useFlags()`, `FlagsRecord`                |
-| `components/site-banner.tsx`      | `SiteBanner` — parses the value, renders `Banner`           |
+| File                                        | Exports                                               |
+| ------------------------------------------- | ----------------------------------------------------- |
+| `lib/site-announcement.ts`                  | `SiteAnnouncement`, `announcementSchema`,             |
+|                                             | `parseAnnouncement()`, `resolveScheduled()`,          |
+|                                             | `isAnnouncementActive()`, `SITE_BANNER_APPS`,         |
+|                                             | `SITE_BANNER_ITEM_KEY`, `SiteBannerConfig`            |
+| `lib/site-announcement-server.ts`           | `getSiteAnnouncement(app)` — the Global Config read   |
+| `components/site-announcement-provider.tsx` | `SiteAnnouncementProvider`, `useSiteAnnouncement()`   |
+| `components/site-banner.tsx`                | `SiteBanner` — renders `Banner` from the announcement |
 
-`SiteBanner` reads the value from `useFlags()`, so apps just render it; pass `value` to drive it
-from another source (the admin preview does this). The banner is not dismissible — it stays visible
-until cleared or updated. (`Banner` still supports `onDismiss` for other, non-site-wide uses.)
+One zod schema (`announcementSchema`) validates every entry everywhere: on read in
+`getSiteAnnouncements`, on write in the admin API route, and per-entry in the editor's snapshot
+read. One malformed entry is dropped without taking the rest of the list with it. `SiteBanner` does
+no parsing or sorting — what reaches the client is already validated and ordered, so zod stays out
+of the reader apps' client bundles.
+
+`SiteBanner` takes the list from `useSiteAnnouncements()`, so apps just render it; pass
+`announcements` to drive it from another source (the admin preview does this). Banners are not
+dismissible — they stay visible until cleared or updated. (`Banner` still supports `onDismiss` for
+other, non-site-wide uses.)
 
 ### Announcement value
 
 ```json
 {
+  "id": "9f1c…",
+  "savedAt": "2026-09-04T09:12:00.000Z",
   "state": "warning",
   "title": "Scheduled maintenance",
   "message": "Jira sync is paused Sat 2-4am UTC.",
@@ -853,51 +895,70 @@ until cleared or updated. (`Banner` still supports `onDismiss` for other, non-si
 }
 ```
 
-- `state`: `info` | `success` | `warning` | `error` (defaults to `info`)
+- `id` addresses one announcement in a target's list; `savedAt` breaks ties in stacking order. Both
+  are stamped server-side on every write and are never taken from the client. Both are optional on
+  read: a hand-written entry without them still renders.
+- `state`: `info` | `success` | `warning` | `error` (an unrecognized value falls back to `info`)
 - `message` is required; a missing or blank message hides the banner
-- `actionLabel`/`actionHref` are only used as a pair
-- `startsAt`/`endsAt` are optional ISO instants; outside the window the banner is hidden
+- `actionLabel`/`actionHref` are only used as a pair — an unmatched half is dropped
+- `startsAt`/`endsAt` are optional ISO instants; outside the window the banner is hidden, and an
+  unparseable bound is ignored rather than hiding the banner
 
-Malformed JSON logs to `console.error` and hides the banner rather than breaking the page.
+A value the schema rejects logs to `console.error` and is dropped from the stack rather than
+breaking the page or hiding the other banners.
 
 ### Wiring in an app
 
-1. Read it in the root layout and hand it to `FlagsProvider`:
+1. Read them in the root layout and hand them to the provider:
 
-   ```ts
-   const flags = { 'site-banner': await getSiteAnnouncement('pulse') };
+   ```tsx
+   const announcements = await getSiteAnnouncements('pulse');
+   // …
+   <SiteAnnouncementProvider announcements={announcements}>
    ```
 
 2. Render `<SiteBanner />` in `main-layout.tsx` just below the sticky header
 
-`getSiteAnnouncement()` does the whole job: app key first, global key as fallback, schedule window
-applied. Add the app to `SITE_BANNER_APPS` so admin can target it.
+`getSiteAnnouncements()` does the whole job: `all` plus the app's own list, schedule window applied,
+sorted. Add the app to `SITE_BANNER_APPS` so admin can target it.
 
 Each `MainLayout` accepts a `banner` prop: omit it for the Global Config value, or pass `null` to
 suppress it on a given page.
+
+> `apps/web` also wraps `FlagsProvider` (its own, in `src/contexts/flags-context.tsx`) for
+> `sidebar-tools`. The other three apps have no feature flags at all — only the announcement
+> provider.
 
 > The schedule window is applied **server-side while the layout renders**, not inside the client
 > `SiteBanner`. Evaluating it during render on both server and client risks a hydration mismatch
 > when a bound falls between the two. The trade-off: an already-open page picks up a scheduled start
 > on its next navigation or reload, not on a timer.
 
-> A missing store is not an error: `getSiteAnnouncement()` returns `''` when neither `GLOBAL_CONFIG`
-> nor `EDGE_CONFIG` is set (the SDK throws on an undefined connection string) and also when the read
-> itself fails, so an app without a store — or an unreachable Global Config — still renders, with
-> the banner simply hidden.
+> A missing store is not an error: `getSiteAnnouncements()` returns `[]` when neither
+> `GLOBAL_CONFIG` nor `EDGE_CONFIG` is set (the SDK throws on an undefined connection string) and
+> also when the read itself fails, so an app without a store — or an unreachable Global Config —
+> still renders, with no banners shown.
 
 ### Editing it (apps/admin)
 
-| File                                 | Role                                       |
-| ------------------------------------ | ------------------------------------------ |
-| `app/flags/site-banner/page.tsx`     | Staff-gated page; reads the current values |
-| `app/flags/site-banner/_components/` | Form (with live preview) and change log    |
-| `app/api/flags/site-banner/route.ts` | `GET` snapshot, `POST` save                |
-| `lib/global-config-admin.ts`         | Vercel REST reads/writes (`server-only`)   |
-| `lib/site-banner-schema.ts`          | zod schemas, presets, serialization        |
+| File                           | Role                                       |
+| ------------------------------ | ------------------------------------------ |
+| `app/site-banner/page.tsx`     | Staff-gated page; reads the current values |
+| `app/site-banner/_components/` | Form (with live preview) and change log    |
+| `app/api/site-banner/route.ts` | `GET` snapshot, `POST` save                |
+| `lib/global-config-admin.ts`   | Vercel REST reads/writes (`server-only`)   |
+| `lib/site-banner-schema.ts`    | Form schema, presets, form↔announcement    |
 
 Access is already handled by `proxy.ts`, which gates every non-public path on
 `COGNITO_REQUIRED_GROUP` (default `staff`).
+
+The editor shows one target's banners as a list; picking one opens it in the form, **Add banner**
+starts a fresh draft, and each save writes exactly one announcement addressed by `id` — an existing
+id is replaced in place, a new one is appended, and a `null` announcement removes it. Saving one
+banner never disturbs the others on that target.
+
+Unlike the apps' read, the editor keeps scheduled announcements that are not showing yet — staff
+need to see and edit them before they go live.
 
 Reads go through the Vercel REST API rather than the Global Config SDK: the API is consistent with
 writes, so the editor shows what was just saved instead of waiting out replication. Writes are

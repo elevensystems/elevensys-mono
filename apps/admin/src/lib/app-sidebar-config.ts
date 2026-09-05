@@ -26,12 +26,7 @@ export const appSidebarData: {
   navMain: [
     { title: 'Dashboard', url: '/', icon: LayoutDashboard },
     { title: 'Urlify', url: '/urlify', icon: LinkIcon },
-    {
-      title: 'Flags',
-      url: '/flags/site-banner',
-      icon: Megaphone,
-      items: [{ title: 'Site Banner', url: '/flags/site-banner' }],
-    },
+    { title: 'Site Banner', url: '/site-banner', icon: Megaphone },
     {
       title: 'Audit',
       url: '/audit',

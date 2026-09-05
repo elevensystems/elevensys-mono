@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 
 import { Banner } from '@workspace/ui/components/banner';
 
-import { SiteBannerForm } from '@/app/flags/site-banner/_components/site-banner-form';
+import { SiteBannerForm } from '@/app/site-banner/_components/site-banner-form';
 import MainLayout from '@/components/layouts/main-layout';
 import { getUserFromSession } from '@/lib/auth';
 import { readSiteBannerSnapshot } from '@/lib/global-config-admin';

@@ -30,13 +30,10 @@ interface MainLayoutProps {
   className?: string;
   /**
    * Announcement banner rendered flush under the sticky header. Defaults to
-   * the flag-driven `SiteBanner`; pass `null` to suppress it.
+   * the announcement from Global Config; pass `null` to suppress it.
    */
   banner?: ReactNode;
 }
-
-/** Path segments that group routes but have no page of their own. */
-const GROUP_ONLY_SEGMENTS = new Set(['flags']);
 
 const formatSegment = (segment: string) =>
   segment
@@ -87,10 +84,6 @@ export default function MainLayout({
                           <BreadcrumbPage>
                             {formatSegment(segment)}
                           </BreadcrumbPage>
-                        ) : GROUP_ONLY_SEGMENTS.has(segment) ? (
-                          <span className="hidden md:block">
-                            {formatSegment(segment)}
-                          </span>
                         ) : (
                           <BreadcrumbLink asChild className="hidden md:block">
                             <Link href={href}>{formatSegment(segment)}</Link>

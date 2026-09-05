@@ -36,9 +36,11 @@ import { NativeSelect } from '@workspace/ui/components/native-select';
 import { SiteBanner } from '@workspace/ui/components/site-banner';
 import { Spinner } from '@workspace/ui/components/spinner';
 import { Textarea } from '@workspace/ui/components/textarea';
+import type { SiteAnnouncement } from '@workspace/ui/lib/site-announcement';
+import { cn } from '@workspace/ui/lib/utils';
 import { toast } from 'sonner';
 
-import { BannerHistory } from '@/app/flags/site-banner/_components/banner-history';
+import { BannerHistory } from '@/app/site-banner/_components/banner-history';
 import type { SiteBannerFormValues } from '@/lib/site-banner-schema';
 import {
   SITE_BANNER_PRESETS,
@@ -47,7 +49,7 @@ import {
   STATE_LABELS,
   TARGET_LABELS,
   siteBannerFormSchema,
-  toAnnouncementValue,
+  toAnnouncement,
   toFormValues,
 } from '@/lib/site-banner-schema';
 import type { SiteBannerSnapshot, SiteBannerTarget } from '@/types/site-banner';
@@ -61,10 +63,10 @@ export function SiteBannerForm({ snapshot }: SiteBannerFormProps) {
   const [current, setCurrent] = useState(snapshot);
 
   const form = useForm({
-    defaultValues: toFormValues('all', snapshot.values.all),
+    defaultValues: toFormValues('all', snapshot.values.all?.[0]),
     validators: { onSubmit: siteBannerFormSchema },
     onSubmit: async ({ value }) => {
-      await save(value.target, toAnnouncementValue(value));
+      await save(value.target, value.id, toAnnouncement(value));
     },
   });
 
@@ -73,14 +75,21 @@ export function SiteBannerForm({ snapshot }: SiteBannerFormProps) {
 
   // Preview the composed announcement even while it is switched off, so an
   // admin can draft one before making it live.
-  const previewValue = toAnnouncementValue({ ...values, enabled: true });
-  const liveValue = current.values[values.target] ?? '';
+  const preview = toAnnouncement({ ...values, enabled: true });
+  const saved = current.values[values.target] ?? [];
+  // Whether the announcement being edited already exists, as opposed to a
+  // draft that has never been saved. Only a saved one can be deleted.
+  const isSaved = saved.some(entry => entry.id === values.id);
 
-  async function save(target: SiteBannerTarget, value: string) {
-    const response = await fetch('/api/flags/site-banner', {
+  async function save(
+    target: SiteBannerTarget,
+    id: string,
+    announcement: SiteAnnouncement | null
+  ) {
+    const response = await fetch('/api/site-banner', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ target, value }),
+      body: JSON.stringify({ target, id, announcement }),
     });
 
     // An expired session is redirected to the HTML login page, so the body is
@@ -99,11 +108,18 @@ export function SiteBannerForm({ snapshot }: SiteBannerFormProps) {
     }
 
     setCurrent(data);
-    applyValues(toFormValues(target, data.values[target] ?? ''));
+    applyValues(
+      toFormValues(
+        target,
+        announcement
+          ? data.values[target]?.find(entry => entry.id === id)
+          : undefined
+      )
+    );
     toast.success(
-      value
+      announcement
         ? 'Banner saved. It may take a few seconds to appear on every app.'
-        : 'Banner cleared.'
+        : 'Banner deleted.'
     );
     // Refresh so this app's own banner reflects the change too.
     router.refresh();
@@ -122,6 +138,7 @@ export function SiteBannerForm({ snapshot }: SiteBannerFormProps) {
     form.reset();
     const opts = { dontUpdateMeta: true };
     form.setFieldValue('target', next.target, opts);
+    form.setFieldValue('id', next.id, opts);
     form.setFieldValue('enabled', next.enabled, opts);
     form.setFieldValue('state', next.state, opts);
     form.setFieldValue('title', next.title, opts);
@@ -132,8 +149,18 @@ export function SiteBannerForm({ snapshot }: SiteBannerFormProps) {
     form.setFieldValue('endsAt', next.endsAt, opts);
   }
 
+  /** Switching target opens that target's first banner, or a blank draft. */
   function switchTarget(target: SiteBannerTarget) {
-    applyValues(toFormValues(target, current.values[target] ?? ''));
+    applyValues(toFormValues(target, current.values[target]?.[0]));
+  }
+
+  function editAnnouncement(announcement: SiteAnnouncement) {
+    applyValues(toFormValues(values.target, announcement));
+  }
+
+  /** Starts a blank draft, which saving appends to the target's list. */
+  function addAnnouncement() {
+    applyValues(toFormValues(values.target, undefined));
   }
 
   return (
@@ -143,11 +170,57 @@ export function SiteBannerForm({ snapshot }: SiteBannerFormProps) {
           <CardHeader>
             <CardTitle>Announcement</CardTitle>
             <CardDescription>
-              Shown at the top of every page. An app-specific announcement
-              replaces the one set for all apps.
+              Shown at the top of every page. An app sees the banners set for
+              all apps plus its own, stacked most urgent first.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-medium">
+                  {TARGET_LABELS[values.target]} banners ({saved.length})
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addAnnouncement}
+                  disabled={isSubmitting}
+                >
+                  Add banner
+                </Button>
+              </div>
+
+              {saved.length === 0 ? (
+                <p className="text-muted-foreground rounded-lg border border-dashed p-4 text-center text-sm">
+                  Nothing posted for this target yet.
+                </p>
+              ) : (
+                <ul className="divide-y rounded-lg border">
+                  {saved.map(entry => (
+                    <li key={entry.id}>
+                      <button
+                        type="button"
+                        aria-current={entry.id === values.id}
+                        onClick={() => editAnnouncement(entry)}
+                        className={cn(
+                          'hover:bg-muted/50 flex w-full items-center gap-3 px-3 py-2 text-left text-sm',
+                          entry.id === values.id && 'bg-muted'
+                        )}
+                      >
+                        <span className="text-muted-foreground w-16 shrink-0 text-xs uppercase">
+                          {STATE_LABELS[entry.state]}
+                        </span>
+                        <span className="truncate">
+                          {entry.title || entry.message}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
             <form
               className="space-y-6"
               onSubmit={event => {
@@ -169,15 +242,18 @@ export function SiteBannerForm({ snapshot }: SiteBannerFormProps) {
                           switchTarget(event.target.value as SiteBannerTarget)
                         }
                       >
-                        {SITE_BANNER_TARGETS.map(target => (
-                          <option key={target} value={target}>
-                            {TARGET_LABELS[target]}
-                            {current.values[target] ? ' — live' : ''}
-                          </option>
-                        ))}
+                        {SITE_BANNER_TARGETS.map(target => {
+                          const count = current.values[target]?.length ?? 0;
+                          return (
+                            <option key={target} value={target}>
+                              {TARGET_LABELS[target]}
+                              {count > 0 ? ` — ${count} live` : ''}
+                            </option>
+                          );
+                        })}
                       </NativeSelect>
                       <FieldDescription>
-                        Switching loads whatever that target has saved.
+                        Switching opens that target&rsquo;s first banner.
                       </FieldDescription>
                     </Field>
                   )}
@@ -422,7 +498,7 @@ export function SiteBannerForm({ snapshot }: SiteBannerFormProps) {
                         Show this banner
                       </FieldLabel>
                       <p className="text-muted-foreground text-sm">
-                        Unchecked, saving hides the banner for{' '}
+                        Unchecked, saving removes this banner from{' '}
                         {TARGET_LABELS[values.target]}.
                       </p>
                     </div>
@@ -433,10 +509,10 @@ export function SiteBannerForm({ snapshot }: SiteBannerFormProps) {
               <div className="flex flex-wrap items-center gap-3">
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting && <Spinner />}
-                  Save banner
+                  {isSaved ? 'Save banner' : 'Post banner'}
                 </Button>
 
-                {liveValue && (
+                {isSaved && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
@@ -444,25 +520,27 @@ export function SiteBannerForm({ snapshot }: SiteBannerFormProps) {
                         variant="outline"
                         disabled={isSubmitting}
                       >
-                        Clear banner
+                        Delete banner
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>
-                          Clear the {TARGET_LABELS[values.target]} banner?
+                          Delete this {TARGET_LABELS[values.target]} banner?
                         </AlertDialogTitle>
                         <AlertDialogDescription>
-                          It disappears for everyone within a few seconds. You
-                          can post a new one at any time.
+                          It disappears for everyone within a few seconds. Any
+                          other banners on this target stay up.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={() => void save(values.target, '')}
+                          onClick={() =>
+                            void save(values.target, values.id, null)
+                          }
                         >
-                          Clear it
+                          Delete it
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -487,8 +565,8 @@ export function SiteBannerForm({ snapshot }: SiteBannerFormProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {previewValue ? (
-              <SiteBanner value={previewValue} flush={false} />
+            {preview ? (
+              <SiteBanner announcements={[preview]} flush={false} />
             ) : (
               <p className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm">
                 Write a message to see it here.

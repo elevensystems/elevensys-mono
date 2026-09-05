@@ -1,16 +1,35 @@
 'use client';
 
-import type { FlagsRecord } from '@workspace/ui/components/flags-provider';
+import * as React from 'react';
 
 import { getVisibleToolPaths as parseVisibleToolPaths } from '@/lib/flags-utils';
 
-// The provider/hook themselves are shared so every app wires flags the same
-// way; re-exported here so app-local imports keep pointing at one place.
-export {
-  FlagsProvider,
-  useFlags,
-} from '@workspace/ui/components/flags-provider';
-export type { FlagsRecord } from '@workspace/ui/components/flags-provider';
+export type FlagsRecord = Record<string, boolean | string>;
+
+const FlagsContext = React.createContext<FlagsRecord>({});
+
+interface FlagsProviderProps {
+  children: React.ReactNode;
+  flags: FlagsRecord;
+}
+
+/**
+ * Makes flag values resolved in the server layout available to client
+ * components.
+ *
+ * This lives in `apps/web` because it is the only app with feature flags (see
+ * `src/flags.ts`). The site announcement banner is not a flag — it has its own
+ * `SiteAnnouncementProvider` in `@workspace/ui`.
+ */
+export function FlagsProvider({ children, flags }: FlagsProviderProps) {
+  return (
+    <FlagsContext.Provider value={flags}>{children}</FlagsContext.Provider>
+  );
+}
+
+export function useFlags() {
+  return React.useContext(FlagsContext);
+}
 
 /**
  * Parses the `sidebar-tools` flag from the flags record into an allowlist of

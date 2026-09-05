@@ -1,207 +1,263 @@
+import type { SiteAnnouncement } from '@workspace/ui/lib/site-announcement';
 import {
   SITE_BANNER_APPS,
   isAnnouncementActive,
-  parseAnnouncementBanner,
-  resolveScheduledAnnouncement,
-  siteBannerKey,
+  parseAnnouncement,
+  resolveAnnouncements,
+  sortAnnouncements,
 } from '@workspace/ui/lib/site-announcement';
 
-describe('parseAnnouncementBanner', () => {
+const silenceErrors = () =>
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+
+describe('parseAnnouncement', () => {
   // --- Hidden / empty ---
-  it('returns null for an empty string', () => {
-    expect(parseAnnouncementBanner('')).toBeNull();
+  it('returns null for a missing announcement', () => {
+    expect(parseAnnouncement(null)).toBeNull();
+    expect(parseAnnouncement(undefined)).toBeNull();
   });
 
-  it('returns null and logs for malformed JSON', () => {
-    const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    expect(parseAnnouncementBanner('not json')).toBeNull();
-    expect(spy).toHaveBeenCalled();
-    spy.mockRestore();
-  });
-
-  it('returns null and logs when the value is a JSON array', () => {
-    const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    expect(parseAnnouncementBanner('[]')).toBeNull();
+  it('returns null and logs for a non-object value', () => {
+    const spy = silenceErrors();
+    expect(parseAnnouncement('not an announcement')).toBeNull();
+    expect(parseAnnouncement([])).toBeNull();
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
   });
 
   it('returns null and logs when "message" is missing', () => {
-    const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    expect(parseAnnouncementBanner('{"state":"warning"}')).toBeNull();
+    const spy = silenceErrors();
+    expect(parseAnnouncement({ state: 'warning' })).toBeNull();
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
   });
 
   it('returns null when "message" is blank', () => {
-    expect(parseAnnouncementBanner('{"message":"   "}')).toBeNull();
+    const spy = silenceErrors();
+    expect(parseAnnouncement({ message: '   ' })).toBeNull();
+    spy.mockRestore();
   });
 
   // --- Valid payloads ---
   it('parses a minimal payload, defaulting state to "info"', () => {
-    expect(parseAnnouncementBanner('{"message":"Hello"}')).toEqual({
+    expect(parseAnnouncement({ message: 'Hello' })).toEqual({
       state: 'info',
       title: undefined,
       message: 'Hello',
       actionLabel: undefined,
       actionHref: undefined,
+      startsAt: undefined,
+      endsAt: undefined,
     });
   });
 
   it('parses a full payload', () => {
-    expect(
-      parseAnnouncementBanner(
-        JSON.stringify({
-          state: 'warning',
-          title: 'Maintenance',
-          message: 'Downtime Sat 2-4am UTC',
-          actionLabel: 'Learn more',
-          actionHref: '/status',
-        })
-      )
-    ).toEqual({
+    const announcement = {
       state: 'warning',
       title: 'Maintenance',
       message: 'Downtime Sat 2-4am UTC',
       actionLabel: 'Learn more',
       actionHref: '/status',
+    };
+
+    expect(parseAnnouncement(announcement)).toMatchObject(announcement);
+  });
+
+  it('trims surrounding whitespace', () => {
+    expect(
+      parseAnnouncement({ message: '  Hello  ', title: '  Hi  ' })
+    ).toMatchObject({
+      message: 'Hello',
+      title: 'Hi',
     });
   });
 
-  it('defaults to "info" and logs when "state" is not recognized', () => {
-    const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  // --- Field-level fallbacks ---
+  it('falls back to "info" for an unrecognized state rather than hiding', () => {
     expect(
-      parseAnnouncementBanner('{"state":"critical","message":"Hi"}')?.state
-    ).toBe('info');
-    expect(spy).toHaveBeenCalled();
-    spy.mockRestore();
+      parseAnnouncement({ state: 'urgent', message: 'Hello' })
+    ).toMatchObject({
+      state: 'info',
+      message: 'Hello',
+    });
   });
 
-  it('drops the action when only actionLabel is provided', () => {
-    const result = parseAnnouncementBanner(
-      '{"message":"Hi","actionLabel":"Go"}'
-    );
-    expect(result?.actionLabel).toBeUndefined();
-    expect(result?.actionHref).toBeUndefined();
+  it('drops an action with only a label', () => {
+    expect(
+      parseAnnouncement({ message: 'Hello', actionLabel: 'Learn more' })
+    ).toMatchObject({ actionLabel: undefined, actionHref: undefined });
   });
 
-  it('drops the action when only actionHref is provided', () => {
-    const result = parseAnnouncementBanner(
-      '{"message":"Hi","actionHref":"/x"}'
-    );
-    expect(result?.actionLabel).toBeUndefined();
-    expect(result?.actionHref).toBeUndefined();
-  });
-});
-
-describe('siteBannerKey', () => {
-  it('namespaces the flag key per app', () => {
-    expect(siteBannerKey('pulse')).toBe('site-banner:pulse');
-    expect(siteBannerKey('web')).toBe('site-banner:web');
+  it('drops an action with only a href', () => {
+    expect(
+      parseAnnouncement({ message: 'Hello', actionHref: '/status' })
+    ).toMatchObject({ actionLabel: undefined, actionHref: undefined });
   });
 
-  it('covers every targetable app', () => {
-    expect(SITE_BANNER_APPS.map(siteBannerKey)).toEqual([
-      'site-banner:web',
-      'site-banner:admin',
-      'site-banner:insight',
-      'site-banner:pulse',
-    ]);
+  it('ignores an unparseable schedule bound instead of hiding the banner', () => {
+    expect(
+      parseAnnouncement({ message: 'Hello', startsAt: 'yesterday' })
+    ).toMatchObject({
+      message: 'Hello',
+      startsAt: undefined,
+    });
   });
 });
 
 describe('isAnnouncementActive', () => {
-  const announcement = { state: 'info' as const, message: 'Hello' };
-  const now = new Date('2026-09-01T12:00:00.000Z');
+  const now = new Date('2026-09-05T12:00:00.000Z');
+  const base = { state: 'info', message: 'Hello' } as const;
 
-  it('is active when no window is set', () => {
-    expect(isAnnouncementActive(announcement, now)).toBe(true);
+  it('is active with no bounds', () => {
+    expect(isAnnouncementActive({ ...base }, now)).toBe(true);
   });
 
-  it('is inactive before startsAt', () => {
+  it('is hidden before startsAt and visible after', () => {
     expect(
       isAnnouncementActive(
-        { ...announcement, startsAt: '2026-09-01T13:00:00.000Z' },
+        { ...base, startsAt: '2026-09-05T13:00:00.000Z' },
         now
       )
     ).toBe(false);
-  });
-
-  it('is active at exactly startsAt', () => {
     expect(
       isAnnouncementActive(
-        { ...announcement, startsAt: '2026-09-01T12:00:00.000Z' },
+        { ...base, startsAt: '2026-09-05T11:00:00.000Z' },
         now
       )
     ).toBe(true);
   });
 
-  it('is active inside the window', () => {
+  it('is hidden after endsAt', () => {
+    expect(
+      isAnnouncementActive({ ...base, endsAt: '2026-09-05T11:00:00.000Z' }, now)
+    ).toBe(false);
+  });
+
+  it('is active inside a closed window', () => {
     expect(
       isAnnouncementActive(
         {
-          ...announcement,
-          startsAt: '2026-09-01T11:00:00.000Z',
-          endsAt: '2026-09-01T13:00:00.000Z',
+          ...base,
+          startsAt: '2026-09-05T11:00:00.000Z',
+          endsAt: '2026-09-05T13:00:00.000Z',
         },
         now
       )
     ).toBe(true);
   });
+});
 
-  it('is inactive after endsAt', () => {
-    expect(
-      isAnnouncementActive(
-        { ...announcement, endsAt: '2026-09-01T11:59:59.000Z' },
-        now
-      )
-    ).toBe(false);
+describe('sortAnnouncements', () => {
+  const at = (
+    state: SiteAnnouncement['state'],
+    savedAt: string
+  ): SiteAnnouncement => ({ state, message: state + savedAt, savedAt });
+
+  it('stacks the most urgent first', () => {
+    const sorted = sortAnnouncements([
+      at('info', '2026-09-01T00:00:00.000Z'),
+      at('error', '2026-09-01T00:00:00.000Z'),
+      at('warning', '2026-09-01T00:00:00.000Z'),
+    ]);
+
+    expect(sorted.map(a => a.state)).toEqual(['error', 'warning', 'info']);
   });
 
-  it('ignores an unparseable bound rather than hiding the banner', () => {
-    const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    expect(
-      isAnnouncementActive({ ...announcement, startsAt: 'tomorrow' }, now)
-    ).toBe(true);
-    expect(spy).toHaveBeenCalled();
+  it('puts the most recently saved first within one tier', () => {
+    const sorted = sortAnnouncements([
+      at('warning', '2026-09-01T00:00:00.000Z'),
+      at('warning', '2026-09-03T00:00:00.000Z'),
+      at('warning', '2026-09-02T00:00:00.000Z'),
+    ]);
+
+    expect(sorted.map(a => a.savedAt)).toEqual([
+      '2026-09-03T00:00:00.000Z',
+      '2026-09-02T00:00:00.000Z',
+      '2026-09-01T00:00:00.000Z',
+    ]);
+  });
+
+  it('treats success and info as equally urgent', () => {
+    const sorted = sortAnnouncements([
+      at('info', '2026-09-01T00:00:00.000Z'),
+      at('success', '2026-09-02T00:00:00.000Z'),
+    ]);
+
+    expect(sorted.map(a => a.state)).toEqual(['success', 'info']);
+  });
+
+  it('sorts an announcement with no savedAt last in its tier', () => {
+    const sorted = sortAnnouncements([
+      { state: 'info', message: 'undated' },
+      at('info', '2026-09-01T00:00:00.000Z'),
+    ]);
+
+    expect(sorted[0]?.savedAt).toBe('2026-09-01T00:00:00.000Z');
+  });
+
+  it('does not mutate the input', () => {
+    const input = [
+      at('info', '2026-09-01T00:00:00.000Z'),
+      at('error', '2026-09-01T00:00:00.000Z'),
+    ];
+    sortAnnouncements(input);
+
+    expect(input[0]?.state).toBe('info');
+  });
+});
+
+describe('resolveAnnouncements', () => {
+  const now = new Date('2026-09-05T12:00:00.000Z');
+
+  it('returns an empty list for anything that is not an array', () => {
+    expect(resolveAnnouncements(undefined, now)).toEqual([]);
+    expect(resolveAnnouncements(null, now)).toEqual([]);
+    expect(resolveAnnouncements({ message: 'Hello' }, now)).toEqual([]);
+  });
+
+  it('keeps every active announcement, in stacking order', () => {
+    const resolved = resolveAnnouncements(
+      [
+        { state: 'info', message: 'Feature' },
+        { state: 'error', message: 'Outage' },
+      ],
+      now
+    );
+
+    expect(resolved.map(a => a.message)).toEqual(['Outage', 'Feature']);
+  });
+
+  it('drops announcements outside their schedule window', () => {
+    const resolved = resolveAnnouncements(
+      [
+        { state: 'info', message: 'Now' },
+        {
+          state: 'info',
+          message: 'Later',
+          startsAt: '2999-01-01T00:00:00.000Z',
+        },
+        { state: 'info', message: 'Over', endsAt: '2020-01-01T00:00:00.000Z' },
+      ],
+      now
+    );
+
+    expect(resolved.map(a => a.message)).toEqual(['Now']);
+  });
+
+  it('drops one invalid entry without losing the rest', () => {
+    const spy = silenceErrors();
+    const resolved = resolveAnnouncements(
+      [{ state: 'info' }, { state: 'info', message: 'Good' }],
+      now
+    );
+
+    expect(resolved.map(a => a.message)).toEqual(['Good']);
     spy.mockRestore();
   });
 });
 
-describe('resolveScheduledAnnouncement', () => {
-  const now = new Date('2026-09-01T12:00:00.000Z');
-
-  it('passes an unscheduled announcement through untouched', () => {
-    const value = '{"state":"warning","message":"Jira is degraded"}';
-    expect(resolveScheduledAnnouncement(value, now)).toBe(value);
-  });
-
-  it('hides an announcement that has not started', () => {
-    const value =
-      '{"message":"Maintenance tonight","startsAt":"2026-09-01T22:00:00.000Z"}';
-    expect(resolveScheduledAnnouncement(value, now)).toBe('');
-  });
-
-  it('shows an announcement inside its window', () => {
-    const value =
-      '{"message":"Maintenance now","startsAt":"2026-09-01T11:00:00.000Z","endsAt":"2026-09-01T14:00:00.000Z"}';
-    expect(resolveScheduledAnnouncement(value, now)).toBe(value);
-  });
-
-  it('hides an announcement that has expired', () => {
-    const value =
-      '{"message":"Maintenance done","endsAt":"2026-08-31T22:00:00.000Z"}';
-    expect(resolveScheduledAnnouncement(value, now)).toBe('');
-  });
-
-  it('resolves an empty value to empty', () => {
-    expect(resolveScheduledAnnouncement('', now)).toBe('');
-  });
-
-  it('resolves a malformed value to empty so it is logged only once', () => {
-    const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    expect(resolveScheduledAnnouncement('not json', now)).toBe('');
-    expect(spy).toHaveBeenCalledTimes(1);
-    spy.mockRestore();
+describe('SITE_BANNER_APPS', () => {
+  it('lists every app that can be targeted', () => {
+    expect(SITE_BANNER_APPS).toEqual(['web', 'admin', 'insight', 'pulse']);
   });
 });

@@ -1,14 +1,17 @@
 import { get } from '@vercel/global-config';
-import { getSiteAnnouncement } from '@workspace/ui/lib/site-announcement-server';
+import { getSiteAnnouncements } from '@workspace/ui/lib/site-announcement-server';
 
 jest.mock('@vercel/global-config', () => ({ get: jest.fn() }));
 
 const mockGet = get as jest.MockedFunction<typeof get>;
 
-const announcement = (message: string, extra: object = {}) =>
-  JSON.stringify({ state: 'info', message, ...extra });
+const announcement = (message: string, extra: object = {}) => ({
+  state: 'info',
+  message,
+  ...extra,
+});
 
-describe('getSiteAnnouncement', () => {
+describe('getSiteAnnouncements', () => {
   beforeEach(() => {
     mockGet.mockReset();
     process.env.GLOBAL_CONFIG = 'https://edge-config.vercel.com/ecfg?token=t';
@@ -18,42 +21,65 @@ describe('getSiteAnnouncement', () => {
     delete process.env.GLOBAL_CONFIG;
   });
 
-  it('prefers the app-specific announcement over the global one', async () => {
+  it('shows the global and app-specific announcements together', async () => {
     mockGet.mockResolvedValue({
-      'site-banner': announcement('global'),
-      'site-banner:admin': announcement('admin only'),
+      all: [announcement('global')],
+      admin: [announcement('admin only')],
     });
 
-    await expect(getSiteAnnouncement('admin')).resolves.toBe(
-      announcement('admin only')
-    );
+    await expect(getSiteAnnouncements('admin')).resolves.toMatchObject([
+      { message: 'global' },
+      { message: 'admin only' },
+    ]);
   });
 
-  it('falls back to the global announcement when the app one is empty', async () => {
+  it('shows every announcement targeted at one app', async () => {
     mockGet.mockResolvedValue({
-      'site-banner': announcement('global'),
-      'site-banner:admin': '',
+      admin: [announcement('first'), announcement('second')],
     });
 
-    await expect(getSiteAnnouncement('admin')).resolves.toBe(
-      announcement('global')
-    );
+    await expect(getSiteAnnouncements('admin')).resolves.toHaveLength(2);
+  });
+
+  it('stacks the most urgent first across both lists', async () => {
+    mockGet.mockResolvedValue({
+      all: [announcement('feature', { state: 'info' })],
+      admin: [announcement('outage', { state: 'error' })],
+    });
+
+    const resolved = await getSiteAnnouncements('admin');
+    expect(resolved.map(a => a.message)).toEqual(['outage', 'feature']);
+  });
+
+  it('ignores announcements targeted at another app', async () => {
+    mockGet.mockResolvedValue({ pulse: [announcement('pulse only')] });
+
+    await expect(getSiteAnnouncements('admin')).resolves.toEqual([]);
+  });
+
+  it('returns an empty list when nothing is posted', async () => {
+    mockGet.mockResolvedValue({});
+
+    await expect(getSiteAnnouncements('admin')).resolves.toEqual([]);
   });
 
   it('hides a scheduled announcement outside its window', async () => {
     mockGet.mockResolvedValue({
-      'site-banner': announcement('later', {
-        startsAt: '2999-01-01T00:00:00.000Z',
-      }),
+      all: [
+        announcement('now'),
+        announcement('later', { startsAt: '2999-01-01T00:00:00.000Z' }),
+      ],
     });
 
-    await expect(getSiteAnnouncement('admin')).resolves.toBe('');
+    await expect(getSiteAnnouncements('admin')).resolves.toMatchObject([
+      { message: 'now' },
+    ]);
   });
 
-  it('returns an empty value without reading when no store is connected', async () => {
+  it('returns an empty list without reading when no store is connected', async () => {
     delete process.env.GLOBAL_CONFIG;
 
-    await expect(getSiteAnnouncement('admin')).resolves.toBe('');
+    await expect(getSiteAnnouncements('admin')).resolves.toEqual([]);
     expect(mockGet).not.toHaveBeenCalled();
   });
 
@@ -63,14 +89,14 @@ describe('getSiteAnnouncement', () => {
     });
     mockGet.mockRejectedValue(bailout);
 
-    await expect(getSiteAnnouncement('admin')).rejects.toBe(bailout);
+    await expect(getSiteAnnouncements('admin')).rejects.toBe(bailout);
   });
 
-  it('returns an empty value and logs when the read fails', async () => {
+  it('returns an empty list and logs when the read fails', async () => {
     const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
     mockGet.mockRejectedValue(new Error('unreachable'));
 
-    await expect(getSiteAnnouncement('admin')).resolves.toBe('');
+    await expect(getSiteAnnouncements('admin')).resolves.toEqual([]);
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
   });

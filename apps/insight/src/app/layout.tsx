@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import { Ubuntu, Ubuntu_Mono } from 'next/font/google';
 
-import { FlagsProvider } from '@workspace/ui/components/flags-provider';
+import { SiteAnnouncementProvider } from '@workspace/ui/components/site-announcement-provider';
 import { Toaster } from '@workspace/ui/components/sonner';
-import { getSiteAnnouncement } from '@workspace/ui/lib/site-announcement-server';
+import { getSiteAnnouncements } from '@workspace/ui/lib/site-announcement-server';
 
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/contexts/auth-context';
@@ -33,9 +33,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const user = await getUserFromSession();
-  const flags = {
-    'site-banner': await getSiteAnnouncement('insight'),
-  };
+  const announcements = await getSiteAnnouncements('insight');
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -47,10 +45,10 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider user={user}>
-            <FlagsProvider flags={flags}>
+            <SiteAnnouncementProvider announcements={announcements}>
               {children}
               <Toaster position="bottom-right" />
-            </FlagsProvider>
+            </SiteAnnouncementProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

@@ -1,17 +1,18 @@
-import { parseAnnouncementBanner } from '@workspace/ui/lib/site-announcement';
+import { announcementSchema } from '@workspace/ui/lib/site-announcement';
 
 import {
   isoToLocalInput,
   localInputToIso,
   siteBannerFormSchema,
   siteBannerRequestSchema,
-  toAnnouncementValue,
+  toAnnouncement,
   toFormValues,
 } from '@/lib/site-banner-schema';
 import type { SiteBannerFormValues } from '@/lib/site-banner-schema';
 
 const base: SiteBannerFormValues = {
   target: 'pulse',
+  id: 'pulse-1',
   enabled: true,
   state: 'warning',
   title: 'Jira DC is unstable',
@@ -22,60 +23,63 @@ const base: SiteBannerFormValues = {
   endsAt: '',
 };
 
-describe('toAnnouncementValue', () => {
-  it('serializes a banner the shared parser accepts', () => {
-    const value = toAnnouncementValue(base);
-
-    expect(parseAnnouncementBanner(value)).toMatchObject({
+describe('toAnnouncement', () => {
+  it('builds an announcement the shared schema accepts', () => {
+    expect(announcementSchema.safeParse(toAnnouncement(base)).success).toBe(
+      true
+    );
+    expect(toAnnouncement(base)).toMatchObject({
       state: 'warning',
       title: 'Jira DC is unstable',
       message: base.message,
     });
   });
 
-  it('escapes quotes so admins never have to', () => {
-    const value = toAnnouncementValue(base);
-
-    expect(value).toContain('\\"Find Dates\\"');
-    expect(parseAnnouncementBanner(value)?.message).toContain('"Find Dates"');
+  it('keeps quotes intact — nothing is serialized on the way out', () => {
+    expect(toAnnouncement(base)?.message).toContain('"Find Dates"');
   });
 
-  it('returns an empty string when the banner is switched off', () => {
-    expect(toAnnouncementValue({ ...base, enabled: false })).toBe('');
+  it('returns null when the banner is switched off', () => {
+    expect(toAnnouncement({ ...base, enabled: false })).toBeNull();
   });
 
-  it('returns an empty string when the message is blank', () => {
-    expect(toAnnouncementValue({ ...base, message: '   ' })).toBe('');
+  it('returns null when the message is blank', () => {
+    expect(toAnnouncement({ ...base, message: '   ' })).toBeNull();
   });
 
   it('omits the title when it is blank', () => {
-    const value = toAnnouncementValue({ ...base, title: '  ' });
-    expect(JSON.parse(value)).not.toHaveProperty('title');
+    expect(toAnnouncement({ ...base, title: '  ' })).not.toHaveProperty(
+      'title'
+    );
   });
 
-  it('omits a half-filled action, which the parser would drop anyway', () => {
-    const value = toAnnouncementValue({ ...base, actionLabel: 'Status page' });
+  it('omits a half-filled action, which the schema would drop anyway', () => {
+    const announcement = toAnnouncement({
+      ...base,
+      actionLabel: 'Status page',
+    });
 
-    expect(JSON.parse(value)).not.toHaveProperty('actionLabel');
-    expect(parseAnnouncementBanner(value)?.actionLabel).toBeUndefined();
+    expect(announcement).not.toHaveProperty('actionLabel');
+    expect(announcementSchema.parse(announcement)?.actionLabel).toBeUndefined();
   });
 
   it('keeps a complete action pair', () => {
-    const value = toAnnouncementValue({
-      ...base,
-      actionLabel: 'Status page',
-      actionHref: 'https://status.elevensys.dev',
-    });
-
-    expect(parseAnnouncementBanner(value)).toMatchObject({
+    expect(
+      toAnnouncement({
+        ...base,
+        actionLabel: 'Status page',
+        actionHref: 'https://status.elevensys.dev',
+      })
+    ).toMatchObject({
       actionLabel: 'Status page',
       actionHref: 'https://status.elevensys.dev',
     });
   });
 
   it('trims surrounding whitespace', () => {
-    const value = toAnnouncementValue({ ...base, message: '  Hello  ' });
-    expect(parseAnnouncementBanner(value)?.message).toBe('Hello');
+    expect(toAnnouncement({ ...base, message: '  Hello  ' })?.message).toBe(
+      'Hello'
+    );
   });
 });
 
@@ -96,14 +100,13 @@ describe('schedule conversion', () => {
   });
 
   it('serializes the window as ISO instants', () => {
-    const value = toAnnouncementValue({
+    const announcement = toAnnouncement({
       ...base,
       startsAt: '2026-09-01T22:30',
     });
-    const parsed = parseAnnouncementBanner(value);
 
-    expect(parsed?.startsAt).toBe(localInputToIso('2026-09-01T22:30'));
-    expect(parsed).not.toHaveProperty('endsAt', expect.anything());
+    expect(announcement?.startsAt).toBe(localInputToIso('2026-09-01T22:30'));
+    expect(announcement?.endsAt).toBeUndefined();
   });
 });
 
@@ -117,28 +120,40 @@ describe('toFormValues', () => {
       endsAt: '2026-09-02T02:00',
     };
 
-    expect(toFormValues('pulse', toAnnouncementValue(withAction))).toEqual(
-      withAction
-    );
+    expect(
+      toFormValues('pulse', {
+        ...toAnnouncement(withAction),
+        id: withAction.id,
+      } as never)
+    ).toEqual(withAction);
   });
 
-  it('produces an empty, disabled form for a hidden banner', () => {
-    expect(toFormValues('web', '')).toMatchObject({
+  it('produces an empty, disabled draft for a target with no announcement', () => {
+    expect(toFormValues('web', undefined)).toMatchObject({
       target: 'web',
       enabled: false,
       state: 'info',
       message: '',
     });
+    expect(toFormValues('web', null).enabled).toBe(false);
   });
 
-  it('falls back to an empty form for a malformed value', () => {
-    expect(toFormValues('web', 'not json').enabled).toBe(false);
+  it('gives each new draft its own id, so saving appends', () => {
+    const first = toFormValues('web', undefined).id;
+    const second = toFormValues('web', undefined).id;
+
+    expect(first).toBeTruthy();
+    expect(first).not.toBe(second);
   });
 
-  it('defaults an unrecognized state to "info"', () => {
-    expect(toFormValues('web', '{"state":"neon","message":"Hi"}').state).toBe(
-      'info'
-    );
+  it('keeps the id of an existing announcement, so saving replaces it', () => {
+    expect(
+      toFormValues('web', {
+        id: 'web-1',
+        state: 'info',
+        message: 'Hello',
+      } as never).id
+    ).toBe('web-1');
   });
 });
 
@@ -207,37 +222,65 @@ describe('siteBannerFormSchema', () => {
 });
 
 describe('siteBannerRequestSchema', () => {
-  it('accepts a serialized announcement', () => {
+  it('accepts an announcement', () => {
     const result = siteBannerRequestSchema.safeParse({
       target: 'pulse',
-      value: toAnnouncementValue(base),
+      id: 'pulse-1',
+      announcement: toAnnouncement(base),
     });
 
     expect(result.success).toBe(true);
   });
 
-  it('accepts an empty value, which clears the banner', () => {
+  it('accepts a null announcement, which removes that banner', () => {
     expect(
-      siteBannerRequestSchema.safeParse({ target: 'all', value: '' }).success
+      siteBannerRequestSchema.safeParse({
+        target: 'all',
+        id: 'all-1',
+        announcement: null,
+      }).success
     ).toBe(true);
   });
 
-  it('rejects an unknown target', () => {
+  it('requires an id, since it says which banner is being written', () => {
     expect(
-      siteBannerRequestSchema.safeParse({ target: 'jira', value: '' }).success
-    ).toBe(false);
-  });
-
-  it('rejects a value the shared parser could not read', () => {
-    expect(
-      siteBannerRequestSchema.safeParse({ target: 'all', value: 'not json' })
+      siteBannerRequestSchema.safeParse({ target: 'all', announcement: null })
         .success
     ).toBe(false);
 
     expect(
       siteBannerRequestSchema.safeParse({
         target: 'all',
-        value: '{"state":"info"}',
+        id: '',
+        announcement: null,
+      }).success
+    ).toBe(false);
+  });
+
+  it('rejects an unknown target', () => {
+    expect(
+      siteBannerRequestSchema.safeParse({
+        target: 'jira',
+        id: 'x',
+        announcement: null,
+      }).success
+    ).toBe(false);
+  });
+
+  it('rejects an announcement the apps could not render', () => {
+    expect(
+      siteBannerRequestSchema.safeParse({
+        target: 'all',
+        id: 'all-1',
+        announcement: { state: 'info' },
+      }).success
+    ).toBe(false);
+
+    expect(
+      siteBannerRequestSchema.safeParse({
+        target: 'all',
+        id: 'all-1',
+        announcement: 'not an announcement',
       }).success
     ).toBe(false);
   });

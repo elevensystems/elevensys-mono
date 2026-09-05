@@ -1,47 +1,53 @@
 'use client';
 
 import { Banner } from '@workspace/ui/components/banner';
-import { useFlags } from '@workspace/ui/components/flags-provider';
-import {
-  SITE_BANNER_FLAG_KEY,
-  parseAnnouncementBanner,
-} from '@workspace/ui/lib/site-announcement';
+import { useSiteAnnouncements } from '@workspace/ui/components/site-announcement-provider';
+import type { SiteAnnouncement } from '@workspace/ui/lib/site-announcement';
 
 interface SiteBannerProps {
   /**
-   * Raw announcement JSON. Defaults to the `site-banner` flag exposed by
-   * `FlagsProvider`; pass explicitly to drive the banner from another source.
+   * The announcements to show, most urgent first. Defaults to the ones
+   * resolved by `SiteAnnouncementProvider`; pass explicitly to drive the stack
+   * from another source, as the admin editor's live preview does.
    */
-  value?: string;
+  announcements?: SiteAnnouncement[];
   /** Full-bleed styling, for rendering directly under a sticky header. */
   flush?: boolean;
 }
 
 /**
- * Site-wide announcement/maintenance banner shared by every app.
+ * Site-wide announcement/maintenance banners shared by every app.
  *
- * Content comes from the `site-banner` flag. The banner cannot be dismissed —
- * it stays visible until the flag is cleared or updated.
+ * An app can show several at once — the global ones plus any targeted at it —
+ * stacked most urgent first. Values are validated and ordered server-side by
+ * `getSiteAnnouncements`, so there is nothing to parse or sort here. Banners
+ * cannot be dismissed; they stay visible until cleared or updated.
  */
-export function SiteBanner({ value, flush = true }: SiteBannerProps) {
-  const flags = useFlags();
-  const rawValue = value ?? flags[SITE_BANNER_FLAG_KEY];
-  const announcement =
-    typeof rawValue === 'string' ? parseAnnouncementBanner(rawValue) : null;
+export function SiteBanner({ announcements, flush = true }: SiteBannerProps) {
+  const fromContext = useSiteAnnouncements();
+  const resolved = announcements ?? fromContext;
 
-  if (!announcement) return null;
+  if (resolved.length === 0) return null;
 
   return (
-    <Banner
-      flush={flush}
-      state={announcement.state}
-      title={announcement.title}
-      message={announcement.message}
-      action={
-        announcement.actionLabel && announcement.actionHref
-          ? { label: announcement.actionLabel, href: announcement.actionHref }
-          : undefined
-      }
-    />
+    <div className={flush ? '' : 'space-y-2'}>
+      {resolved.map((announcement, index) => (
+        <Banner
+          key={announcement.id ?? index}
+          flush={flush}
+          state={announcement.state}
+          title={announcement.title}
+          message={announcement.message}
+          action={
+            announcement.actionLabel && announcement.actionHref
+              ? {
+                  label: announcement.actionLabel,
+                  href: announcement.actionHref,
+                }
+              : undefined
+          }
+        />
+      ))}
+    </div>
   );
 }

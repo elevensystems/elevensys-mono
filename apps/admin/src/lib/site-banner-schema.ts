@@ -1,32 +1,26 @@
 import {
+  SITE_ANNOUNCEMENT_STATES,
   SITE_BANNER_APPS,
-  SITE_BANNER_FLAG_KEY,
+  SITE_BANNER_ITEM_KEY,
   type SiteAnnouncement,
   type SiteAnnouncementState,
-  siteBannerKey,
+  announcementSchema,
 } from '@workspace/ui/lib/site-announcement';
 import { z } from 'zod';
 
 import type { SiteBannerTarget } from '@/types/site-banner';
 
-export const SITE_BANNER_STATES = [
-  'info',
-  'success',
-  'warning',
-  'error',
-] as const;
+export const SITE_BANNER_STATES = SITE_ANNOUNCEMENT_STATES;
+
+/** Tags this feature's entries in the shared audit log. */
+export const SITE_BANNER_FEATURE = SITE_BANNER_ITEM_KEY;
 
 const TARGET_VALUES = ['all', ...SITE_BANNER_APPS] as const;
 
 /** Every target the editor can write, in display order. */
 export const SITE_BANNER_TARGETS: SiteBannerTarget[] = [...TARGET_VALUES];
 
-/** Flag key an announcement for `target` is stored under. */
-export function targetFlagKey(target: SiteBannerTarget): string {
-  return target === 'all' ? SITE_BANNER_FLAG_KEY : siteBannerKey(target);
-}
-
-/** Newest-first change log length. Keeps the Global Config item small. */
+/** Newest-first audit log length. Keeps the Global Config item small. */
 export const HISTORY_LIMIT = 20;
 
 export const TARGET_LABELS: Record<SiteBannerTarget, string> = {
@@ -47,6 +41,8 @@ export const STATE_LABELS: Record<SiteAnnouncementState, string> = {
 /** Form state. Every field is a string so inputs stay controlled. */
 export interface SiteBannerFormValues {
   target: SiteBannerTarget;
+  /** Which announcement in the target's list is being edited. */
+  id: string;
   enabled: boolean;
   state: SiteAnnouncementState;
   title: string;
@@ -58,7 +54,7 @@ export interface SiteBannerFormValues {
   endsAt: string;
 }
 
-export const EMPTY_FORM_VALUES: Omit<SiteBannerFormValues, 'target'> = {
+export const EMPTY_FORM_VALUES: Omit<SiteBannerFormValues, 'target' | 'id'> = {
   enabled: false,
   state: 'info',
   title: '',
@@ -88,6 +84,7 @@ function isUsableHref(href: string): boolean {
 export const siteBannerFormSchema = z
   .object({
     target: z.enum(TARGET_VALUES),
+    id: z.string().min(1),
     enabled: z.boolean(),
     state: z.enum(SITE_BANNER_STATES),
     title: z.string(),
@@ -141,22 +138,23 @@ export const siteBannerFormSchema = z
   });
 
 /**
- * Wire format for `POST /api/flags/site-banner`. The client sends the already
- * serialized announcement so both sides agree on exactly one representation;
- * the server re-parses it so a client bug cannot write an unreadable value.
+ * Wire format for `POST /api/site-banner`. The announcement is validated with
+ * the same schema the readers use, so a client bug cannot write a value the
+ * apps would refuse to render.
+ *
+ * `id` says which announcement in the target's list is being written — an
+ * unknown id appends a new one. A `null` announcement removes it.
  */
 export const siteBannerRequestSchema = z.object({
   target: z.enum(TARGET_VALUES),
-  value: z.string().refine(value => {
-    if (value === '') return true;
-    try {
-      const parsed = JSON.parse(value) as { message?: unknown };
-      return typeof parsed.message === 'string' && parsed.message.trim() !== '';
-    } catch {
-      return false;
-    }
-  }, 'Value must be an empty string or JSON with a non-empty "message".'),
+  id: z.string().min(1),
+  announcement: announcementSchema.nullable(),
 });
+
+/** A fresh id for an announcement being added. */
+export function newAnnouncementId(): string {
+  return crypto.randomUUID();
+}
 
 /** `datetime-local` (admin's local time) → ISO instant, or `undefined`. */
 export function localInputToIso(value: string): string | undefined {
@@ -179,11 +177,13 @@ export function isoToLocalInput(value: string | undefined): string {
 }
 
 /**
- * Form values → the raw flag value. A disabled banner serializes to `''`,
+ * Form values → the stored announcement. A disabled banner resolves to `null`,
  * which is what hides it.
  */
-export function toAnnouncementValue(values: SiteBannerFormValues): string {
-  if (!values.enabled || !values.message.trim()) return '';
+export function toAnnouncement(
+  values: SiteBannerFormValues
+): SiteAnnouncement | null {
+  if (!values.enabled || !values.message.trim()) return null;
 
   const hasAction = Boolean(
     values.actionLabel.trim() && values.actionHref.trim()
@@ -206,39 +206,32 @@ export function toAnnouncementValue(values: SiteBannerFormValues): string {
   if (startsAt) announcement.startsAt = startsAt;
   if (endsAt) announcement.endsAt = endsAt;
 
-  return JSON.stringify(announcement);
+  return announcement;
 }
 
-/** Raw flag value → form values, for loading an existing announcement. */
+/**
+ * Stored announcement → form values, for loading an existing one. Without an
+ * announcement the form is a blank draft for a new banner, which gets a fresh
+ * id so saving appends rather than overwriting.
+ */
 export function toFormValues(
   target: SiteBannerTarget,
-  raw: string
+  announcement: SiteAnnouncement | null | undefined
 ): SiteBannerFormValues {
-  if (!raw) return { target, ...EMPTY_FORM_VALUES };
-
-  let parsed: Partial<SiteAnnouncement>;
-  try {
-    parsed = JSON.parse(raw) as Partial<SiteAnnouncement>;
-  } catch {
-    return { target, ...EMPTY_FORM_VALUES };
-  }
-
-  const state = SITE_BANNER_STATES.includes(
-    parsed.state as SiteAnnouncementState
-  )
-    ? (parsed.state as SiteAnnouncementState)
-    : 'info';
+  if (!announcement)
+    return { target, id: newAnnouncementId(), ...EMPTY_FORM_VALUES };
 
   return {
     target,
+    id: announcement.id ?? newAnnouncementId(),
     enabled: true,
-    state,
-    title: parsed.title ?? '',
-    message: parsed.message ?? '',
-    actionLabel: parsed.actionLabel ?? '',
-    actionHref: parsed.actionHref ?? '',
-    startsAt: isoToLocalInput(parsed.startsAt),
-    endsAt: isoToLocalInput(parsed.endsAt),
+    state: announcement.state,
+    title: announcement.title ?? '',
+    message: announcement.message,
+    actionLabel: announcement.actionLabel ?? '',
+    actionHref: announcement.actionHref ?? '',
+    startsAt: isoToLocalInput(announcement.startsAt),
+    endsAt: isoToLocalInput(announcement.endsAt),
   };
 }
 

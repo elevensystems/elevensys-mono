@@ -49,7 +49,8 @@ export async function POST(request: NextRequest) {
   try {
     const snapshot = await writeSiteBannerValue({
       target: parsed.data.target,
-      value: parsed.data.value,
+      id: parsed.data.id,
+      announcement: parsed.data.announcement,
       by: user.name || user.email || user.sub,
     });
     return NextResponse.json(snapshot);

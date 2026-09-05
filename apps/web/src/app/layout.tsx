@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import { Ubuntu, Ubuntu_Mono } from 'next/font/google';
 
+import { SiteAnnouncementProvider } from '@workspace/ui/components/site-announcement-provider';
 import { Toaster } from '@workspace/ui/components/sonner';
-import { getSiteAnnouncement } from '@workspace/ui/lib/site-announcement-server';
+import { getSiteAnnouncements } from '@workspace/ui/lib/site-announcement-server';
 
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/contexts/auth-context';
@@ -47,10 +48,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const user = await getUserFromSession();
-  const flags = {
-    'sidebar-tools': String((await sidebarToolsFlag()) ?? ''),
-    'site-banner': await getSiteAnnouncement('web'),
-  };
+  const flags = { 'sidebar-tools': String((await sidebarToolsFlag()) ?? '') };
+  const announcements = await getSiteAnnouncements('web');
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -63,8 +62,10 @@ export default async function RootLayout({
         >
           <AuthProvider user={user}>
             <FlagsProvider flags={flags}>
-              {children}
-              <Toaster position="bottom-right" />
+              <SiteAnnouncementProvider announcements={announcements}>
+                {children}
+                <Toaster position="bottom-right" />
+              </SiteAnnouncementProvider>
             </FlagsProvider>
           </AuthProvider>
         </ThemeProvider>

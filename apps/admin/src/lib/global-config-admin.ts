@@ -1,11 +1,18 @@
 import { createClient } from '@vercel/global-config';
+import {
+  SITE_BANNER_ITEM_KEY,
+  type SiteAnnouncement,
+  type SiteBannerConfig,
+  announcementSchema,
+  sortAnnouncements,
+} from '@workspace/ui/lib/site-announcement';
 import 'server-only';
 
 import { env } from '@/env';
 import {
   HISTORY_LIMIT,
+  SITE_BANNER_FEATURE,
   SITE_BANNER_TARGETS,
-  targetFlagKey,
 } from '@/lib/site-banner-schema';
 import type {
   SiteBannerHistoryEntry,
@@ -14,13 +21,13 @@ import type {
 } from '@/types/site-banner';
 
 /**
- * Global Config item holding the flag values. Must match the adapter's
- * `globalConfigItemKey`, which defaults to `flags`.
+ * Global Config item holding the change log for every config feature, newest
+ * first. Entries are tagged with `feature` so a second feature can share it.
+ *
+ * Named `config-audit`, not `audit`: this app already has an unrelated audit
+ * feature backed by the API (`/api/audit`).
  */
-const FLAGS_ITEM_KEY = 'flags';
-
-/** Global Config item holding the announcement change log. */
-const HISTORY_ITEM_KEY = 'site-banner-history';
+const AUDIT_ITEM_KEY = 'config-audit';
 
 const VERCEL_API = 'https://api.vercel.com';
 
@@ -139,25 +146,42 @@ function normalizeItems(payload: unknown): Record<string, unknown> {
   return {};
 }
 
-/** Announcement values keyed by flag key, ignoring anything non-string. */
-function readFlagValues(
-  items: Record<string, unknown>
-): Record<string, string> {
-  const flags = items[FLAGS_ITEM_KEY];
-  if (!flags || typeof flags !== 'object' || Array.isArray(flags)) return {};
+/**
+ * The stored announcements for each target, in stacking order. Every entry is
+ * validated on its own so one malformed announcement does not blank the editor
+ * for the rest.
+ *
+ * Unlike the apps' read, this keeps scheduled announcements that are not
+ * showing yet — staff need to see and edit them before they go live.
+ */
+function readBannerConfig(items: Record<string, unknown>): SiteBannerConfig {
+  const stored = items[SITE_BANNER_ITEM_KEY];
+  if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return {};
 
-  const values: Record<string, string> = {};
-  for (const [key, value] of Object.entries(flags)) {
-    if (typeof value === 'string') values[key] = value;
+  const config: SiteBannerConfig = {};
+  for (const target of SITE_BANNER_TARGETS) {
+    const value = (stored as Record<string, unknown>)[target];
+    if (!Array.isArray(value)) continue;
+
+    const announcements: SiteAnnouncement[] = [];
+    for (const entry of value) {
+      const result = announcementSchema.safeParse(entry);
+      if (result.success) announcements.push(result.data);
+      else console.error('[site-banner] ignoring invalid "%s" entry', target);
+    }
+
+    if (announcements.length > 0)
+      config[target] = sortAnnouncements(announcements);
   }
-  return values;
+  return config;
 }
 
-function readHistory(items: Record<string, unknown>): SiteBannerHistoryEntry[] {
-  const history = items[HISTORY_ITEM_KEY];
-  if (!Array.isArray(history)) return [];
+/** The whole audit log, including entries belonging to other features. */
+function readAudit(items: Record<string, unknown>): SiteBannerHistoryEntry[] {
+  const audit = items[AUDIT_ITEM_KEY];
+  if (!Array.isArray(audit)) return [];
 
-  return history.filter(
+  return audit.filter(
     (entry): entry is SiteBannerHistoryEntry =>
       Boolean(entry) &&
       typeof entry === 'object' &&
@@ -174,90 +198,104 @@ function readHistory(items: Record<string, unknown>): SiteBannerHistoryEntry[] {
  */
 export async function readSiteBannerSnapshot(): Promise<SiteBannerSnapshot> {
   if (!isSiteBannerStoreConfigured()) {
-    return { values: emptyValues(), history: [], configured: false };
+    return { values: {}, history: [], configured: false };
   }
 
   const items = normalizeItems(await vercelApi<unknown>('/items'));
-  const flagValues = readFlagValues(items);
 
-  const values = emptyValues();
-  for (const target of SITE_BANNER_TARGETS) {
-    values[target] = flagValues[targetFlagKey(target)] ?? '';
-  }
-
-  return { values, history: readHistory(items), configured: true };
-}
-
-function emptyValues(): Record<SiteBannerTarget, string> {
-  return Object.fromEntries(
-    SITE_BANNER_TARGETS.map(target => [target, ''])
-  ) as Record<SiteBannerTarget, string>;
+  return {
+    values: readBannerConfig(items),
+    history: readAudit(items).filter(
+      entry => entry.feature === SITE_BANNER_FEATURE
+    ),
+    configured: true,
+  };
 }
 
 /**
- * Writes one target's announcement and prepends a change-log entry.
+ * Adds, replaces, or removes one announcement in a target's list, and prepends
+ * an audit entry.
  *
- * Global Config items are replaced wholesale, so the `flags` object is read,
- * merged, and written back. Every target key is written on each save — the
- * adapter throws (and the flag falls back to its default, logging a warning)
- * for keys missing from the item, so seeding them all keeps the app logs quiet.
+ * The announcement is addressed by `id`: an id already in the list is replaced
+ * in place, a new one is appended, and a `null` announcement removes it. This
+ * is what lets several banners coexist on one target without a save wiping the
+ * others.
+ *
+ * Global Config items are replaced wholesale, so the `site-banner` item is
+ * read, merged, and written back — but only this feature's item is touched, so
+ * a save can never disturb another feature's config or `apps/web`'s real
+ * `flags` item. A target left with no announcements is deleted rather than
+ * stored as an empty list, keeping "off" and "absent" the same state.
  *
  * There is no locking: two admins saving at once means last-write-wins. With a
- * handful of staff that is acceptable, and the change log makes it visible.
+ * handful of staff that is acceptable, and the audit log makes it visible.
  */
 export async function writeSiteBannerValue({
   target,
-  value,
+  id,
+  announcement,
   by,
 }: {
   target: SiteBannerTarget;
-  value: string;
+  id: string;
+  announcement: SiteAnnouncement | null;
   by: string;
 }): Promise<SiteBannerSnapshot> {
-  const snapshot = await readSiteBannerSnapshot();
+  if (!isSiteBannerStoreConfigured()) {
+    throw new GlobalConfigError(
+      503,
+      'Site banner storage is not configured. Set GLOBAL_CONFIG and VERCEL_API_TOKEN.'
+    );
+  }
 
-  const flags: Record<string, string> = {};
-  for (const key of SITE_BANNER_TARGETS) {
-    flags[targetFlagKey(key)] = key === target ? value : snapshot.values[key];
+  const items = normalizeItems(await vercelApi<unknown>('/items'));
+  const config = readBannerConfig(items);
+
+  const existing = config[target] ?? [];
+  const rest = existing.filter(entry => entry.id !== id);
+
+  if (announcement) {
+    // `id` and `savedAt` are stamped here, never taken from the client: the id
+    // keys the list and the timestamp decides stacking order among equals.
+    const saved = { ...announcement, id, savedAt: new Date().toISOString() };
+    config[target] = sortAnnouncements([...rest, saved]);
+  } else if (rest.length > 0) {
+    config[target] = rest;
+  } else {
+    delete config[target];
   }
 
   const entry: SiteBannerHistoryEntry = {
     at: new Date().toISOString(),
     by,
+    feature: SITE_BANNER_FEATURE,
     target,
-    action: value ? 'save' : 'clear',
-    summary: summarize(value),
+    action: announcement ? 'save' : 'clear',
+    summary: summarize(announcement),
   };
-  const history = [entry, ...snapshot.history].slice(0, HISTORY_LIMIT);
+  const audit = [entry, ...readAudit(items)].slice(0, HISTORY_LIMIT);
 
   await vercelApi('/items', {
     method: 'PATCH',
     body: JSON.stringify({
       items: [
-        { operation: 'upsert', key: FLAGS_ITEM_KEY, value: flags },
-        { operation: 'upsert', key: HISTORY_ITEM_KEY, value: history },
+        { operation: 'upsert', key: SITE_BANNER_ITEM_KEY, value: config },
+        { operation: 'upsert', key: AUDIT_ITEM_KEY, value: audit },
       ],
     }),
   });
 
   return {
-    values: { ...snapshot.values, [target]: value },
-    history,
+    values: config,
+    history: audit.filter(item => item.feature === SITE_BANNER_FEATURE),
     configured: true,
   };
 }
 
-/** One-line description of a saved announcement, for the change log. */
-function summarize(value: string): string {
-  if (!value) return 'Banner cleared';
+/** One-line description of a saved announcement, for the audit log. */
+function summarize(announcement: SiteAnnouncement | null): string {
+  if (!announcement) return 'Banner cleared';
 
-  try {
-    const parsed = JSON.parse(value) as { title?: string; message?: string };
-    const text = parsed.title || parsed.message || '';
-    return text.length > 120
-      ? `${text.slice(0, 117)}…`
-      : text || 'Banner saved';
-  } catch {
-    return 'Banner saved';
-  }
+  const text = announcement.title || announcement.message;
+  return text.length > 120 ? `${text.slice(0, 117)}…` : text;
 }
