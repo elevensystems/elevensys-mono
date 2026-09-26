@@ -261,7 +261,8 @@ export function SiteBannerForm({ snapshot }: SiteBannerFormProps) {
           />
         </div>
 
-        <Panel>
+        {/* Stretched to the left column's height, so the two end level. */}
+        <Panel className="lg:self-stretch">
           <PanelHeader>
             <PanelTitle>Compose</PanelTitle>
             <PanelActions>
@@ -281,7 +282,7 @@ export function SiteBannerForm({ snapshot }: SiteBannerFormProps) {
             </PanelActions>
           </PanelHeader>
 
-          <PanelBody>
+          <PanelBody className="flex-1">
             <div className="flex flex-col gap-2.5 rounded-t-xl border-b p-4">
               {preview ? (
                 <SiteBanner announcements={[preview]} flush={false} preview />

@@ -55,6 +55,10 @@ interface BannerPickerPanelProps {
  *
  * Delete sits on each row rather than under the composer: rows exist only for
  * saved banners, so nothing appears or vanishes when a draft is opened.
+ *
+ * The list is always three rows tall, whatever is posted: rows have a fixed
+ * height, a fourth banner scrolls, and the empty state fills the same space.
+ * Adding or deleting a banner never moves anything on the page.
  */
 export function BannerPickerPanel({
   target,
@@ -70,20 +74,27 @@ export function BannerPickerPanel({
     <Panel dense={false}>
       <PanelHeader>
         <PanelTitle>Banners</PanelTitle>
-        {saved.length > 0 && (
-          <PanelActions>
-            <Button type="button" variant="outline" size="sm" onClick={onAdd}>
-              <Plus />
-              New banner
-            </Button>
-          </PanelActions>
-        )}
+        <PanelActions>
+          {/* Always shown, so the header never reflows; disabled while the
+              composer already holds a fresh draft it would only wipe. */}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={!currentId}
+            onClick={onAdd}
+          >
+            <Plus />
+            New banner
+          </Button>
+        </PanelActions>
       </PanelHeader>
 
-      <PanelBody>
+      {/* Three 4.25rem rows, plus the body's own top and bottom border. */}
+      <PanelBody className="h-[calc(3*4.25rem+2px)] overflow-y-auto">
         {saved.length === 0 ? (
-          <div className="flex flex-col items-center gap-3.5 px-4 py-6 text-center">
-            <MegaphoneOff className="text-muted-foreground size-[22px]" />
+          <div className="flex h-full flex-col items-center justify-center gap-2 px-4 py-3 text-center">
+            <MegaphoneOff className="text-muted-foreground size-[18px]" />
             <div>
               <p className="text-sm font-medium">
                 Nothing posted on {TARGET_LABELS[target]}
@@ -105,7 +116,7 @@ export function BannerPickerPanel({
                 <li
                   key={entry.id ?? index}
                   className={cn(
-                    'flex items-start border-l-2',
+                    'flex h-17 items-center border-l-2',
                     open
                       ? 'border-l-primary bg-muted'
                       : 'hover:bg-muted/50 border-l-transparent'
@@ -115,22 +126,23 @@ export function BannerPickerPanel({
                     type="button"
                     aria-current={open}
                     onClick={() => onEdit(entry)}
-                    className="flex min-w-0 flex-1 flex-col items-start gap-1 py-3 pl-4 text-left"
+                    className="flex h-full min-w-0 flex-1 flex-col items-start justify-center gap-1 pl-4 text-left"
                   >
                     <span className="w-full truncate text-sm font-medium">
                       {name}
                     </span>
-                    <span className="flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                    {/* One line, so every row keeps the same height. */}
+                    <span className="flex w-full min-w-0 items-center gap-2">
                       <Token
                         color={STATE_TOKEN_COLORS[entry.state]}
                         density="compact"
-                        className="rounded-[6px] text-[11px] tracking-[0.03em] uppercase"
+                        className="shrink-0 rounded-[6px] text-[11px] tracking-[0.03em] uppercase"
                       >
                         {STATE_LABELS[entry.state]}
                       </Token>
                       <span
                         className={cn(
-                          'min-w-0 text-xs',
+                          'min-w-0 truncate text-xs',
                           schedule.status === 'live'
                             ? 'text-token-green-fg'
                             : 'text-muted-foreground'
@@ -151,7 +163,7 @@ export function BannerPickerPanel({
                           size="icon-sm"
                           aria-label={`Delete ${name}`}
                           disabled={busy}
-                          className="text-muted-foreground hover:text-destructive mx-2 mt-2.5 shrink-0"
+                          className="text-muted-foreground hover:text-destructive mx-2 shrink-0"
                         >
                           <Trash2 />
                         </Button>
