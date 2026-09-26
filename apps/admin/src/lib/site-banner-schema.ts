@@ -66,7 +66,6 @@ export interface SiteBannerFormValues {
    * draft that has never been saved — it gets its id on submit.
    */
   id: string;
-  enabled: boolean;
   state: SiteAnnouncementState;
   title: string;
   message: string;
@@ -89,7 +88,6 @@ export interface SiteBannerFormValues {
 }
 
 export const EMPTY_FORM_VALUES: Omit<SiteBannerFormValues, 'target' | 'id'> = {
-  enabled: false,
   state: 'info',
   title: '',
   message: '',
@@ -113,15 +111,13 @@ function isUsableHref(href: string): boolean {
 }
 
 /**
- * Validates the editor form. A disabled banner clears the announcement, so its
- * content is not validated — an admin turning a banner off should not have to
- * fix its message first.
+ * Validates the editor form. Taking a banner down is the Delete button's job,
+ * so everything submitted here is a banner about to go up.
  */
 export const siteBannerFormSchema = z
   .object({
     target: z.enum(TARGET_VALUES),
     id: z.string(),
-    enabled: z.boolean(),
     state: z.enum(SITE_BANNER_STATES),
     title: z.string(),
     message: z.string(),
@@ -133,8 +129,6 @@ export const siteBannerFormSchema = z
     endsAt: z.string(),
   })
   .superRefine((values, ctx) => {
-    if (!values.enabled) return;
-
     if (!values.message.trim()) {
       ctx.addIssue({
         code: 'custom',
@@ -221,13 +215,13 @@ export function isoToLocalInput(value: string | undefined): string {
 }
 
 /**
- * Form values → the stored announcement. A disabled banner resolves to `null`,
- * which is what hides it.
+ * Form values → the stored announcement, or `null` while there is no message
+ * to show yet.
  */
 export function toAnnouncement(
   values: SiteBannerFormValues
 ): SiteAnnouncement | null {
-  if (!values.enabled || !values.message.trim()) return null;
+  if (!values.message.trim()) return null;
 
   const hasAction = Boolean(
     values.actionLabel.trim() && values.actionHref.trim()
@@ -276,7 +270,6 @@ export function toFormValues(
   return {
     target,
     id: announcement.id ?? '',
-    enabled: true,
     state: announcement.state,
     title: announcement.title ?? '',
     message: announcement.message,

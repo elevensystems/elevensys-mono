@@ -15,7 +15,6 @@ import type { SiteBannerFormValues } from '@/lib/site-banner-schema';
 const base: SiteBannerFormValues = {
   target: 'pulse',
   id: 'pulse-1',
-  enabled: true,
   state: 'warning',
   title: 'Jira DC is unstable',
   message: 'The "Find Dates" feature may not work. Please pick dates manually.',
@@ -41,10 +40,6 @@ describe('toAnnouncement', () => {
 
   it('keeps quotes intact — nothing is serialized on the way out', () => {
     expect(toAnnouncement(base)?.message).toContain('"Find Dates"');
-  });
-
-  it('returns null when the banner is switched off', () => {
-    expect(toAnnouncement({ ...base, enabled: false })).toBeNull();
   });
 
   it('returns null when the message is blank', () => {
@@ -295,14 +290,13 @@ describe('toFormValues', () => {
     ).toEqual(withAction);
   });
 
-  it('produces an empty, disabled draft for a target with no announcement', () => {
+  it('produces an empty draft for a target with no announcement', () => {
     expect(toFormValues('web', undefined)).toMatchObject({
       target: 'web',
-      enabled: false,
       state: 'info',
       message: '',
     });
-    expect(toFormValues('web', null).enabled).toBe(false);
+    expect(toFormValues('web', null).message).toBe('');
   });
 
   it('leaves a new draft without an id, so saving appends', () => {
@@ -332,21 +326,11 @@ describe('siteBannerFormSchema', () => {
     expect(siteBannerFormSchema.safeParse(base).success).toBe(true);
   });
 
-  it('requires a message when the banner is on', () => {
+  it('requires a message', () => {
     const result = siteBannerFormSchema.safeParse({ ...base, message: '' });
 
     expect(result.success).toBe(false);
     expect(result.error?.issues[0]?.path).toEqual(['message']);
-  });
-
-  it('skips validation when the banner is being switched off', () => {
-    const result = siteBannerFormSchema.safeParse({
-      ...base,
-      enabled: false,
-      message: '',
-    });
-
-    expect(result.success).toBe(true);
   });
 
   it('rejects a half-filled action', () => {

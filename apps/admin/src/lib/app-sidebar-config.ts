@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import {
+  CalendarClock,
   LayoutDashboard,
   Link as LinkIcon,
   Megaphone,
@@ -27,6 +28,7 @@ export const appSidebarData: {
   navMain: [
     { title: 'Dashboard', url: '/', icon: LayoutDashboard },
     { title: 'Urlify', url: '/urlify', icon: LinkIcon },
+    { title: 'Autolog', url: '/autolog', icon: CalendarClock },
     { title: 'Site Banner', url: '/site-banner', icon: Megaphone },
     { title: 'Tools Visibility', url: '/tools-visibility', icon: Wrench },
     {
