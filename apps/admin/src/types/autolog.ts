@@ -132,5 +132,7 @@ export function formatScheduleShort(config: AutologConfig): string {
 }
 
 export function totalHours(config: AutologConfig): number {
-  return config.tickets?.reduce((sum, t) => sum + (t.hours ?? 0), 0) ?? 0;
+  const sum = config.tickets?.reduce((acc, t) => acc + (t.hours ?? 0), 0) ?? 0;
+  // Rounded to 2 decimals so float drift (7.999999999999997) never renders.
+  return Math.round(sum * 100) / 100;
 }

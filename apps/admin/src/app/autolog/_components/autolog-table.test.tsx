@@ -186,7 +186,86 @@ describe('AutologTable', () => {
     expect(ownerColumn()[1]).toContain('AnNT3');
   });
 
-  // --- Detail sheet ---
+  // --- Pagination ---
+  /** `count` configs owned by user-01, user-02, … so the owner sort is stable. */
+  const manyConfigs = (count: number) =>
+    Array.from({ length: count }, (_, i) => {
+      const n = String(i + 1).padStart(2, '0');
+      return makeConfig({ configId: `cfg-${n}`, username: `user-${n}` });
+    });
+
+  it('hides the pagination controls when everything fits on one page', () => {
+    renderTable(manyConfigs(10));
+    expect(
+      screen.queryByRole('navigation', { name: 'pagination' })
+    ).not.toBeInTheDocument();
+    expect(ownerColumn()).toHaveLength(10);
+  });
+
+  it('shows the first page of 20 rows by default', () => {
+    renderTable(manyConfigs(45));
+
+    expect(ownerColumn()).toHaveLength(20);
+    expect(ownerColumn()[0]).toContain('user-01');
+    expect(screen.getByText('1–20 of 45')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Page 1' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
+    expect(
+      screen.getByRole('button', { name: 'Previous page' })
+    ).toBeDisabled();
+  });
+
+  it('moves between pages', async () => {
+    const user = userEvent.setup();
+    renderTable(manyConfigs(45));
+
+    await user.click(screen.getByRole('button', { name: 'Page 3' }));
+    expect(ownerColumn()).toHaveLength(5);
+    expect(ownerColumn()[0]).toContain('user-41');
+    expect(screen.getByText('41–45 of 45')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next page' })).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: 'Previous page' }));
+    expect(ownerColumn()[0]).toContain('user-21');
+  });
+
+  it('collapses distant page numbers', () => {
+    renderTable(manyConfigs(200));
+
+    expect(screen.getByRole('button', { name: 'Page 1' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Page 2' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Page 10' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Page 5' })
+    ).not.toBeInTheDocument();
+  });
+
+  it('returns to the first page when the search changes', async () => {
+    const user = userEvent.setup();
+    renderTable(manyConfigs(45));
+
+    await user.click(screen.getByRole('button', { name: 'Page 2' }));
+    await user.type(
+      screen.getByRole('textbox', { name: 'Search configurations' }),
+      'user-'
+    );
+
+    expect(ownerColumn()[0]).toContain('user-01');
+  });
+
+  it('lands on the new last page when the list shrinks', async () => {
+    const { rerender } = renderTable(manyConfigs(45));
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole('button', { name: 'Page 3' }));
+    rerender(<AutologTable configs={manyConfigs(30)} loadError={null} />);
+
+    expect(ownerColumn()[0]).toContain('user-21');
+    expect(screen.getByText('21–30 of 30')).toBeInTheDocument();
+  });
+
   it('opens the detail sheet with the owner and schedule when a row is clicked', async () => {
     const user = userEvent.setup();
     renderTable([makeConfig()]);

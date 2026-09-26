@@ -62,11 +62,6 @@ async function chooseTarget(
   );
 }
 
-/** The composer's on/off switch, whose label names the current target. */
-function enabledSwitch() {
-  return screen.getByRole('switch', { name: /^Showing on/ });
-}
-
 /** The page header's Publish button — the composer's only submit control. */
 function publishButton() {
   return screen.getByRole('button', { name: 'Publish' });
@@ -139,20 +134,8 @@ describe('SiteBannerForm', () => {
     expect(await findInPreview('Jira is degraded')).toBeVisible();
   });
 
-  it('previews a draft even while the banner is switched off', async () => {
-    const user = userEvent.setup();
-    render(<SiteBannerForm snapshot={makeSnapshot()} />);
-
-    await user.type(screen.getByLabelText('Message'), 'Not live yet');
-
-    expect(await findInPreview('Not live yet')).toBeVisible();
-    expect(
-      screen.getByText(/Switched off — saving now removes it/)
-    ).toBeVisible();
-  });
-
   // --- Presets ---
-  it('fills the form from a preset and switches the banner on', async () => {
+  it('fills the form from a preset', async () => {
     const user = userEvent.setup();
     render(<SiteBannerForm snapshot={makeSnapshot()} />);
 
@@ -162,7 +145,6 @@ describe('SiteBannerForm', () => {
       'Service is experiencing issues'
     );
     expect(screen.getByRole('radio', { name: 'Error' })).toBeChecked();
-    expect(enabledSwitch()).toBeChecked();
   });
 
   // --- Timing ---
@@ -186,7 +168,6 @@ describe('SiteBannerForm', () => {
     render(<SiteBannerForm snapshot={makeSnapshot()} />);
 
     await user.type(screen.getByLabelText('Message'), 'Something');
-    await user.click(enabledSwitch());
     await user.click(screen.getByRole('radio', { name: 'Scheduled window' }));
     fireEvent.change(screen.getByLabelText('Starts'), {
       target: { value: '2099-09-06T22:00' },
@@ -222,7 +203,6 @@ describe('SiteBannerForm', () => {
       screen.getByLabelText('Message'),
       'The "Find Dates" feature may not work.'
     );
-    await user.click(enabledSwitch());
     await user.click(publishButton());
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
@@ -245,7 +225,6 @@ describe('SiteBannerForm', () => {
 
     await user.type(screen.getByLabelText('Message'), 'A new tool has landed');
     await user.click(screen.getByRole('switch', { name: 'Dismissible' }));
-    await user.click(enabledSwitch());
     await user.click(publishButton());
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
@@ -261,7 +240,6 @@ describe('SiteBannerForm', () => {
     render(<SiteBannerForm snapshot={makeSnapshot()} />);
 
     await user.type(screen.getByLabelText('Message'), 'Everything is down');
-    await user.click(enabledSwitch());
     await user.click(publishButton());
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
@@ -276,7 +254,6 @@ describe('SiteBannerForm', () => {
 
     render(<SiteBannerForm snapshot={makeSnapshot()} />);
 
-    await user.click(enabledSwitch());
     await user.click(publishButton());
 
     expect(await screen.findByText('Message is required.')).toBeVisible();
@@ -293,7 +270,6 @@ describe('SiteBannerForm', () => {
     render(<SiteBannerForm snapshot={makeSnapshot()} />);
 
     await user.type(screen.getByLabelText('Message'), 'Something');
-    await user.click(enabledSwitch());
     await user.click(publishButton());
 
     await waitFor(() =>
@@ -314,7 +290,6 @@ describe('SiteBannerForm', () => {
     render(<SiteBannerForm snapshot={makeSnapshot()} />);
 
     await user.type(screen.getByLabelText('Message'), 'Something');
-    await user.click(enabledSwitch());
     await user.click(publishButton());
 
     await waitFor(() =>
@@ -353,10 +328,10 @@ describe('SiteBannerForm', () => {
 
     // Scoped to the list buttons: the open banner also shows in the preview.
     expect(
-      screen.getByRole('button', { name: /Jira DC is unstable/ })
+      screen.getByRole('button', { name: /^Jira DC is unstable/ })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /Second notice/ })
+      screen.getByRole('button', { name: /^Second notice/ })
     ).toBeInTheDocument();
   });
 
@@ -374,7 +349,7 @@ describe('SiteBannerForm', () => {
     );
 
     await chooseTarget(user, 'Pulse');
-    await user.click(screen.getByRole('button', { name: /Second notice/ }));
+    await user.click(screen.getByRole('button', { name: /^Second notice/ }));
 
     expect(screen.getByLabelText(/^Title/)).toHaveValue('Second notice');
   });
@@ -393,13 +368,13 @@ describe('SiteBannerForm', () => {
     );
 
     await chooseTarget(user, 'Pulse');
-    await user.click(screen.getByRole('button', { name: /Second notice/ }));
+    await user.click(screen.getByRole('button', { name: /^Second notice/ }));
 
     expect(
-      screen.getByRole('button', { name: /Second notice/ })
+      screen.getByRole('button', { name: /^Second notice/ })
     ).toHaveAttribute('aria-current', 'true');
     expect(
-      screen.getByRole('button', { name: /Jira DC is unstable/ })
+      screen.getByRole('button', { name: /^Jira DC is unstable/ })
     ).toHaveAttribute('aria-current', 'false');
   });
 
@@ -414,7 +389,6 @@ describe('SiteBannerForm', () => {
     await chooseTarget(user, 'Pulse');
     await user.click(screen.getByRole('button', { name: 'New banner' }));
     await user.type(screen.getByLabelText('Message'), 'A second notice.');
-    await user.click(enabledSwitch());
     await user.click(publishButton());
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
@@ -441,25 +415,31 @@ describe('SiteBannerForm', () => {
   });
 
   // --- Deleting ---
-  it('offers Delete only for a banner that has been posted', async () => {
+  it('offers Delete on each posted banner, never on a draft', async () => {
     const user = userEvent.setup();
     render(
-      <SiteBannerForm snapshot={makeSnapshot({ pulse: [PULSE_BANNER] })} />
+      <SiteBannerForm
+        snapshot={makeSnapshot({
+          pulse: [
+            PULSE_BANNER,
+            { ...PULSE_BANNER, id: 'pulse-2', title: 'Second notice' },
+          ],
+        })}
+      />
     );
-
-    expect(
-      screen.queryByRole('button', { name: 'Delete' })
-    ).not.toBeInTheDocument();
 
     await chooseTarget(user, 'Pulse');
 
-    expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
-
-    // A fresh draft has nothing to delete yet.
-    await user.click(screen.getByRole('button', { name: 'New banner' }));
     expect(
-      screen.queryByRole('button', { name: 'Delete' })
-    ).not.toBeInTheDocument();
+      screen.getByRole('button', { name: 'Delete Jira DC is unstable' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Delete Second notice' })
+    ).toBeInTheDocument();
+
+    // Opening a draft adds no Delete of its own and takes none away.
+    await user.click(screen.getByRole('button', { name: 'New banner' }));
+    expect(screen.getAllByRole('button', { name: /^Delete / })).toHaveLength(2);
   });
 
   it('posts a null announcement for the chosen id when deletion is confirmed', async () => {
@@ -471,7 +451,9 @@ describe('SiteBannerForm', () => {
     );
 
     await chooseTarget(user, 'Pulse');
-    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Delete Jira DC is unstable' })
+    );
     await user.click(screen.getByRole('button', { name: 'Delete it' }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
@@ -480,5 +462,45 @@ describe('SiteBannerForm', () => {
       id: 'pulse-1',
       announcement: null,
     });
+  });
+
+  it('keeps the open banner in the composer when another one is deleted', async () => {
+    const user = userEvent.setup();
+    const second = { ...PULSE_BANNER, id: 'pulse-2', title: 'Second notice' };
+    mockSave(makeSnapshot({ pulse: [second] }));
+
+    render(
+      <SiteBannerForm
+        snapshot={makeSnapshot({ pulse: [PULSE_BANNER, second] })}
+      />
+    );
+
+    await chooseTarget(user, 'Pulse');
+    await user.click(screen.getByRole('button', { name: /^Second notice/ }));
+    await user.click(
+      screen.getByRole('button', { name: 'Delete Jira DC is unstable' })
+    );
+    await user.click(screen.getByRole('button', { name: 'Delete it' }));
+
+    await waitFor(() => expect(toastSuccess).toHaveBeenCalled());
+    expect(screen.getByLabelText(/^Title/)).toHaveValue('Second notice');
+  });
+
+  it('opens a blank draft once the open banner is deleted', async () => {
+    const user = userEvent.setup();
+    mockSave(makeSnapshot());
+
+    render(
+      <SiteBannerForm snapshot={makeSnapshot({ pulse: [PULSE_BANNER] })} />
+    );
+
+    await chooseTarget(user, 'Pulse');
+    await user.click(
+      screen.getByRole('button', { name: 'Delete Jira DC is unstable' })
+    );
+    await user.click(screen.getByRole('button', { name: 'Delete it' }));
+
+    await waitFor(() => expect(toastSuccess).toHaveBeenCalled());
+    expect(screen.getByLabelText('Message')).toHaveValue('');
   });
 });
