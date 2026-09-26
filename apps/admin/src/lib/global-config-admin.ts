@@ -30,7 +30,7 @@ import type { SiteBannerSnapshot, SiteBannerTarget } from '@/types/site-banner';
  * Unlike the apps' read, this keeps scheduled announcements that are not
  * showing yet — staff need to see and edit them before they go live.
  */
-function readBannerConfig(items: Record<string, unknown>): SiteBannerConfig {
+export function readBannerConfig(items: Record<string, unknown>): SiteBannerConfig {
   const stored = items[SITE_BANNER_ITEM_KEY];
   if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return {};
 
