@@ -17,6 +17,18 @@ jest.mock('@/lib/auth', () => ({
   getUserFromSession: jest.fn(),
 }));
 
+jest.mock('@/lib/global-config-admin', () => ({
+  readBannerConfig: () => ({ all: [{ message: 'a' }, { message: 'b' }] }),
+}));
+
+jest.mock('@/lib/global-config-client', () => ({
+  isGlobalConfigConfigured: () => true,
+  readItems: jest
+    .fn()
+    .mockResolvedValue({ 'sidebar-tools': ['/tools/passly'] }),
+  readAudit: () => [],
+}));
+
 describe('AdminPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -48,17 +60,31 @@ describe('AdminPage', () => {
     );
   });
 
-  it('renders the Urlify card', async () => {
+  it('renders a link card for every section', async () => {
     (getUserFromSession as jest.Mock).mockResolvedValue(null);
 
     const component = await AdminPage();
     render(component);
 
-    expect(screen.getByText('Urlify')).toBeInTheDocument();
-    expect(screen.getByText(/Manage shortened URLs/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Open Urlify/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /Urlify/ })).toHaveAttribute(
       'href',
       '/urlify'
     );
+    expect(screen.getByText(/Manage shortened URLs/)).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /Site Banner/ })
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Audit/ })).toBeInTheDocument();
+  });
+
+  it('displays live config status', async () => {
+    (getUserFromSession as jest.Mock).mockResolvedValue(null);
+
+    const component = await AdminPage();
+    render(component);
+
+    expect(screen.getByText('2 banners live or scheduled')).toBeInTheDocument();
+    expect(screen.getByText(/^1 of \d+ tools visible$/)).toBeInTheDocument();
+    expect(screen.getByText('No changes recorded yet.')).toBeInTheDocument();
   });
 });

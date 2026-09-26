@@ -216,7 +216,6 @@ export function UrlifyTable({
       <PageHeader
         className="mb-2"
         title="Urlify"
-        description="Shortened URLs — open, paginate, and delete."
         actions={
           <Button
             variant="outline"
@@ -252,7 +251,7 @@ export function UrlifyTable({
 
         <PanelBody>
           <Table>
-            <TableHeader className="bg-muted/50">
+            <TableHeader>
               <TableRow>
                 <TableHead className="w-10">
                   <Checkbox
