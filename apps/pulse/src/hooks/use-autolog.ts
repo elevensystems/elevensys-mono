@@ -148,9 +148,11 @@ export function useAutolog({
         });
         if (!res.ok) {
           const err = await res.json().catch(() => null);
-          throw new Error(err?.error || `HTTP ${res.status}`);
+          throw new Error(err?.error || err?.message || `HTTP ${res.status}`);
         }
-        toast.success('Manual run triggered successfully');
+        toast.success(
+          "Run started — you'll get a Teams message when it's done"
+        );
         return true;
       } catch (err) {
         toast.error(

@@ -156,7 +156,7 @@ export function ConfigForm({
     };
 
     const tickets = validEntries.map(e => ({
-      issueKey: e.issueKey,
+      issueKey: e.issueKey.trim(),
       hours: e.hours,
       description: e.description || undefined,
       typeOfWork: e.typeOfWork,

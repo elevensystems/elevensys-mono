@@ -273,7 +273,7 @@ export function ConfigDetailSheet({
                 ) : (
                   <Play className="mr-1.5 h-3.5 w-3.5" />
                 )}
-                {isRunning ? 'Running...' : runSuccess ? 'Done' : 'Run Now'}
+                {isRunning ? 'Starting...' : runSuccess ? 'Started' : 'Run Now'}
               </Button>
             )}
             <div className="ml-auto flex gap-2">
