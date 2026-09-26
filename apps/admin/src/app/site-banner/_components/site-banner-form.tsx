@@ -5,17 +5,6 @@ import { useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { useForm, useStore } from '@tanstack/react-form';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@workspace/ui/components/alert-dialog';
 import { Button } from '@workspace/ui/components/button';
 import { Field, FieldLabel } from '@workspace/ui/components/field';
 import { FieldMessage } from '@workspace/ui/components/field-message';
@@ -128,13 +117,8 @@ export function SiteBannerForm({ snapshot }: SiteBannerFormProps) {
   const values = useStore(form.store, state => state.values);
   const isSubmitting = useStore(form.store, state => state.isSubmitting);
 
-  // Preview the composed announcement even while it is switched off, so an
-  // admin can draft one before making it live.
-  const preview = toAnnouncement({ ...values, enabled: true });
+  const preview = toAnnouncement(values);
   const saved = current.values[values.target] ?? [];
-  // Whether the announcement being edited already exists, as opposed to a
-  // draft that has never been saved. Only a saved one can be deleted.
-  const isSaved = saved.some(entry => entry.id === values.id);
 
   async function save(
     target: SiteBannerTarget,
@@ -163,14 +147,18 @@ export function SiteBannerForm({ snapshot }: SiteBannerFormProps) {
     }
 
     setCurrent(data);
-    applyValues(
-      toFormValues(
-        target,
-        announcement
-          ? data.values[target]?.find(entry => entry.id === id)
-          : undefined
-      )
-    );
+    // Deleting a banner other than the open one leaves the composer, and any
+    // edits in it, alone.
+    if (announcement || id === form.getFieldValue('id')) {
+      applyValues(
+        toFormValues(
+          target,
+          announcement
+            ? data.values[target]?.find(entry => entry.id === id)
+            : undefined
+        )
+      );
+    }
     toast.success(
       announcement
         ? 'Banner saved. It may take a few seconds to appear on every app.'
@@ -194,7 +182,6 @@ export function SiteBannerForm({ snapshot }: SiteBannerFormProps) {
     const opts = { dontUpdateMeta: true };
     form.setFieldValue('target', next.target, opts);
     form.setFieldValue('id', next.id, opts);
-    form.setFieldValue('enabled', next.enabled, opts);
     form.setFieldValue('state', next.state, opts);
     form.setFieldValue('title', next.title, opts);
     form.setFieldValue('message', next.message, opts);
@@ -215,24 +202,26 @@ export function SiteBannerForm({ snapshot }: SiteBannerFormProps) {
     applyValues(toFormValues(values.target, announcement));
   }
 
+  function deleteAnnouncement(id: string) {
+    void save(values.target, id, null);
+  }
+
   /** Starts a blank draft, which saving appends to the target's list. */
   function addAnnouncement() {
     applyValues(toFormValues(values.target, undefined));
   }
 
   function applyPreset(preset: SiteBannerPreset) {
-    applyValues({ ...values, ...preset.values, enabled: true });
+    applyValues({ ...values, ...preset.values });
   }
 
-  const previewNote = values.enabled
-    ? describeSchedule(
-        {
-          startsAt: preview?.startsAt,
-          endsAt: preview?.endsAt,
-        },
-        now
-      ).label
-    : 'Switched off — saving now removes it.';
+  const previewNote = describeSchedule(
+    {
+      startsAt: preview?.startsAt,
+      endsAt: preview?.endsAt,
+    },
+    now
+  ).label;
 
   return (
     <>
@@ -265,12 +254,15 @@ export function SiteBannerForm({ snapshot }: SiteBannerFormProps) {
             saved={saved}
             currentId={values.id}
             now={now}
+            busy={isSubmitting}
             onEdit={editAnnouncement}
             onAdd={addAnnouncement}
+            onDelete={deleteAnnouncement}
           />
         </div>
 
-        <Panel>
+        {/* Stretched to the left column's height, so the two end level. */}
+        <Panel className="lg:self-stretch">
           <PanelHeader>
             <PanelTitle>Compose</PanelTitle>
             <PanelActions>
@@ -290,7 +282,7 @@ export function SiteBannerForm({ snapshot }: SiteBannerFormProps) {
             </PanelActions>
           </PanelHeader>
 
-          <PanelBody>
+          <PanelBody className="flex-1">
             <div className="flex flex-col gap-2.5 rounded-t-xl border-b p-4">
               {preview ? (
                 <SiteBanner announcements={[preview]} flush={false} preview />
@@ -609,68 +601,6 @@ export function SiteBannerForm({ snapshot }: SiteBannerFormProps) {
                     </div>
                   )}
                 />
-
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <form.Field
-                    name="enabled"
-                    children={field => (
-                      <div className="flex flex-wrap items-center gap-2.5">
-                        <Switch
-                          id="banner-enabled"
-                          checked={field.state.value}
-                          onCheckedChange={checked =>
-                            field.handleChange(checked === true)
-                          }
-                        />
-                        <FieldLabel
-                          htmlFor="banner-enabled"
-                          className="text-sm"
-                        >
-                          Showing on {TARGET_LABELS[values.target]}
-                        </FieldLabel>
-                        <span className="text-muted-foreground text-sm">
-                          Switch off and save to remove it
-                        </span>
-                      </div>
-                    )}
-                  />
-
-                  {isSaved && (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="text-destructive"
-                          disabled={isSubmitting}
-                        >
-                          Delete
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>
-                            Delete this {TARGET_LABELS[values.target]} banner?
-                          </AlertDialogTitle>
-                          <AlertDialogDescription>
-                            It disappears for everyone within a few seconds. Any
-                            other banners on this target stay up.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() =>
-                              void save(values.target, values.id, null)
-                            }
-                          >
-                            Delete it
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  )}
-                </div>
               </div>
             </form>
           </PanelBody>
