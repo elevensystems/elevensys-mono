@@ -47,7 +47,7 @@ export const appSidebarData: {
             { title: 'My Worklogs', url: '/timesheet/my-worklogs' },
           ],
         },
-        { title: 'Absences', url: '/absences', icon: CalendarX, badge: 'New' },
+        { title: 'Absences', url: '/absences', icon: CalendarX },
         {
           title: 'Autolog',
           url: '/autolog',

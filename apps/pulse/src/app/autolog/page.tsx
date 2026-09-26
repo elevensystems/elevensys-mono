@@ -69,12 +69,6 @@ export default function AutologPage() {
             )}
           </div>
 
-          <Banner
-            state="info"
-            title="Under development"
-            message="Autolog is still in development and will be released soon."
-          />
-
           {isLoaded && !isConfigured && (
             <NotConfiguredAlert isConfigured={false} />
           )}
