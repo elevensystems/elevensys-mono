@@ -1,10 +1,11 @@
 'use client';
 
-import { useMemo } from 'react';
+import { type ReactNode, useMemo } from 'react';
 
 import { Button } from '@workspace/ui/components/button';
 import { Panel, PanelBody, PanelHeader } from '@workspace/ui/components/panel';
 import { Token } from '@workspace/ui/components/token';
+import { cn } from '@workspace/ui/lib/utils';
 import { Plus } from 'lucide-react';
 
 import { STANDARD_HOURS, formatHours } from '@/lib/timesheet';
@@ -33,6 +34,13 @@ interface WorkEntriesPanelProps {
   onClearRowError?: (id: string, field: keyof RowErrors) => void;
   /** Extra classes for the Panel (e.g. an error ring). */
   className?: string;
+  /**
+   * Underline tabs rendered at the start of the header. The header drops its
+   * vertical padding so the active tab's underline meets the body's edge. Give
+   * the tabs a minimum width: once it and the target group no longer fit on
+   * one line, the group wraps below rather than squeezing the tabs away.
+   */
+  tabs?: ReactNode;
 }
 
 /**
@@ -53,6 +61,7 @@ export function WorkEntriesPanel({
   rowErrors,
   onClearRowError,
   className,
+  tabs,
 }: WorkEntriesPanelProps) {
   const totalHours = useMemo(
     () => entries.reduce((sum, e) => sum + (e.hours || 0), 0),
@@ -68,23 +77,37 @@ export function WorkEntriesPanel({
 
   return (
     <Panel className={className}>
-      <PanelHeader className="justify-between">
-        {/* Daily target */}
-        <div className="flex items-center gap-2.5">
-          <span className="text-sm font-semibold">Daily target</span>
-          <Token
-            color={hoursTokenColor}
-            density="compact"
-            className="tabular-nums"
-          >
-            {formatHours(totalHours)}h / {formatHours(STANDARD_HOURS)}h
-          </Token>
-        </div>
+      <PanelHeader
+        className={cn(
+          'justify-between',
+          tabs && 'items-stretch gap-x-4 gap-y-0 py-0'
+        )}
+      >
+        {tabs}
 
-        <Button variant="outline" onClick={onAdd} disabled={addDisabled}>
-          <Plus />
-          Add Row
-        </Button>
+        <div
+          className={cn(
+            'contents',
+            tabs && 'ml-auto flex shrink-0 items-center gap-3 py-2'
+          )}
+        >
+          {/* Daily target */}
+          <div className="flex items-center gap-2.5">
+            <span className="text-sm font-semibold">Daily target</span>
+            <Token
+              color={hoursTokenColor}
+              density="compact"
+              className="tabular-nums"
+            >
+              {formatHours(totalHours)}h / {formatHours(STANDARD_HOURS)}h
+            </Token>
+          </div>
+
+          <Button variant="outline" onClick={onAdd} disabled={addDisabled}>
+            <Plus />
+            Add Row
+          </Button>
+        </div>
       </PanelHeader>
 
       {/* Entries table */}

@@ -16,30 +16,36 @@ import { TokenExpiredAlert } from '@/components/features/timesheet/token-expired
 import { WorkEntriesPanel } from '@/components/features/timesheet/work-entries-panel';
 import MainLayout from '@/components/layouts/main-layout';
 import { ToolPageHeader } from '@/components/layouts/tool-page-header';
+import { useFailedWorklogs } from '@/hooks/use-failed-worklogs';
 import { useLogWorkSubmission } from '@/hooks/use-log-work-submission';
 import { useMissingWorklogs } from '@/hooks/use-missing-worklogs';
 import { useTimesheetSettings } from '@/hooks/use-timesheet-settings';
+import { useWorklogProfiles } from '@/hooks/use-worklog-profiles';
 import { showAuthErrorToast } from '@/lib/auth-toast';
 import {
   createDefaultEntry,
   formatDateForApi,
   groupDatesIntoRanges,
   isValidIssueKey,
-  loadSavedEntries,
-  saveEntriesToStorage,
+  reconcileFailedWorklogs,
 } from '@/lib/timesheet';
 import type {
   DateRange,
   LogWorkResult,
   RowErrors,
+  RunOutcome,
   ValidationErrors,
   WorkEntry,
 } from '@/types/timesheet';
 
 import { ConfirmDialog } from './_components/confirm-dialog';
+import { FailedWorklogsPanel } from './_components/failed-worklogs-panel';
 import { LogworkStep, LogworkStepper } from './_components/logwork-stepper';
 import { MissingWorklogsCard } from './_components/missing-worklogs-card';
 import { SubmissionModal } from './_components/submission-modal';
+import { WorklogProfileTabs } from './_components/worklog-profile-tabs';
+
+const NOT_LOGGED_HINT = 'Retry the rest from "Not logged" below the form.';
 
 /** Convert a Date to DD/Mon/YY API format */
 function dateToApiFormat(date: Date): string {
@@ -75,16 +81,25 @@ export default function LogWorkPage() {
     results,
     requestStatuses,
     submitEntries,
+    submitWork,
     retryFailed,
     cancelSubmission,
     resetResults,
   } = useLogWorkSubmission(settings);
 
-  const [entries, setEntries] = useState<WorkEntry[]>(() =>
-    selectedProjectId
-      ? loadSavedEntries(selectedProjectId)
-      : [createDefaultEntry()]
-  );
+  const {
+    profiles,
+    activeProfile,
+    entries,
+    setEntries,
+    selectProfile,
+    createProfile,
+    duplicateProfile,
+    renameProfile,
+    deleteProfile,
+  } = useWorklogProfiles(selectedProjectId);
+  const { failedWorklogs, updateFailedWorklogs } =
+    useFailedWorklogs(selectedProjectId);
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [includeWeekends, setIncludeWeekends] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({
@@ -94,6 +109,8 @@ export default function LogWorkPage() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [submissionModalOpen, setSubmissionModalOpen] = useState(false);
   const pendingResultsRef = useRef<LogWorkResult[]>([]);
+  // The rows the current run was started with, to snapshot its leftovers.
+  const runEntriesRef = useRef<ReadonlyMap<string, WorkEntry>>(new Map());
 
   // Derive parsedDates (DD/Mon/YY strings) from selectedDates
   const parsedDates = useMemo(
@@ -131,40 +148,17 @@ export default function LogWorkPage() {
     []
   );
 
-  // Warn before navigating away if there are unsaved entries
-  useEffect(() => {
-    const hasEntries = entries.some(e => e.issueKey.trim());
-    if (!hasEntries) return;
-    const handler = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-    };
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
-  }, [entries]);
-
-  // Entries are per-project drafts, but the project now comes from the header
-  // switcher and can change at any time — so stash the current entries under
-  // the outgoing project before swapping in the incoming project's draft.
-  const entriesRef = useRef(entries);
-  useEffect(() => {
-    entriesRef.current = entries;
-  }, [entries]);
-
-  const previousProjectIdRef = useRef(selectedProjectId);
-  useEffect(() => {
-    const previousProjectId = previousProjectIdRef.current;
-    if (previousProjectId === selectedProjectId) return;
-    previousProjectIdRef.current = selectedProjectId;
-
-    if (previousProjectId) {
-      saveEntriesToStorage(entriesRef.current, previousProjectId);
-    }
-    setEntries(
-      selectedProjectId
-        ? loadSavedEntries(selectedProjectId)
-        : [createDefaultEntry()]
-    );
-  }, [selectedProjectId]);
+  // Row errors are keyed by entry id, so they mean nothing on another profile
+  // — whether the user switched tabs or the header switched project.
+  const [errorsProfileId, setErrorsProfileId] = useState(activeProfile.id);
+  if (errorsProfileId !== activeProfile.id) {
+    setErrorsProfileId(activeProfile.id);
+    setErrors(prev => ({
+      ...prev,
+      global: { ...prev.global, entries: undefined },
+      rows: new Map(),
+    }));
+  }
 
   const validEntryCount = useMemo(
     () => entries.filter(e => e.issueKey.trim()).length,
@@ -178,13 +172,16 @@ export default function LogWorkPage() {
 
   const addEntry = useCallback(() => {
     setEntries(prev => [...prev, createDefaultEntry()]);
-  }, []);
+  }, [setEntries]);
 
-  const removeEntry = useCallback((id: string) => {
-    setEntries(prev =>
-      prev.length > 1 ? prev.filter(e => e.id !== id) : prev
-    );
-  }, []);
+  const removeEntry = useCallback(
+    (id: string) => {
+      setEntries(prev =>
+        prev.length > 1 ? prev.filter(e => e.id !== id) : prev
+      );
+    },
+    [setEntries]
+  );
 
   const updateEntry = useCallback(
     (id: string, field: keyof WorkEntry, value: string | number) => {
@@ -194,7 +191,7 @@ export default function LogWorkPage() {
         )
       );
     },
-    []
+    [setEntries]
   );
 
   const validateEntries = useCallback((): ValidationErrors => {
@@ -262,49 +259,61 @@ export default function LogWorkPage() {
       if (hasAuthError) {
         showAuthErrorToast(() => router.push('/config'));
       } else if (successCount > 0) {
-        toast.warning(`${successCount} succeeded, ${errorCount} failed`);
+        toast.warning(`${successCount} succeeded, ${errorCount} failed`, {
+          description: NOT_LOGGED_HINT,
+        });
       } else {
-        toast.error(`All ${errorCount} entries failed`);
-      }
-
-      if (successCount > 0) {
-        const failedIssueKeys = new Set(
-          logResults.filter(r => !r.success).map(r => r.entry.issueKey)
-        );
-        setEntries(prev => prev.filter(e => failedIssueKeys.has(e.issueKey)));
+        toast.error(`All ${errorCount} entries failed`, {
+          description: NOT_LOGGED_HINT,
+        });
       }
     },
     [router, hasAuthError]
   );
 
+  // Save leftovers the moment a run finishes — not when the modal closes —
+  // so a reload or a closed tab afterwards cannot lose them.
+  const recordOutcome = useCallback(
+    (outcome: RunOutcome) => {
+      pendingResultsRef.current = outcome.results;
+      updateFailedWorklogs(prev =>
+        reconcileFailedWorklogs(prev, outcome.statuses, runEntriesRef.current)
+      );
+    },
+    [updateFailedWorklogs]
+  );
+
+  // Leaving mid-run would drop requests that were never sent.
+  useEffect(() => {
+    if (!isSubmitting) return;
+    const handler = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isSubmitting]);
+
   const handleLogWork = useCallback(async () => {
     setShowConfirmDialog(false);
     setSubmissionModalOpen(true);
-
-    const validEntries = entries.filter(e => e.issueKey.trim());
-    saveEntriesToStorage(validEntries, selectedProjectId);
-
-    const logResults = await submitEntries({
-      entries,
-      ranges: dateRanges,
-    });
-
-    // Results are processed when modal closes
-    pendingResultsRef.current = logResults;
-  }, [entries, dateRanges, selectedProjectId, submitEntries]);
+    runEntriesRef.current = new Map(entries.map(e => [e.id, e]));
+    recordOutcome(await submitEntries({ entries, ranges: dateRanges }));
+    // Whatever did not log is now in the Not logged list, so the selection has
+    // nothing left to offer but a second copy of what did. The rows stay: they
+    // are the profile's template, not a one-off draft.
+    setSelectedDates([]);
+  }, [entries, dateRanges, submitEntries, recordOutcome]);
 
   const handleRetryFailed = useCallback(async () => {
-    const failedResults = results.filter(
-      r => !r.success && r.error !== 'Cancelled'
+    recordOutcome(await retryFailed());
+  }, [retryFailed, recordOutcome]);
+
+  const handleRetryFailedWorklogs = useCallback(async () => {
+    if (failedWorklogs.length === 0) return;
+    setSubmissionModalOpen(true);
+    runEntriesRef.current = new Map(
+      failedWorklogs.map(f => [f.entry.id, f.entry])
     );
-    if (failedResults.length === 0) return;
-
-    const logResults = await retryFailed({
-      failedResults,
-    });
-
-    pendingResultsRef.current = logResults;
-  }, [results, retryFailed]);
+    recordOutcome(await submitWork(failedWorklogs));
+  }, [failedWorklogs, submitWork, recordOutcome]);
 
   const handleSubmissionModalClose = useCallback(() => {
     setSubmissionModalOpen(false);
@@ -426,10 +435,37 @@ export default function LogWorkPage() {
                   rowErrors={errors.rows}
                   onClearRowError={clearRowError}
                   className={cn(errors.global.entries && 'border-destructive')}
+                  tabs={
+                    <WorklogProfileTabs
+                      profiles={profiles}
+                      activeId={activeProfile.id}
+                      onSelect={selectProfile}
+                      onCreate={createProfile}
+                      onDuplicate={duplicateProfile}
+                      onRename={renameProfile}
+                      onDelete={deleteProfile}
+                      disabled={isSubmitting}
+                    />
+                  }
                 />
               </FieldMessage>
             </LogworkStep>
           </LogworkStepper>
+
+          {/* Below the form, so appearing, shrinking or clearing never moves
+              the fields above it. */}
+          <FailedWorklogsPanel
+            failedWorklogs={failedWorklogs}
+            onRetry={handleRetryFailedWorklogs}
+            onRemove={entryId =>
+              updateFailedWorklogs(prev =>
+                prev.filter(f => f.entry.id !== entryId)
+              )
+            }
+            onClear={() => updateFailedWorklogs(() => [])}
+            retryDisabled={isSubmitting || !isConfigured}
+            dismissDisabled={isSubmitting}
+          />
         </div>
 
         <SubmissionModal

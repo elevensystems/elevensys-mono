@@ -1,7 +1,11 @@
 import type {
   DateRange,
+  FailedWorklog,
   MissingWorklogUser,
+  RequestStatus,
   WorkEntry,
+  WorklogProfile,
+  WorklogProfileStore,
   WorklogsWarningEntry,
 } from '@/types/timesheet';
 
@@ -100,62 +104,322 @@ export function createDefaultEntry(): WorkEntry {
 }
 
 const SAVED_ENTRIES_KEY = 'timesheet_saved_entries';
+const WORKLOG_PROFILES_KEY = 'timesheet_worklog_profiles';
+const FAILED_WORKLOGS_KEY = 'timesheet_failed_worklogs';
 
-/**
- * localStorage key for saved work entries. Scoped per project so each project
- * remembers its own set of tickets; the un-scoped key is the legacy fallback.
- */
-function getSavedEntriesKey(projectId?: string): string {
-  return projectId
-    ? `${SAVED_ENTRIES_KEY}::project::${projectId}`
-    : SAVED_ENTRIES_KEY;
+function projectStorageKey(base: string, projectId: string): string {
+  return `${base}::project::${projectId}`;
+}
+
+export function worklogProfilesStorageKey(projectId: string): string {
+  return projectStorageKey(WORKLOG_PROFILES_KEY, projectId);
+}
+
+export function failedWorklogsStorageKey(projectId: string): string {
+  return projectStorageKey(FAILED_WORKLOGS_KEY, projectId);
+}
+
+export const DEFAULT_PROFILE_NAME = 'Default';
+export const MAX_PROFILE_NAME_LENGTH = 40;
+
+type StoredEntry = Omit<WorkEntry, 'id'>;
+
+interface StoredProfileStore {
+  activeId: string;
+  profiles: { id: string; name: string; entries: StoredEntry[] }[];
+}
+
+/** Stored entries get fresh ids on load so React keys stay unique. */
+function hydrateEntries(stored: unknown): WorkEntry[] {
+  if (!Array.isArray(stored) || stored.length === 0) {
+    return [createDefaultEntry()];
+  }
+  return (stored as StoredEntry[]).map(entry => ({
+    ...entry,
+    id: generateEntryId(),
+  }));
 }
 
 /**
- * Load the work entries previously saved for a project from localStorage.
- * Falls back to a single default entry when nothing is stored or data is
- * corrupt. Each loaded entry gets a fresh id so React keys stay stable.
+ * Drops only fully blank rows, so a row whose ticket is being swapped keeps
+ * its description. Ids are regenerated on load.
  */
-export function loadSavedEntries(projectId?: string): WorkEntry[] {
-  if (typeof window === 'undefined') return [createDefaultEntry()];
+function dehydrateEntries(entries: WorkEntry[]): StoredEntry[] {
+  return entries
+    .filter(e => e.issueKey.trim() || e.description.trim())
+    .map(({ id: _id, ...rest }) => rest);
+}
+
+/** The single per-project list saved before profiles existed. */
+function loadLegacyEntries(projectId: string): WorkEntry[] {
   try {
-    const saved = localStorage.getItem(getSavedEntriesKey(projectId));
-    if (saved) {
-      const parsed = JSON.parse(saved) as Omit<WorkEntry, 'id'>[];
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.map(entry => ({
-          ...entry,
-          id: generateEntryId(),
-        }));
-      }
-    }
+    const saved = localStorage.getItem(
+      projectStorageKey(SAVED_ENTRIES_KEY, projectId)
+    );
+    if (saved) return hydrateEntries(JSON.parse(saved));
   } catch {
     // Ignore corrupted data
   }
   return [createDefaultEntry()];
 }
 
+export function createWorklogProfile(
+  name: string,
+  entries: WorkEntry[] = [createDefaultEntry()]
+): WorklogProfile {
+  return { id: generateEntryId(), name, entries };
+}
+
+/** "Profile N", counting on from the number of profiles and skipping names in use. */
+export function nextProfileName(profiles: WorklogProfile[]): string {
+  const taken = new Set(profiles.map(p => p.name));
+  let n = profiles.length + 1;
+  while (taken.has(`Profile ${n}`)) n++;
+  return `Profile ${n}`;
+}
+
 /**
- * Persist work entries (those with an issue key) for a project to localStorage.
- * Ids are stripped before saving since they are regenerated on load.
+ * Load a project's worklog profiles from localStorage. A project that only
+ * has the pre-profiles single list gets it as its first profile.
  */
-export function saveEntriesToStorage(
-  entries: WorkEntry[],
-  projectId?: string
+export function loadWorklogProfiles(projectId: string): WorklogProfileStore {
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem(worklogProfilesStorageKey(projectId));
+      if (raw) {
+        const parsed = JSON.parse(raw) as StoredProfileStore;
+        const profiles = (parsed.profiles ?? [])
+          .filter(p => p && typeof p.id === 'string')
+          .map(p => ({
+            id: p.id,
+            name: p.name || DEFAULT_PROFILE_NAME,
+            entries: hydrateEntries(p.entries),
+          }));
+        if (profiles.length > 0) {
+          const activeId = profiles.some(p => p.id === parsed.activeId)
+            ? parsed.activeId
+            : profiles[0].id;
+          return { activeId, profiles };
+        }
+      }
+    } catch {
+      // Ignore corrupted data
+    }
+  }
+
+  const profile = createWorklogProfile(
+    DEFAULT_PROFILE_NAME,
+    typeof window === 'undefined'
+      ? [createDefaultEntry()]
+      : loadLegacyEntries(projectId)
+  );
+  return { activeId: profile.id, profiles: [profile] };
+}
+
+export function saveWorklogProfiles(
+  store: WorklogProfileStore,
+  projectId: string
 ): void {
   try {
-    const toSave = entries
-      .filter(e => e.issueKey.trim())
-      .map(({ id: _id, ...rest }) => rest);
-    if (toSave.length > 0) {
-      localStorage.setItem(
-        getSavedEntriesKey(projectId),
-        JSON.stringify(toSave)
-      );
-    }
+    const toSave: StoredProfileStore = {
+      activeId: store.activeId,
+      profiles: store.profiles.map(p => ({
+        id: p.id,
+        name: p.name,
+        entries: dehydrateEntries(p.entries),
+      })),
+    };
+    localStorage.setItem(
+      worklogProfilesStorageKey(projectId),
+      JSON.stringify(toSave)
+    );
   } catch {
     // Ignore storage errors
   }
+}
+
+function isStoredEntry(value: unknown): value is WorkEntry {
+  const entry = value as WorkEntry | null;
+  return (
+    !!entry &&
+    typeof entry.id === 'string' &&
+    typeof entry.issueKey === 'string' &&
+    typeof entry.typeOfWork === 'string' &&
+    typeof entry.description === 'string' &&
+    typeof entry.hours === 'number'
+  );
+}
+
+function isStoredRange(value: unknown): value is DateRange {
+  const range = value as DateRange | null;
+  return (
+    !!range &&
+    typeof range.startDate === 'string' &&
+    typeof range.endDate === 'string' &&
+    Array.isArray(range.dates) &&
+    range.dates.length > 0 &&
+    range.dates.every(d => typeof d === 'string' && parseApiDate(d) !== null)
+  );
+}
+
+/** Checks every field later code reads, so junk in storage is dropped on load. */
+function isFailedWorklog(value: unknown): value is FailedWorklog {
+  const item = value as FailedWorklog | null;
+  return (
+    !!item &&
+    isStoredEntry(item.entry) &&
+    Array.isArray(item.ranges) &&
+    item.ranges.length > 0 &&
+    item.ranges.every(isStoredRange)
+  );
+}
+
+export function loadFailedWorklogs(projectId: string): FailedWorklog[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(failedWorklogsStorageKey(projectId));
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter(isFailedWorklog) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveFailedWorklogs(
+  failed: FailedWorklog[],
+  projectId: string
+): void {
+  const key = failedWorklogsStorageKey(projectId);
+  try {
+    if (failed.length === 0) localStorage.removeItem(key);
+    else localStorage.setItem(key, JSON.stringify(failed));
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+/**
+ * A request that was not confirmed as logged — failed, skipped by a cancel, or
+ * never reached. The one definition of "still missing" for a run's statuses.
+ */
+export function isUnlogged(status: RequestStatus): boolean {
+  return status.status !== 'success' && status.dates.length > 0;
+}
+
+/** The date range a request covered, rebuilt from its dates. */
+export function statusRange(status: RequestStatus): DateRange {
+  return {
+    startDate: status.dates[0],
+    endDate: status.dates[status.dates.length - 1],
+    dates: status.dates,
+  };
+}
+
+/**
+ * Every row × range of a run that was not confirmed as logged, grouped back
+ * per row. Built from the per-request statuses rather than the per-row
+ * results, so a row that succeeded on some ranges only keeps the ranges it
+ * still needs.
+ */
+export function collectFailedWorklogs(
+  statuses: RequestStatus[],
+  entriesById: ReadonlyMap<string, WorkEntry>
+): FailedWorklog[] {
+  const byEntry = new Map<string, FailedWorklog>();
+  for (const status of statuses) {
+    if (!isUnlogged(status)) continue;
+    const entry = entriesById.get(status.entryId);
+    if (!entry) continue;
+
+    let failed = byEntry.get(status.entryId);
+    if (!failed) {
+      failed = { entry: { ...entry, id: generateEntryId() }, ranges: [] };
+      byEntry.set(status.entryId, failed);
+    }
+    failed.ranges.push(statusRange(status));
+    const reason =
+      status.status === 'failed' ? status.error || 'Failed' : 'Not sent';
+    const label = `${status.rangeLabel}: ${reason}`;
+    failed.error = failed.error ? `${failed.error}; ${label}` : label;
+  }
+  return [...byEntry.values()];
+}
+
+/**
+ * Identifies the work a row logs. Rows with the same key are the same
+ * worklog: a retry list keeps them as one item, and logging one covers the
+ * other. Two rows on one ticket that differ in any field are separate work.
+ */
+function workKey(entry: WorkEntry): string {
+  return JSON.stringify([
+    entry.issueKey.trim(),
+    entry.typeOfWork,
+    entry.description.trim(),
+    entry.hours,
+  ]);
+}
+
+function sortApiDates(dates: Iterable<string>): string[] {
+  return [...new Set(dates)].sort(
+    (a, b) =>
+      (parseApiDate(a)?.getTime() ?? 0) - (parseApiDate(b)?.getTime() ?? 0)
+  );
+}
+
+/**
+ * Fold a finished run into the retry list: drop every date the run logged for
+ * the same work (whichever list item it came from, so a normal submit clears
+ * it too), then add what the run left unlogged, merging items that describe
+ * the same work. Another row on the same ticket and date — a 2h Review next
+ * to a failed 6h Create — is different work and clears nothing.
+ */
+export function reconcileFailedWorklogs(
+  previous: FailedWorklog[],
+  statuses: RequestStatus[],
+  entriesById: ReadonlyMap<string, WorkEntry>
+): FailedWorklog[] {
+  const logged = new Set<string>();
+  for (const status of statuses) {
+    const entry = entriesById.get(status.entryId);
+    if (status.status !== 'success' || !entry) continue;
+    const key = workKey(entry);
+    status.dates.forEach(d => logged.add(`${key}|${d}`));
+  }
+
+  const merged = new Map<
+    string,
+    { entry: WorkEntry; dates: string[]; error?: string }
+  >();
+  const add = (item: FailedWorklog) => {
+    const key = workKey(item.entry);
+    const dates = item.ranges
+      .flatMap(r => r.dates)
+      .filter(d => !logged.has(`${key}|${d}`));
+    if (dates.length === 0) return;
+    const existing = merged.get(key);
+    if (existing) {
+      existing.dates.push(...dates);
+      existing.error = item.error ?? existing.error;
+    } else {
+      merged.set(key, { entry: item.entry, dates, error: item.error });
+    }
+  };
+  previous.forEach(add);
+  collectFailedWorklogs(statuses, entriesById).forEach(add);
+
+  return [...merged.values()].map(({ entry, dates, error }) => ({
+    entry,
+    ranges: groupDatesIntoRanges(sortApiDates(dates)),
+    error,
+  }));
+}
+
+/** The rows with a ticket in a project's active worklog profile (for Autolog prefill). */
+export function loadSavedEntries(projectId: string): WorkEntry[] {
+  const store = loadWorklogProfiles(projectId);
+  const active = store.profiles.find(p => p.id === store.activeId);
+  const keyed = active?.entries.filter(e => e.issueKey.trim()) ?? [];
+  return keyed.length > 0 ? keyed : [createDefaultEntry()];
 }
 
 /**

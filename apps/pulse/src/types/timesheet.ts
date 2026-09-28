@@ -31,6 +31,28 @@ export interface WorkEntry {
   hours: number;
 }
 
+/** A named, reusable set of work entries saved per project. */
+export interface WorklogProfile {
+  id: string;
+  name: string;
+  entries: WorkEntry[];
+}
+
+export interface WorklogProfileStore {
+  activeId: string;
+  profiles: WorklogProfile[];
+}
+
+/**
+ * A row whose worklogs were not confirmed for some date ranges (failed,
+ * skipped or cancelled), kept per project so they can be retried exactly.
+ */
+export interface FailedWorklog {
+  entry: WorkEntry;
+  ranges: DateRange[];
+  error?: string;
+}
+
 export interface WorklogPayload {
   username: string;
   issueKey: string;
@@ -111,6 +133,18 @@ export interface RequestStatus {
   status: RequestStatusState;
   error?: string;
   errorStatus?: number;
+}
+
+/** One row of a submission run and the date ranges to log it for. */
+export interface WorkItem {
+  entry: WorkEntry;
+  ranges: DateRange[];
+}
+
+/** What a run ended with; `statuses` covers every row × range of the run. */
+export interface RunOutcome {
+  results: LogWorkResult[];
+  statuses: RequestStatus[];
 }
 
 export interface JiraProject {

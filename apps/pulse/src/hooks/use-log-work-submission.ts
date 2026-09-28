@@ -8,13 +8,17 @@ import {
   delay,
   formatRangeLabel,
   getCurrentTime,
+  isUnlogged,
+  statusRange,
 } from '@/lib/timesheet';
 import type {
   DateRange,
   LogWorkResult,
   RequestStatus,
+  RunOutcome,
   TimesheetSettings,
   WorkEntry,
+  WorkItem,
 } from '@/types/timesheet';
 
 interface SubmitParams {
@@ -22,8 +26,43 @@ interface SubmitParams {
   ranges: DateRange[];
 }
 
-interface RetryParams {
-  failedResults: LogWorkResult[];
+function statusOf(
+  statuses: RequestStatus[],
+  entryId: string,
+  range: DateRange
+): RequestStatus | undefined {
+  const label = formatRangeLabel(range);
+  return statuses.find(s => s.entryId === entryId && s.rangeLabel === label);
+}
+
+/**
+ * Per-row results derived from the per-range statuses, so a cancel or an
+ * early stop can never drop a row or report unsent ranges as logged. Uses the
+ * same `isUnlogged` test as the retry list, so the two always agree.
+ */
+function deriveResults(
+  items: WorkItem[],
+  statuses: RequestStatus[]
+): LogWorkResult[] {
+  return items.map(({ entry }) => {
+    const missing = statuses.filter(
+      s => s.entryId === entry.id && isUnlogged(s)
+    );
+    if (missing.length === 0) return { entry, success: true };
+
+    const failures = missing.filter(s => s.status === 'failed');
+    const error = failures.length
+      ? failures
+          .map(s => `${s.rangeLabel}: ${s.error || 'Unknown error'}`)
+          .join('; ')
+      : 'Cancelled';
+    return {
+      entry,
+      success: false,
+      error,
+      failedRanges: missing.map(statusRange),
+    };
+  });
 }
 
 export function useLogWorkSubmission(settings: TimesheetSettings) {
@@ -33,24 +72,33 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
   const [results, setResults] = useState<LogWorkResult[]>([]);
   const [requestStatuses, setRequestStatuses] = useState<RequestStatus[]>([]);
   const abortRef = useRef(false);
+  // Mirrors of the current run, readable synchronously when it resolves.
+  const statusesRef = useRef<RequestStatus[]>([]);
+  const itemsRef = useRef<WorkItem[]>([]);
+
+  const setStatuses = useCallback((next: RequestStatus[]) => {
+    statusesRef.current = next;
+    setRequestStatuses(next);
+  }, []);
 
   const updateRequestStatus = useCallback(
     (
       entryId: string,
-      rangeLabel: string,
+      range: DateRange,
       status: RequestStatus['status'],
       error?: string,
       errorStatus?: number
     ) => {
-      setRequestStatuses(prev =>
-        prev.map(rs =>
-          rs.entryId === entryId && rs.rangeLabel === rangeLabel
+      const label = formatRangeLabel(range);
+      setStatuses(
+        statusesRef.current.map(rs =>
+          rs.entryId === entryId && rs.rangeLabel === label
             ? { ...rs, status, error, errorStatus }
             : rs
         )
       );
     },
-    []
+    [setStatuses]
   );
 
   const cancelSubmission = useCallback(() => {
@@ -112,273 +160,124 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
     [settings.jiraInstance, settings.username]
   );
 
-  const submitEntries = useCallback(
-    async ({ entries, ranges }: SubmitParams): Promise<LogWorkResult[]> => {
-      const validEntries = entries.filter(e => e.issueKey.trim());
+  /**
+   * Send `queue` one request per row × range, pausing between requests.
+   * Whatever a cancel leaves unsent is marked skipped.
+   */
+  const runQueue = useCallback(
+    async (queue: WorkItem[]): Promise<RunOutcome> => {
       const time = getCurrentTime();
       const headers = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${settings.token}`,
       };
 
-      // Pre-build all request statuses (one per entry × range)
-      const initialStatuses: RequestStatus[] = validEntries.flatMap(entry =>
-        ranges.map(range => ({
-          entryId: entry.id,
-          issueKey: entry.issueKey.trim(),
-          rangeLabel: formatRangeLabel(range),
-          dates: range.dates,
-          status: 'pending' as const,
-        }))
-      );
-
-      setRequestStatuses(initialStatuses);
       setIsSubmitting(true);
       setIsCancelled(false);
       setHasAuthError(false);
-      setResults([]);
       abortRef.current = false;
 
-      const logResults: LogWorkResult[] = [];
+      let sent = 0;
+      outer: for (const { entry, ranges } of queue) {
+        for (const range of ranges) {
+          if (sent > 0) await delay(REQUEST_DELAY_MS);
+          if (abortRef.current) break outer;
+          sent++;
 
-      for (const entry of validEntries) {
-        const failedRanges: DateRange[] = [];
-        const entryErrors: string[] = [];
-        let successCount = 0;
-
-        for (let i = 0; i < ranges.length; i++) {
-          const range = ranges[i];
-          const label = formatRangeLabel(range);
-
-          if (abortRef.current) {
-            // Mark remaining as skipped
-            updateRequestStatus(entry.id, label, 'skipped');
-            for (let j = i + 1; j < ranges.length; j++) {
-              updateRequestStatus(
-                entry.id,
-                formatRangeLabel(ranges[j]),
-                'skipped'
-              );
-            }
-            // Also mark remaining entries as skipped
-            const entryIdx = validEntries.indexOf(entry);
-            for (let k = entryIdx + 1; k < validEntries.length; k++) {
-              for (const r of ranges) {
-                updateRequestStatus(
-                  validEntries[k].id,
-                  formatRangeLabel(r),
-                  'skipped'
-                );
-              }
-            }
-            if (successCount > 0 || failedRanges.length > 0) {
-              logResults.push({
-                entry,
-                success: failedRanges.length === 0 && successCount > 0,
-                error:
-                  failedRanges.length > 0 ? entryErrors.join('; ') : undefined,
-                failedRanges:
-                  failedRanges.length > 0 ? failedRanges : undefined,
-              });
-            }
-            for (let k = entryIdx + 1; k < validEntries.length; k++) {
-              logResults.push({
-                entry: validEntries[k],
-                success: false,
-                error: 'Cancelled',
-              });
-            }
-            break;
-          }
-
-          updateRequestStatus(entry.id, label, 'in-progress');
-
+          updateRequestStatus(entry.id, range, 'in-progress');
           const result = await submitRange(entry, range, headers, time);
-
           if (result.success) {
-            updateRequestStatus(entry.id, label, 'success');
-            successCount++;
+            updateRequestStatus(entry.id, range, 'success');
           } else {
             updateRequestStatus(
               entry.id,
-              label,
+              range,
               'failed',
               result.error,
               result.errorStatus
             );
             if (result.isAuthError) setHasAuthError(true);
-            failedRanges.push(range);
-            entryErrors.push(`${label}: ${result.error || 'Unknown error'}`);
           }
-
-          if (i < ranges.length - 1) {
-            await delay(REQUEST_DELAY_MS);
-          }
-        }
-
-        if (abortRef.current) break;
-
-        if (entryErrors.length === 0) {
-          logResults.push({ entry, success: true });
-        } else if (successCount > 0) {
-          logResults.push({
-            entry,
-            success: false,
-            error: `${successCount}/${ranges.length} ranges succeeded. Failures: ${entryErrors.join('; ')}`,
-            failedRanges,
-          });
-        } else {
-          logResults.push({
-            entry,
-            success: false,
-            error: entryErrors.join('; '),
-            failedRanges,
-          });
-        }
-
-        if (
-          !abortRef.current &&
-          validEntries.indexOf(entry) < validEntries.length - 1
-        ) {
-          await delay(REQUEST_DELAY_MS);
         }
       }
 
-      setResults(logResults);
-      setIsSubmitting(false);
-
-      return logResults;
-    },
-    [settings.token, submitRange, updateRequestStatus]
-  );
-
-  const retryFailed = useCallback(
-    async ({ failedResults }: RetryParams): Promise<LogWorkResult[]> => {
-      const time = getCurrentTime();
-      const headers = {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${settings.token}`,
-      };
-
-      // Reset failed statuses to pending
-      setRequestStatuses(prev =>
-        prev.map(rs =>
-          rs.status === 'failed'
-            ? {
-                ...rs,
-                status: 'pending',
-                error: undefined,
-                errorStatus: undefined,
-              }
-            : rs
+      setStatuses(
+        statusesRef.current.map(s =>
+          s.status === 'pending' ? { ...s, status: 'skipped' } : s
         )
       );
-
-      setIsSubmitting(true);
-      setIsCancelled(false);
-      setHasAuthError(false);
-      abortRef.current = false;
-
-      const logResults: LogWorkResult[] = [];
-
-      for (let i = 0; i < failedResults.length; i++) {
-        const { entry, failedRanges } = failedResults[i];
-
-        const ranges =
-          failedRanges && failedRanges.length > 0 ? failedRanges : [];
-
-        if (ranges.length === 0) {
-          logResults.push({
-            entry,
-            success: false,
-            error: 'No ranges to retry',
-          });
-          continue;
-        }
-
-        const entryFailedRanges: DateRange[] = [];
-        const entryErrors: string[] = [];
-        let successCount = 0;
-
-        for (let j = 0; j < ranges.length; j++) {
-          const range = ranges[j];
-          const label = formatRangeLabel(range);
-
-          if (abortRef.current) {
-            updateRequestStatus(entry.id, label, 'skipped');
-            for (let k = j + 1; k < ranges.length; k++) {
-              updateRequestStatus(
-                entry.id,
-                formatRangeLabel(ranges[k]),
-                'skipped'
-              );
-            }
-            break;
-          }
-
-          updateRequestStatus(entry.id, label, 'in-progress');
-
-          const result = await submitRange(entry, range, headers, time);
-
-          if (result.success) {
-            updateRequestStatus(entry.id, label, 'success');
-            successCount++;
-          } else {
-            updateRequestStatus(
-              entry.id,
-              label,
-              'failed',
-              result.error,
-              result.errorStatus
-            );
-            if (result.isAuthError) setHasAuthError(true);
-            entryFailedRanges.push(range);
-            entryErrors.push(`${label}: ${result.error || 'Unknown error'}`);
-          }
-
-          if (j < ranges.length - 1) {
-            await delay(REQUEST_DELAY_MS);
-          }
-        }
-
-        if (entryErrors.length === 0) {
-          logResults.push({ entry, success: true });
-        } else if (successCount > 0) {
-          logResults.push({
-            entry,
-            success: false,
-            error: `${successCount}/${ranges.length} succeeded. Failures: ${entryErrors.join('; ')}`,
-            failedRanges: entryFailedRanges,
-          });
-        } else {
-          logResults.push({
-            entry,
-            success: false,
-            error: entryErrors.join('; '),
-            failedRanges: entryFailedRanges,
-          });
-        }
-
-        if (abortRef.current) break;
-
-        if (i < failedResults.length - 1) {
-          await delay(REQUEST_DELAY_MS);
-        }
-      }
-
-      setResults(logResults);
+      const outcome = {
+        results: deriveResults(itemsRef.current, statusesRef.current),
+        statuses: statusesRef.current,
+      };
+      setResults(outcome.results);
       setIsSubmitting(false);
-
-      return logResults;
+      return outcome;
     },
-    [settings.token, submitRange, updateRequestStatus]
+    [settings.token, submitRange, updateRequestStatus, setStatuses]
   );
 
+  /** Log each row for its own date ranges, one request per row × range. */
+  const submitWork = useCallback(
+    (items: WorkItem[]): Promise<RunOutcome> => {
+      itemsRef.current = items;
+      setResults([]);
+      setStatuses(
+        items.flatMap(({ entry, ranges }) =>
+          ranges.map(range => ({
+            entryId: entry.id,
+            issueKey: entry.issueKey.trim(),
+            rangeLabel: formatRangeLabel(range),
+            dates: range.dates,
+            status: 'pending' as const,
+          }))
+        )
+      );
+      return runQueue(items);
+    },
+    [runQueue, setStatuses]
+  );
+
+  const submitEntries = useCallback(
+    ({ entries, ranges }: SubmitParams): Promise<RunOutcome> =>
+      submitWork(
+        entries.filter(e => e.issueKey.trim()).map(entry => ({ entry, ranges }))
+      ),
+    [submitWork]
+  );
+
+  /** Re-send only the ranges of the current run that failed. */
+  const retryFailed = useCallback((): Promise<RunOutcome> => {
+    const queue = itemsRef.current
+      .map(({ entry, ranges }) => ({
+        entry,
+        ranges: ranges.filter(
+          r => statusOf(statusesRef.current, entry.id, r)?.status === 'failed'
+        ),
+      }))
+      .filter(item => item.ranges.length > 0);
+
+    setStatuses(
+      statusesRef.current.map(s =>
+        s.status === 'failed'
+          ? {
+              ...s,
+              status: 'pending',
+              error: undefined,
+              errorStatus: undefined,
+            }
+          : s
+      )
+    );
+    return runQueue(queue);
+  }, [runQueue, setStatuses]);
+
   const resetResults = useCallback(() => {
+    itemsRef.current = [];
     setResults([]);
-    setRequestStatuses([]);
+    setStatuses([]);
     setIsCancelled(false);
-  }, []);
+  }, [setStatuses]);
 
   return {
     isSubmitting,
@@ -387,6 +286,7 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
     results,
     requestStatuses,
     submitEntries,
+    submitWork,
     retryFailed,
     cancelSubmission,
     resetResults,
