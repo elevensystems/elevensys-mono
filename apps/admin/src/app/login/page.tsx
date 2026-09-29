@@ -1,39 +1,29 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import { useEffect } from 'react';
+import { SignInScreen } from '@workspace/ui/components/sign-in-screen';
+import { Shield } from 'lucide-react';
 
-import { useSearchParams } from 'next/navigation';
+import { appSidebarData } from '@/lib/app-sidebar-config';
+import { getUserFromSession, hasStaffAccess } from '@/lib/auth';
 
-export default function LoginPage() {
-  const searchParams = useSearchParams();
-  const error = searchParams.get('error');
+interface LoginPageProps {
+  searchParams: Promise<{ error?: string }>;
+}
 
-  useEffect(() => {
-    if (error) return;
-    window.location.replace('/api/auth/login');
-  }, [error]);
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const [{ error }, user] = await Promise.all([
+    searchParams,
+    getUserFromSession(),
+  ]);
 
-  if (error === 'forbidden') {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6">
-        <h1 className="text-2xl font-semibold">Access denied</h1>
-        <p className="max-w-md text-center text-sm text-muted-foreground">
-          Your account isn&apos;t authorized for the admin console. Contact an
-          administrator if you believe this is a mistake.
-        </p>
-        <a
-          href="/api/auth/login"
-          className="text-sm underline underline-offset-4"
-        >
-          Sign in with a different account
-        </a>
-      </div>
-    );
-  }
+  if (hasStaffAccess(user)) redirect('/');
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <p className="text-sm text-muted-foreground">Redirecting to sign in…</p>
-    </div>
+    <SignInScreen
+      appName={appSidebarData.appName}
+      icon={<Shield />}
+      forbidden={error === 'forbidden'}
+      forbiddenMessage="Your account isn't authorized for the admin console. Contact an administrator if you believe this is a mistake."
+    />
   );
 }
