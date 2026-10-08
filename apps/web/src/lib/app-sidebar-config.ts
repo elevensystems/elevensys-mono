@@ -1,4 +1,5 @@
 import { TOOLS, type ToolPath } from '@workspace/ui/lib/tools';
+import type { AuthUser } from '@workspace/ui/lib/utils';
 import {
   Braces,
   CaseSensitive,
@@ -16,7 +17,6 @@ import {
 } from 'lucide-react';
 
 import type { ToolConfig } from '@/lib/tools-config';
-import type { AuthUser } from '@/types/auth';
 
 /**
  * Presentation for each tool. Names and URLs come from the shared `TOOLS`

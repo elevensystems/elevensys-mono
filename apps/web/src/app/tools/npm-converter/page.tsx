@@ -16,6 +16,7 @@ import { Check, Copy, Package } from 'lucide-react';
 import MainLayout from '@/components/layouts/main-layout';
 import { ToolPageHeader } from '@/components/layouts/tool-page-header';
 import { useActionFeedback } from '@/hooks/use-action-feedback';
+import { copyToClipboard } from '@/lib/clipboard';
 
 /**
  * Converts Lerna publish output to npm install command
@@ -101,11 +102,9 @@ export default function NpmConverterPage() {
   const handleCopy = useCallback(async () => {
     if (!result?.command) return;
 
-    try {
-      await navigator.clipboard.writeText(result.command);
+    if (await copyToClipboard(result.command)) {
       trigger('copy');
-    } catch (err) {
-      console.error('Failed to copy to clipboard:', err);
+    } else {
       setError('Failed to copy to clipboard');
       trigger('copy', { error: true });
     }

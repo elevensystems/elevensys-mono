@@ -2,6 +2,8 @@
 
 import { useCallback, useRef, useState } from 'react';
 
+import { readErrorMessage } from '@workspace/ui/lib/http';
+
 import { isAuthError } from '@/lib/fetch-utils';
 import {
   REQUEST_DELAY_MS,
@@ -140,10 +142,9 @@ export function useLogWorkSubmission(settings: TimesheetSettings) {
         });
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => null);
           return {
             success: false,
-            error: errorData?.error || `HTTP ${response.status}`,
+            error: await readErrorMessage(response),
             errorStatus: response.status,
             isAuthError: isAuthError(response.status),
           };

@@ -1,9 +1,10 @@
 import { redirect } from 'next/navigation';
 
+import { getAccessToken } from '@workspace/ui/lib/auth-server';
+
 import MainLayout from '@/components/layouts/main-layout';
 import { PageShell } from '@/components/layouts/page-shell';
 import { apiFetch } from '@/lib/api-fetch';
-import { getAccessToken } from '@/lib/auth';
 import type { AutologConfig } from '@/types/autolog';
 
 import { AutologTable } from './_components/autolog-table';

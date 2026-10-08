@@ -14,6 +14,7 @@ import { useTheme } from 'next-themes';
 import { JsonToolToolbar } from '@/components/layouts/json-tool-toolbar';
 import MainLayout from '@/components/layouts/main-layout';
 import { useActionFeedback } from '@/hooks/use-action-feedback';
+import { copyToClipboard } from '@/lib/clipboard';
 import { parseJsonSafely } from '@/lib/json-utils';
 import {
   BASE_EDITOR_OPTIONS,
@@ -166,12 +167,8 @@ export default function JsonLensPage() {
   const handleCopy = useCallback(async () => {
     if (!jsonText) return;
 
-    try {
-      await navigator.clipboard.writeText(jsonText);
-      trigger('copy');
-    } catch {
-      trigger('copy', { error: true });
-    }
+    if (await copyToClipboard(jsonText)) trigger('copy');
+    else trigger('copy', { error: true });
   }, [jsonText, trigger]);
 
   const optionsContent = (

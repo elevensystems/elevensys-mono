@@ -2,6 +2,8 @@
 
 import { useCallback, useState } from 'react';
 
+import { readErrorMessage } from '@workspace/ui/lib/http';
+
 export interface LogEntry {
   timestamp: string;
   level: string;
@@ -42,8 +44,9 @@ export function useSystemLogs() {
         body: JSON.stringify(params),
       });
       if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        throw new Error(body?.error ?? `Request failed: HTTP ${res.status}`);
+        throw new Error(
+          await readErrorMessage(res, `Request failed: HTTP ${res.status}`)
+        );
       }
       const data = (await res.json()) as { items: LogEntry[] };
       setItems(data.items ?? []);

@@ -1,49 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { env } from '@/env';
-import { AUTH_COOKIES, decodeJwt, isTokenExpired } from '@/lib/auth';
-import { authCookie, deletedCookie } from '@/lib/auth-cookies';
+import {
+  AUTH_COOKIES,
+  REFRESH_TOKEN_MAX_AGE,
+  decodeJwt,
+  isTokenExpired,
+} from '@workspace/ui/lib/auth';
+import { requestCognitoTokens } from '@workspace/ui/lib/auth-server';
+
+import { authCookie, cognito, deletedCookie } from '@/lib/auth';
 
 const AUTH_ROUTES = ['/login', '/signup', '/forgot-password'];
 
 function isAuthRoute(pathname: string): boolean {
   return AUTH_ROUTES.includes(pathname);
-}
-
-async function refreshTokens(refreshToken: string): Promise<{
-  id_token: string;
-  refresh_token?: string;
-  expires_in: number;
-} | null> {
-  const cognitoDomain = env.COGNITO_DOMAIN;
-  const clientId = env.COGNITO_CLIENT_ID;
-
-  try {
-    const params = new URLSearchParams({
-      grant_type: 'refresh_token',
-      client_id: clientId,
-      refresh_token: refreshToken,
-    });
-
-    const res = await fetch(`${cognitoDomain}/oauth2/token`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: params.toString(),
-    });
-
-    if (!res.ok) return null;
-
-    const data = await res.json();
-    if (!data.id_token) return null;
-
-    return {
-      id_token: data.id_token,
-      refresh_token: data.refresh_token,
-      expires_in: data.expires_in ?? 3600,
-    };
-  } catch {
-    return null;
-  }
 }
 
 export async function proxy(request: NextRequest) {
@@ -98,9 +68,12 @@ async function handleTokenRefresh(
   refreshToken: string,
   pathname: string
 ): Promise<NextResponse> {
-  const tokens = await refreshTokens(refreshToken);
+  const tokens = await requestCognitoTokens(cognito, {
+    grant_type: 'refresh_token',
+    refresh_token: refreshToken,
+  });
 
-  if (tokens) {
+  if (tokens?.id_token) {
     const newPayload = decodeJwt(tokens.id_token);
     if (newPayload && !isTokenExpired(newPayload)) {
       const response = isAuthRoute(pathname)
@@ -110,14 +83,14 @@ async function handleTokenRefresh(
       response.cookies.set(
         AUTH_COOKIES.idToken,
         tokens.id_token,
-        authCookie(tokens.expires_in)
+        authCookie(tokens.expires_in ?? 3600)
       );
 
       if (tokens.refresh_token) {
         response.cookies.set(
           AUTH_COOKIES.refreshToken,
           tokens.refresh_token,
-          authCookie(60 * 60 * 24 * 30)
+          authCookie(REFRESH_TOKEN_MAX_AGE)
         );
       }
 

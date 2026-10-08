@@ -2,17 +2,8 @@
 
 import { ReactNode } from 'react';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@workspace/ui/components/breadcrumb';
+import { useAuth } from '@workspace/ui/components/auth-provider';
+import { PathBreadcrumb } from '@workspace/ui/components/path-breadcrumb';
 import { Separator } from '@workspace/ui/components/separator';
 import {
   SidebarInset,
@@ -23,7 +14,6 @@ import { SidebarAutoCollapse } from '@workspace/ui/components/sidebar-auto-colla
 import { SiteBanner } from '@workspace/ui/components/site-banner';
 
 import { AppSidebar } from '@/components/layouts/app-sidebar';
-import { useAuth } from '@/contexts/auth-context';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -45,19 +35,7 @@ export default function MainLayout({
   className = '',
   banner,
 }: MainLayoutProps) {
-  const pathname = usePathname();
   const { user } = useAuth();
-
-  // Generate breadcrumb items from pathname
-  const pathSegments = pathname.split('/').filter(Boolean);
-
-  // Helper function to format segment text
-  const formatSegment = (segment: string) => {
-    return segment
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -71,41 +49,7 @@ export default function MainLayout({
               orientation="vertical"
               className="mr-2 data-[orientation=vertical]:h-4"
             />
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink asChild>
-                    <Link href="/">Home</Link>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                {pathSegments.length > 0 && (
-                  <BreadcrumbSeparator className="hidden md:block" />
-                )}
-                {pathSegments.map((segment, index) => {
-                  const isLast = index === pathSegments.length - 1;
-                  const href = '/' + pathSegments.slice(0, index + 1).join('/');
-
-                  return (
-                    <div key={href} className="contents">
-                      <BreadcrumbItem>
-                        {isLast ? (
-                          <BreadcrumbPage>
-                            {formatSegment(segment)}
-                          </BreadcrumbPage>
-                        ) : (
-                          <BreadcrumbLink asChild className="hidden md:block">
-                            <Link href={href}>{formatSegment(segment)}</Link>
-                          </BreadcrumbLink>
-                        )}
-                      </BreadcrumbItem>
-                      {!isLast && (
-                        <BreadcrumbSeparator className="hidden md:block" />
-                      )}
-                    </div>
-                  );
-                })}
-              </BreadcrumbList>
-            </Breadcrumb>
+            <PathBreadcrumb />
           </div>
         </header>
         {banner === undefined ? <SiteBanner /> : banner}

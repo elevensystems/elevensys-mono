@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { JIRA_URLS } from '@/lib/api-urls';
-import { sanitizeErrorText } from '@/lib/fetch-utils';
-import { missingJiraInstanceResponse } from '@/lib/jira-proxy';
+import {
+  internalErrorResponse,
+  missingJiraInstanceResponse,
+  upstreamErrorResponse,
+} from '@/lib/jira-proxy';
 
 interface IssuesSearchRequest {
   jiraInstance: string;
@@ -55,11 +58,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (!response.ok) {
-      const errorText = await response.text();
-      return NextResponse.json(
-        { error: sanitizeErrorText(errorText, response.status) },
-        { status: response.status }
-      );
+      return upstreamErrorResponse(response);
     }
 
     const result = await response.json();
@@ -83,11 +82,6 @@ export async function POST(request: NextRequest) {
       data: { total: 0, issues: [] },
     });
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Internal server error',
-      },
-      { status: 500 }
-    );
+    return internalErrorResponse(error);
   }
 }

@@ -30,6 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table';
+import { readErrorMessage } from '@workspace/ui/lib/http';
 import { cn } from '@workspace/ui/lib/utils';
 import {
   AlertTriangle,
@@ -180,10 +181,7 @@ export function AutologTable({ configs, loadError }: AutologTableProps) {
         { method: 'DELETE' }
       );
       if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as {
-          error?: string;
-        } | null;
-        throw new Error(body?.error || `HTTP ${res.status}`);
+        throw new Error(await readErrorMessage(res));
       }
       toast.success(`Deleted the ${projectName} config for ${username}`);
       setPendingDelete(null);

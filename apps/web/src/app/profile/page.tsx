@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 
+import { useAuth } from '@workspace/ui/components/auth-provider';
 import {
   Avatar,
   AvatarFallback,
@@ -19,7 +20,6 @@ import { Separator } from '@workspace/ui/components/separator';
 import { BadgeCheck, KeyRound, Mail, Users } from 'lucide-react';
 
 import MainLayout from '@/components/layouts/main-layout';
-import { useAuth } from '@/contexts/auth-context';
 
 function getUserInitials(name: string) {
   return name

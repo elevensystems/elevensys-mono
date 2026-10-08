@@ -123,10 +123,8 @@ elevensys-mono/
 │   │   │   ├── components/
 │   │   │   │   ├── layouts/        # Layout components (main-layout, app-sidebar, nav-*, etc.)
 │   │   │   │   ├── features/       # Feature-specific components (auth)
-│   │   │   │   ├── header.tsx
-│   │   │   │   └── theme-provider.tsx
+│   │   │   │   └── header.tsx
 │   │   │   ├── contexts/
-│   │   │   │   ├── auth-context.tsx    # Auth state via React Context
 │   │   │   │   └── visible-tools-context.tsx  # Which tools the sidebar shows
 │   │   │   ├── hooks/              # Custom hooks (use-action-feedback, use-url-history)
 │   │   │   ├── lib/                # Utilities, configs, schemas
@@ -145,8 +143,6 @@ elevensys-mono/
 │   │   │   ├── app/
 │   │   │   │   ├── layout.tsx      # Root layout (Ubuntu font, ThemeProvider)
 │   │   │   │   └── page.tsx        # Admin dashboard page
-│   │   │   ├── components/
-│   │   │   │   └── theme-provider.tsx
 │   │   │   └── styles/
 │   │   │       └── globals.css
 │   │   ├── next.config.ts
@@ -318,6 +314,8 @@ import type { AuthUser } from '@/types/auth';
 
 // Always use 'use client' directive for client components
 
+// Always use 'use client' directive for client components
+
 // Define interfaces above component
 interface MyComponentProps {
   title: string;
@@ -450,7 +448,8 @@ moved to the app root: `/`, `/timesheet/logwork`, `/timesheet/my-worklogs`,
 
 - **Provider**: AWS Cognito with OAuth2 + PKCE
 - **Token Storage**: HttpOnly cookies (`cognito_id_token`, `cognito_refresh_token`)
-- **Session**: Server-side JWT decoding in `src/lib/auth.ts`
+- **Session**: Server-side JWT decoding in `src/lib/auth.ts`, built on the shared Cognito helpers
+  (see **Shared Cognito auth** below)
 - **Auth pages**: `/login`, `/signup`, `/forgot-password` (self-contained pages)
 
 ### User Roles
@@ -467,9 +466,8 @@ type UserRole = 'pro' | 'free';
 ```tsx
 'use client';
 
+import { useAuth } from '@workspace/ui/components/auth-provider';
 import { hasRole } from '@workspace/ui/lib/utils';
-
-import { useAuth } from '@/contexts/auth-context';
 
 function MyComponent() {
   const { user } = useAuth();
@@ -480,6 +478,22 @@ function MyComponent() {
   }
 }
 ```
+
+### Shared Cognito auth (web, admin, insight)
+
+The three Cognito apps share one implementation; each app keeps only its env binding and its access
+rule in `src/lib/auth.ts` (`cognito` config, `authCookie`/`deletedCookie`, `getUserFromSession`, and
+`hasStaffAccess`/`hasInsightAccess` in admin/insight).
+
+| File                                           | Exports                                                        |
+| ---------------------------------------------- | -------------------------------------------------------------- |
+| `packages/ui/src/lib/auth.ts`                  | `AUTH_COOKIES`, `JwtPayload`, `decodeJwt()`,                   |
+|                                                | `isTokenExpired()`, `userFromPayload()`, `createAuthCookies()` |
+| `packages/ui/src/lib/auth-server.ts`           | `redirectToCognito()` (PKCE), `requestCognitoTokens()`,        |
+|                                                | `cognitoLogoutUrl()`, `getSession()`, `getAccessToken()`       |
+| `packages/ui/src/components/auth-provider.tsx` | `AuthProvider`, `useAuth()`                                    |
+
+`auth.ts` is pure (safe in `proxy.ts` and tests); `auth-server.ts` reads cookies via `next/headers`.
 
 ### Pro-Only Feature Gating
 

@@ -15,6 +15,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@workspace/ui/components/sidebar';
+import type { AuthUser } from '@workspace/ui/lib/utils';
 
 import { FeedbackModal } from '@/components/layouts/feedback-modal';
 import { NavSecondary } from '@/components/layouts/nav-secondary';
@@ -24,7 +25,6 @@ import { SupportModal } from '@/components/layouts/support-modal';
 import { useVisibleTools } from '@/contexts/visible-tools-context';
 import { appSidebarData } from '@/lib/app-sidebar-config';
 import { APP_NAME } from '@/lib/constants';
-import type { AuthUser } from '@/types/auth';
 
 const hasData = <T,>(data: T[] | undefined | null): boolean => {
   return Boolean(data && data.length > 0);

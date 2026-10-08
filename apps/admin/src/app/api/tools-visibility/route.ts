@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { z } from 'zod';
 
+import { errorResponse } from '@/lib/api-fetch';
 import { getUserFromSession } from '@/lib/auth';
-import { GlobalConfigError } from '@/lib/global-config-client';
 import {
   readToolsVisibilitySnapshot,
   writeToolsVisibility,
@@ -14,17 +14,6 @@ const requestSchema = z.object({
   visible: z.array(z.string().min(1)).nullable(),
 });
 
-function handleError(error: unknown) {
-  if (error instanceof GlobalConfigError) {
-    return NextResponse.json(
-      { error: error.message },
-      { status: error.status }
-    );
-  }
-  console.error('tools-visibility error:', error);
-  return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-}
-
 export async function GET() {
   const user = await getUserFromSession();
   if (!user) {
@@ -34,7 +23,7 @@ export async function GET() {
   try {
     return NextResponse.json(await readToolsVisibilitySnapshot());
   } catch (error) {
-    return handleError(error);
+    return errorResponse(error, 'tools-visibility error');
   }
 }
 
@@ -60,6 +49,6 @@ export async function POST(request: NextRequest) {
       })
     );
   } catch (error) {
-    return handleError(error);
+    return errorResponse(error, 'tools-visibility error');
   }
 }

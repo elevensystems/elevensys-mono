@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { OPENAI_URL } from '@/lib/api-urls';
 import { validateModel } from '@/lib/constants';
-import { fetchWithTimeout } from '@/lib/fetch-utils';
+import { getOutputText, postToOpenAI } from '@/lib/fetch-utils';
 import type { ChatMessage, MoodRequest } from '@/types/beatly';
 
 export async function POST(request: NextRequest) {
@@ -10,7 +9,6 @@ export async function POST(request: NextRequest) {
     const body: MoodRequest = await request.json();
     const { mood, language, genres, excludedSongs } = body;
 
-    const lambdaBase = OPENAI_URL;
     const model = validateModel(body.model);
 
     if (!mood) {
@@ -59,18 +57,7 @@ Return only pure JSON, no markdown or explanations.${excludeStr}`;
     ];
 
     try {
-      const response = await fetchWithTimeout(lambdaBase, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model,
-          input: messages,
-          temperature: 1,
-          store: true,
-        }),
-      });
+      const response = await postToOpenAI(model, messages);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -86,8 +73,7 @@ Return only pure JSON, no markdown or explanations.${excludeStr}`;
       }
 
       const data = await response.json();
-      const content =
-        data?.output_text?.trim() || data?.data?.output_text?.trim() || '';
+      const content = getOutputText(data).trim();
 
       if (!content) {
         console.error('Empty response from OpenAI');

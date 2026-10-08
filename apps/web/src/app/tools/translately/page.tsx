@@ -7,6 +7,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from '@workspace/ui/components/alert';
+import { useAuth } from '@workspace/ui/components/auth-provider';
 import { Badge } from '@workspace/ui/components/badge';
 import { Button } from '@workspace/ui/components/button';
 import {
@@ -40,8 +41,8 @@ import {
 import GuestLoginAlert from '@/components/layouts/guest-login-alert';
 import MainLayout from '@/components/layouts/main-layout';
 import { ToolPageHeader } from '@/components/layouts/tool-page-header';
-import { useAuth } from '@/contexts/auth-context';
 import { useActionFeedback } from '@/hooks/use-action-feedback';
+import { copyToClipboard } from '@/lib/clipboard';
 import {
   AI_MODELS,
   MAX_TRANSLATE_INPUT_LENGTH,
@@ -202,11 +203,9 @@ export default function TranslatelyPage() {
   const handleCopy = useCallback(async () => {
     if (!outputText) return;
 
-    try {
-      await navigator.clipboard.writeText(outputText);
+    if (await copyToClipboard(outputText)) {
       trigger('copy');
-    } catch (err) {
-      console.error('Failed to copy translation:', err);
+    } else {
       setError('Failed to copy to clipboard. Please try again.');
       trigger('copy', { error: true });
     }

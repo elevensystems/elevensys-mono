@@ -58,11 +58,23 @@ export function parseApiDate(dateStr: string): Date | null {
  */
 export function jiraDateToISO(dateStr: string): string {
   const date = parseApiDate(dateStr);
-  if (!date) return dateStr;
+  return date ? toISODate(date) : dateStr;
+}
+
+/** A local calendar date as ISO "YYYY-MM-DD" (no UTC shift, unlike `toISOString`). */
+export function toISODate(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+/** A local calendar date in Jira API format D/Mon/YY, e.g. "15/Jan/25". */
+export function toJiraDate(date: Date): string {
+  const day = date.getDate();
+  const month = MONTH_ABBRS[date.getMonth()];
+  const year = String(date.getFullYear()).slice(-2);
+  return `${day}/${month}/${year}`;
 }
 
 /**
@@ -70,11 +82,7 @@ export function jiraDateToISO(dateStr: string): string {
  * e.g. "2025-01-15" → "15/Jan/25"
  */
 export function formatDateForApi(dateStr: string): string {
-  const date = new Date(dateStr + 'T00:00:00');
-  const day = date.getDate();
-  const month = MONTH_ABBRS[date.getMonth()];
-  const year = String(date.getFullYear()).slice(-2);
-  return `${day}/${month}/${year}`;
+  return toJiraDate(new Date(dateStr + 'T00:00:00'));
 }
 
 /**
@@ -447,26 +455,8 @@ export function isValidIssueKey(key: string): boolean {
  * → "Jan 15, 2025" or "Feb 6, 2026"
  */
 export function formatDisplayDate(dateStr: string): string {
-  // Handle Jira format: "DD/Mon/YY"
-  const tempoMatch = dateStr.match(/^(\d{1,2})\/([A-Za-z]{3})\/(\d{2})$/);
-  if (tempoMatch) {
-    const [, day, monthAbbr, yearShort] = tempoMatch;
-    const monthIndex = MONTH_ABBRS.findIndex(
-      m => m.toLowerCase() === monthAbbr.toLowerCase()
-    );
-    if (monthIndex !== -1) {
-      const fullYear = 2000 + parseInt(yearShort, 10);
-      const date = new Date(fullYear, monthIndex, parseInt(day, 10));
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
-    }
-  }
-
-  // Fallback: ISO format "YYYY-MM-DD"
-  const date = new Date(dateStr + 'T00:00:00');
+  // Jira format first, then ISO "YYYY-MM-DD"
+  const date = parseApiDate(dateStr) ?? new Date(dateStr + 'T00:00:00');
   return date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
@@ -479,8 +469,7 @@ export function formatDisplayDate(dateStr: string): string {
  */
 export function getMonthStart(): string {
   const now = new Date();
-  const d = new Date(now.getFullYear(), now.getMonth(), 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return toISODate(new Date(now.getFullYear(), now.getMonth(), 1));
 }
 
 /**
@@ -488,8 +477,22 @@ export function getMonthStart(): string {
  */
 export function getMonthEnd(): string {
   const now = new Date();
-  const d = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return toISODate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+}
+
+/**
+ * Why a search's date range cannot be run, or `null` when it can.
+ * `fromDate`/`toDate` are ISO "YYYY-MM-DD".
+ */
+export function validateDateRange(
+  fromDate: string,
+  toDate: string
+): string | null {
+  if (!fromDate || !toDate) return 'Please select a date range.';
+  if (new Date(fromDate) > new Date(toDate)) {
+    return 'Start date must be before or equal to end date.';
+  }
+  return null;
 }
 
 /**

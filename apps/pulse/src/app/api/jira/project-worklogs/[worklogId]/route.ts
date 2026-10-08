@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { JIRA_URLS } from '@/lib/api-urls';
-import { sanitizeErrorText } from '@/lib/fetch-utils';
 import {
   getJiraInstanceFromQuery,
+  internalErrorResponse,
   missingJiraInstanceResponse,
+  upstreamErrorResponse,
 } from '@/lib/jira-proxy';
 import type { UpdateWorklogRequest } from '@/types/timesheet';
 
@@ -46,22 +47,13 @@ export async function PUT(
     );
 
     if (!response.ok) {
-      const errorText = await response.text();
-      return NextResponse.json(
-        { error: sanitizeErrorText(errorText, response.status) },
-        { status: response.status }
-      );
+      return upstreamErrorResponse(response);
     }
 
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Internal server error',
-      },
-      { status: 500 }
-    );
+    return internalErrorResponse(error);
   }
 }
 
@@ -104,11 +96,7 @@ export async function DELETE(
     );
 
     if (!response.ok) {
-      const errorText = await response.text();
-      return NextResponse.json(
-        { error: sanitizeErrorText(errorText, response.status) },
-        { status: response.status }
-      );
+      return upstreamErrorResponse(response);
     }
 
     if (response.status === 204) {
@@ -118,11 +106,6 @@ export async function DELETE(
     const data = await response.json().catch(() => ({ success: true }));
     return NextResponse.json({ success: true, data });
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Internal server error',
-      },
-      { status: 500 }
-    );
+    return internalErrorResponse(error);
   }
 }

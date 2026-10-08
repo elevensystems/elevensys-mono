@@ -23,10 +23,9 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@workspace/ui/components/sidebar';
+import type { AuthUser } from '@workspace/ui/lib/utils';
 import { ChevronsUpDown, LogOut, Monitor, Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
-
-import type { AuthUser } from '@/types/auth';
 
 const THEMES = [
   { label: 'Light', value: 'light', icon: Sun },

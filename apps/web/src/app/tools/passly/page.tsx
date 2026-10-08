@@ -22,6 +22,7 @@ import { z } from 'zod';
 import MainLayout from '@/components/layouts/main-layout';
 import { ToolPageHeader } from '@/components/layouts/tool-page-header';
 import { useActionFeedback } from '@/hooks/use-action-feedback';
+import { copyToClipboard } from '@/lib/clipboard';
 import {
   PASSWORD_DEFAULT_LENGTH,
   PASSWORD_MAX_LENGTH,
@@ -135,13 +136,8 @@ export default function PasslyPage() {
 
   const handleCopy = useCallback(
     async (password: string, id: string) => {
-      try {
-        await navigator.clipboard.writeText(password);
-        trigger(id);
-      } catch (err) {
-        console.error('Failed to copy to clipboard:', err);
-        trigger(id, { error: true });
-      }
+      if (await copyToClipboard(password)) trigger(id);
+      else trigger(id, { error: true });
     },
     [trigger]
   );

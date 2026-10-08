@@ -14,6 +14,7 @@ import { useTheme } from 'next-themes';
 import { JsonToolToolbar } from '@/components/layouts/json-tool-toolbar';
 import MainLayout from '@/components/layouts/main-layout';
 import { useActionFeedback } from '@/hooks/use-action-feedback';
+import { copyToClipboard } from '@/lib/clipboard';
 import { DEFAULT_JSON, generateJsCode } from '@/lib/json-objectify';
 import type { ConversionOptions } from '@/lib/json-objectify';
 import { parseJsonSafely } from '@/lib/json-utils';
@@ -89,12 +90,8 @@ export default function JsonObjectifyPage() {
 
   const handleCopy = useCallback(async () => {
     if (!jsOutput) return;
-    try {
-      await navigator.clipboard.writeText(jsOutput);
-      trigger('copy');
-    } catch {
-      trigger('copy', { error: true });
-    }
+    if (await copyToClipboard(jsOutput)) trigger('copy');
+    else trigger('copy', { error: true });
   }, [jsOutput, trigger]);
 
   const optionsContent = (

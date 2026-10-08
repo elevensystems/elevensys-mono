@@ -6,8 +6,7 @@ import {
   AlertTitle,
 } from '@workspace/ui/components/alert';
 import { Button } from '@workspace/ui/components/button';
-
-import type { AuthUser } from '@/types/auth';
+import type { AuthUser } from '@workspace/ui/lib/utils';
 
 import MainLayout from './main-layout';
 import { ToolPageHeader } from './tool-page-header';

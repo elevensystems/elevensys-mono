@@ -1,5 +1,3 @@
-import { REQUEST_TIMEOUT_MS } from '@/lib/constants';
-
 const HTTP_STATUS_MESSAGES: Record<number, string> = {
   400: 'Bad request',
   401: 'Unauthorized - please log in again',
@@ -50,27 +48,4 @@ export function sanitizeErrorText(text: string, status: number): string {
   }
 
   return text;
-}
-
-/**
- * Wraps fetch with an AbortController timeout.
- * Automatically aborts if the request exceeds the given timeout.
- */
-export async function fetchWithTimeout(
-  url: string,
-  options: RequestInit = {},
-  timeout: number = REQUEST_TIMEOUT_MS
-): Promise<Response> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-  try {
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal,
-    });
-    return response;
-  } finally {
-    clearTimeout(timeoutId);
-  }
 }

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { readErrorMessage } from '@workspace/ui/lib/http';
 import { toast } from 'sonner';
 
 import { MAX_AUTOLOG_CONFIGS } from '@/lib/constants';
@@ -66,8 +67,7 @@ export function useAutolog({
           body: JSON.stringify(payload),
         });
         if (!res.ok) {
-          const err = await res.json().catch(() => null);
-          throw new Error(err?.error || `HTTP ${res.status}`);
+          throw new Error(await readErrorMessage(res));
         }
         const newConfig: AutologConfig = await res.json();
         setConfigs(prev => [...prev, newConfig]);
@@ -95,8 +95,7 @@ export function useAutolog({
           body: JSON.stringify(payload),
         });
         if (!res.ok) {
-          const err = await res.json().catch(() => null);
-          throw new Error(err?.error || `HTTP ${res.status}`);
+          throw new Error(await readErrorMessage(res));
         }
         const updated: AutologConfig = await res.json();
         setConfigs(prev =>
@@ -122,8 +121,7 @@ export function useAutolog({
           { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } }
         );
         if (!res.ok) {
-          const err = await res.json().catch(() => null);
-          throw new Error(err?.error || `HTTP ${res.status}`);
+          throw new Error(await readErrorMessage(res));
         }
         setConfigs(prev => prev.filter(c => c.configId !== configId));
         toast.success('Configuration deleted');
@@ -147,8 +145,7 @@ export function useAutolog({
           body: JSON.stringify({ username }),
         });
         if (!res.ok) {
-          const err = await res.json().catch(() => null);
-          throw new Error(err?.error || err?.message || `HTTP ${res.status}`);
+          throw new Error(await readErrorMessage(res));
         }
         toast.success(
           "Run started — you'll get a Teams message when it's done"

@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react';
 
+import { readErrorMessage } from '@workspace/ui/lib/http';
 import { toast } from 'sonner';
 
 import { REQUEST_DELAY_MS, delay } from '@/lib/timesheet';
@@ -17,6 +18,34 @@ export function getWorklogKey(worklog: WorklogEntry | MyWorklogsRow): string {
 }
 
 const SELECTABLE_STATUSES = ['pending', 'rejected', 'reopened'];
+
+/** Deletes one worklog through the Jira proxy; throws with the API's message on failure. */
+async function deleteWorklog(
+  settings: TimesheetSettings,
+  worklogId: number,
+  issueId: number
+): Promise<void> {
+  const params = new URLSearchParams({
+    jiraInstance: settings.jiraInstance,
+    issueId: issueId.toString(),
+  });
+  const response = await fetch(
+    `/api/jira/project-worklogs/${worklogId}?${params.toString()}`,
+    {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${settings.token}` },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(
+        response,
+        `Failed to delete worklog: HTTP ${response.status}`
+      )
+    );
+  }
+}
 
 interface UseWorklogMutationsParams {
   settings: TimesheetSettings;
@@ -103,25 +132,7 @@ export function useWorklogMutations({
       setDeletingId(key);
 
       try {
-        const params = new URLSearchParams({
-          jiraInstance: settings.jiraInstance,
-          issueId: issueId.toString(),
-        });
-        const response = await fetch(
-          `/api/jira/project-worklogs/${worklogId}?${params.toString()}`,
-          {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${settings.token}` },
-          }
-        );
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => null);
-          throw new Error(
-            errorData?.error ||
-              `Failed to delete worklog: HTTP ${response.status}`
-          );
-        }
+        await deleteWorklog(settings, worklogId, issueId);
 
         setWorklogs(prev =>
           prev.filter(w => !(w.id === worklogId && w.issueId === issueId))
@@ -182,10 +193,11 @@ export function useWorklogMutations({
         );
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => null);
           throw new Error(
-            errorData?.error ||
+            await readErrorMessage(
+              response,
               `Failed to update worklog: HTTP ${response.status}`
+            )
           );
         }
 
@@ -269,25 +281,7 @@ export function useWorklogMutations({
       setBulkDeleteProgress(Math.round(((i + 1) / total) * 100));
 
       try {
-        const deleteParams = new URLSearchParams({
-          jiraInstance: settings.jiraInstance,
-          issueId: worklog.issueId.toString(),
-        });
-        const response = await fetch(
-          `/api/jira/project-worklogs/${worklog.id}?${deleteParams.toString()}`,
-          {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${settings.token}` },
-          }
-        );
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => null);
-          throw new Error(
-            errorData?.error ||
-              `Failed to delete worklog: HTTP ${response.status}`
-          );
-        }
+        await deleteWorklog(settings, worklog.id, worklog.issueId);
 
         setWorklogs(prev =>
           prev.filter(

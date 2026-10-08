@@ -14,13 +14,13 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@workspace/ui/components/sidebar';
+import type { AuthUser } from '@workspace/ui/lib/utils';
 import { ChartPie } from 'lucide-react';
 
 import { NavMain } from '@/components/layouts/nav-main';
 import { NavSecondary } from '@/components/layouts/nav-secondary';
 import { NavUser } from '@/components/layouts/nav-user';
 import { appSidebarData } from '@/lib/app-sidebar-config';
-import type { AuthUser } from '@/types/auth';
 
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
   user?: AuthUser | null;

@@ -1,7 +1,6 @@
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
-
-import { ThemeProvider } from './theme-provider';
+import { ThemeProvider } from '@workspace/ui/components/theme-provider';
 
 jest.mock('next-themes', () => ({
   ThemeProvider: ({ children }: { children: React.ReactNode }) => (

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { AUTOLOG_URLS } from '@/lib/api-urls';
+import { internalErrorResponse } from '@/lib/jira-proxy';
 
 interface RouteParams {
   params: Promise<{ configId: string }>;
@@ -31,12 +32,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Internal server error',
-      },
-      { status: 500 }
-    );
+    return internalErrorResponse(error);
   }
 }
 
@@ -64,11 +60,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Internal server error',
-      },
-      { status: 500 }
-    );
+    return internalErrorResponse(error);
   }
 }

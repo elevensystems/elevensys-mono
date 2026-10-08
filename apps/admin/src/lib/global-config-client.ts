@@ -2,6 +2,7 @@ import { createClient } from '@vercel/global-config';
 import 'server-only';
 
 import { env } from '@/env';
+import { ApiError } from '@/lib/api-error';
 import { type ConfigAuditEntry, HISTORY_LIMIT } from '@/types/config-audit';
 
 /**
@@ -15,11 +16,9 @@ const AUDIT_ITEM_KEY = 'config-audit';
 
 const VERCEL_API = 'https://api.vercel.com';
 
-export class GlobalConfigError extends Error {
-  status: number;
+export class GlobalConfigError extends ApiError {
   constructor(status: number, message: string) {
-    super(message);
-    this.status = status;
+    super(status, message);
     this.name = 'GlobalConfigError';
   }
 }

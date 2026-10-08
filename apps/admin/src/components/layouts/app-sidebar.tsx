@@ -13,12 +13,12 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@workspace/ui/components/sidebar';
+import type { AuthUser } from '@workspace/ui/lib/utils';
 import { Shield } from 'lucide-react';
 
 import { NavMain } from '@/components/layouts/nav-main';
 import { NavUser } from '@/components/layouts/nav-user';
 import { appSidebarData } from '@/lib/app-sidebar-config';
-import type { AuthUser } from '@/types/auth';
 
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
   user?: AuthUser | null;

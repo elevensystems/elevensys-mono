@@ -1,4 +1,4 @@
-import { isTokenExpired, userFromPayload } from './auth';
+import { isTokenExpired, userFromPayload } from '@workspace/ui/lib/auth';
 
 describe('isTokenExpired', () => {
   it('returns false for a future expiry', () => {

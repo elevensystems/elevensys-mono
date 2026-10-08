@@ -1,12 +1,26 @@
-import { env } from '@/env';
+import { NextResponse } from 'next/server';
 
-export class ApiError extends Error {
-  status: number;
-  constructor(status: number, message: string) {
-    super(message);
-    this.status = status;
-    this.name = 'ApiError';
+import { env } from '@/env';
+import { ApiError } from '@/lib/api-error';
+
+/**
+ * The JSON reply for an error a route handler caught. An `ApiError` (which
+ * includes `GlobalConfigError`) keeps its status and message; anything else is
+ * logged under `context` and answered with a 500 carrying `fallback`.
+ */
+export function errorResponse(
+  error: unknown,
+  context: string,
+  fallback = 'Internal server error'
+): NextResponse {
+  if (error instanceof ApiError) {
+    return NextResponse.json(
+      { error: error.message },
+      { status: error.status }
+    );
   }
+  console.error(`${context}:`, error);
+  return NextResponse.json({ error: fallback }, { status: 500 });
 }
 
 type ApiFetchOptions = Omit<RequestInit, 'body'> & {

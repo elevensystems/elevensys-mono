@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { OPENAI_URL } from '@/lib/api-urls';
 import { getUserFromSession } from '@/lib/auth';
 import { MAX_TRANSLATE_INPUT_LENGTH, validateModel } from '@/lib/constants';
-import { fetchWithTimeout } from '@/lib/fetch-utils';
+import { getOutputText, postToOpenAI } from '@/lib/fetch-utils';
 import type { TranslateRequestBody } from '@/types/translate';
 
 const buildPrompt = (
@@ -55,30 +54,12 @@ export async function POST(request: NextRequest) {
       'You are an expert bilingual translator specializing in high-quality Vietnamese-English and English-Vietnamese translations.';
     const userMessage = buildPrompt(input, directionLabel, tonesLabel);
 
-    const lambdaBase = OPENAI_URL;
-
     try {
-      const response = await fetchWithTimeout(lambdaBase, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model,
-          input: [
-            {
-              role: 'system',
-              content: systemMessage,
-            },
-            {
-              role: 'user',
-              content: userMessage,
-            },
-          ],
-          temperature: 1, // Using temperature 1 for natural, varied translations
-          store: true,
-        }),
-      });
+      // The relay runs at temperature 1, for natural, varied translations.
+      const response = await postToOpenAI(model, [
+        { role: 'system', content: systemMessage },
+        { role: 'user', content: userMessage },
+      ]);
 
       const data = await response.json();
 
@@ -95,7 +76,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const outputText = data?.output_text || data?.data?.output_text || '';
+      const outputText = getOutputText(data);
 
       if (!outputText) {
         throw new Error('Empty translation response');

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { JIRA_URLS } from '@/lib/api-urls';
-import { sanitizeErrorText } from '@/lib/fetch-utils';
 import {
   getJiraInstanceFromQuery,
+  internalErrorResponse,
   missingJiraInstanceResponse,
+  upstreamErrorResponse,
 } from '@/lib/jira-proxy';
 
 export async function GET(request: NextRequest) {
@@ -55,19 +56,11 @@ export async function GET(request: NextRequest) {
     ]);
 
     if (!worklogsResponse.ok) {
-      const errorText = await worklogsResponse.text();
-      return NextResponse.json(
-        { error: sanitizeErrorText(errorText, worklogsResponse.status) },
-        { status: worklogsResponse.status }
-      );
+      return upstreamErrorResponse(worklogsResponse);
     }
 
     if (!paginationResponse.ok) {
-      const errorText = await paginationResponse.text();
-      return NextResponse.json(
-        { error: sanitizeErrorText(errorText, paginationResponse.status) },
-        { status: paginationResponse.status }
-      );
+      return upstreamErrorResponse(paginationResponse);
     }
 
     const [worklogsData, paginationData] = await Promise.all([
@@ -83,11 +76,6 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Internal server error',
-      },
-      { status: 500 }
-    );
+    return internalErrorResponse(error);
   }
 }

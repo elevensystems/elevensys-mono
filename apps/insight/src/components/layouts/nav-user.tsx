@@ -19,9 +19,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@workspace/ui/components/sidebar';
+import type { AuthUser } from '@workspace/ui/lib/utils';
 import { ChevronsUpDown, LogOut } from 'lucide-react';
-
-import type { AuthUser } from '@/types/auth';
 
 const getUserInitials = (name: string) => {
   return name

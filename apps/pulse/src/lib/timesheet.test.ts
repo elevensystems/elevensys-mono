@@ -5,6 +5,9 @@ import {
   collectFailedWorklogs,
   createDefaultEntry,
   createWorklogProfile,
+  formatDateForApi,
+  formatDisplayDate,
+  jiraDateToISO,
   loadFailedWorklogs,
   loadWorklogProfiles,
   nextProfileName,
@@ -13,7 +16,47 @@ import {
   reconcileFailedWorklogs,
   saveFailedWorklogs,
   saveWorklogProfiles,
+  toISODate,
+  toJiraDate,
+  validateDateRange,
 } from './timesheet';
+
+describe('date formatting', () => {
+  it('formats a local date as ISO and as Jira D/Mon/YY', () => {
+    const date = new Date(2026, 0, 5);
+    expect(toISODate(date)).toBe('2026-01-05');
+    expect(toJiraDate(date)).toBe('5/Jan/26');
+  });
+
+  it('converts between ISO and Jira formats', () => {
+    expect(formatDateForApi('2025-01-15')).toBe('15/Jan/25');
+    expect(jiraDateToISO('15/Jan/25')).toBe('2025-01-15');
+    expect(jiraDateToISO('not a date')).toBe('not a date');
+  });
+
+  it('displays both Jira and ISO dates the same way', () => {
+    expect(formatDisplayDate('6/Feb/26')).toBe('Feb 6, 2026');
+    expect(formatDisplayDate('2026-02-06')).toBe('Feb 6, 2026');
+  });
+});
+
+describe('validateDateRange', () => {
+  it('requires both bounds', () => {
+    expect(validateDateRange('', '2026-01-31')).toBe(
+      'Please select a date range.'
+    );
+  });
+
+  it('rejects a range that ends before it starts', () => {
+    expect(validateDateRange('2026-02-01', '2026-01-31')).toBe(
+      'Start date must be before or equal to end date.'
+    );
+  });
+
+  it('accepts a single-day range', () => {
+    expect(validateDateRange('2026-01-31', '2026-01-31')).toBeNull();
+  });
+});
 
 describe('parseWarningEntries', () => {
   it('splits the comma-separated dates into a list per user', () => {

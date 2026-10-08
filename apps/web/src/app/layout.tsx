@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
 import { Ubuntu, Ubuntu_Mono } from 'next/font/google';
 
+import { AuthProvider } from '@workspace/ui/components/auth-provider';
 import { SiteAnnouncementProvider } from '@workspace/ui/components/site-announcement-provider';
 import { Toaster } from '@workspace/ui/components/sonner';
+import { ThemeProvider } from '@workspace/ui/components/theme-provider';
 import { getSiteAnnouncements } from '@workspace/ui/lib/site-announcement-server';
 
-import { ThemeProvider } from '@/components/theme-provider';
-import { AuthProvider } from '@/contexts/auth-context';
 import { VisibleToolsProvider } from '@/contexts/visible-tools-context';
 import { getUserFromSession } from '@/lib/auth';
 import { APP_DESCRIPTION, APP_NAME } from '@/lib/constants';

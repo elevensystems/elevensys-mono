@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { ApiError, apiFetch } from '@/lib/api-fetch';
-import { getAccessToken } from '@/lib/auth';
+import { getAccessToken } from '@workspace/ui/lib/auth-server';
+
+import { apiFetch, errorResponse } from '@/lib/api-fetch';
 
 /**
  * Delete one user's autolog configuration.
@@ -34,10 +35,6 @@ export const DELETE = async (
     );
     return NextResponse.json(result ?? { success: true });
   } catch (err) {
-    if (err instanceof ApiError) {
-      return NextResponse.json({ error: err.message }, { status: err.status });
-    }
-    console.error('Autolog delete failed:', err);
-    return NextResponse.json({ error: 'Delete failed' }, { status: 500 });
+    return errorResponse(err, 'Autolog delete failed', 'Delete failed');
   }
 };

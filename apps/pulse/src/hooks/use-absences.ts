@@ -4,12 +4,18 @@ import { useCallback, useRef, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { readErrorMessage } from '@workspace/ui/lib/http';
 import { toast } from 'sonner';
 
 import { normalizeAbsence } from '@/app/absences/_components/absences-utils';
 import { showAuthErrorToast } from '@/lib/auth-toast';
 import { isAuthError } from '@/lib/fetch-utils';
-import { formatDateForApi, getMonthEnd, getMonthStart } from '@/lib/timesheet';
+import {
+  formatDateForApi,
+  getMonthEnd,
+  getMonthStart,
+  validateDateRange,
+} from '@/lib/timesheet';
 import type {
   AbsenceRow,
   AbsencesData,
@@ -104,9 +110,11 @@ export function useAbsences({ settings, isConfigured }: UseAbsencesParams) {
             setRows([]);
             return;
           }
-          const errorData = await response.json().catch(() => null);
           throw new Error(
-            errorData?.error || `Failed to fetch: HTTP ${response.status}`
+            await readErrorMessage(
+              response,
+              `Failed to fetch: HTTP ${response.status}`
+            )
           );
         }
 
@@ -155,12 +163,9 @@ export function useAbsences({ settings, isConfigured }: UseAbsencesParams) {
       setError('Please select a project.');
       return;
     }
-    if (!fromDate || !toDate) {
-      setError('Please select a date range.');
-      return;
-    }
-    if (new Date(fromDate) > new Date(toDate)) {
-      setError('Start date must be before or equal to end date.');
+    const rangeError = validateDateRange(fromDate, toDate);
+    if (rangeError) {
+      setError(rangeError);
       return;
     }
 

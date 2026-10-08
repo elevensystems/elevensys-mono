@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { ApiError, apiFetch } from '@/lib/api-fetch';
-import { getAccessToken, getUserFromSession } from '@/lib/auth';
+import { getAccessToken } from '@workspace/ui/lib/auth-server';
+
+import { apiFetch, errorResponse } from '@/lib/api-fetch';
+import { getUserFromSession } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   const user = await getUserFromSession();
@@ -20,16 +22,6 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json(data);
   } catch (error) {
-    if (error instanceof ApiError) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: error.status }
-      );
-    }
-    console.error('audit proxy error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return errorResponse(error, 'audit proxy error');
   }
 }

@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { readErrorMessage } from '@workspace/ui/lib/http';
 import { toast } from 'sonner';
 
 import { showAuthErrorToast } from '@/lib/auth-toast';
@@ -81,8 +82,7 @@ export function useMissingWorklogs({
           showAuthErrorToast(() => router.push('/config'));
           return null;
         }
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.error || `HTTP ${response.status}`);
+        throw new Error(await readErrorMessage(response));
       }
 
       const result = await response.json();

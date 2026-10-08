@@ -24,10 +24,10 @@ import { useWorklogProfiles } from '@/hooks/use-worklog-profiles';
 import { showAuthErrorToast } from '@/lib/auth-toast';
 import {
   createDefaultEntry,
-  formatDateForApi,
   groupDatesIntoRanges,
   isValidIssueKey,
   reconcileFailedWorklogs,
+  toJiraDate,
 } from '@/lib/timesheet';
 import type {
   DateRange,
@@ -46,14 +46,6 @@ import { SubmissionModal } from './_components/submission-modal';
 import { WorklogProfileTabs } from './_components/worklog-profile-tabs';
 
 const NOT_LOGGED_HINT = 'Retry the rest from "Not logged" below the form.';
-
-/** Convert a Date to DD/Mon/YY API format */
-function dateToApiFormat(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return formatDateForApi(`${y}-${m}-${d}`);
-}
 
 export default function LogWorkPage() {
   const router = useRouter();
@@ -117,7 +109,7 @@ export default function LogWorkPage() {
     () =>
       [...selectedDates]
         .sort((a, b) => a.getTime() - b.getTime())
-        .map(dateToApiFormat),
+        .map(toJiraDate),
     [selectedDates]
   );
 

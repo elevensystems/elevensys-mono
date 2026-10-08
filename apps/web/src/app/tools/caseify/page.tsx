@@ -31,6 +31,7 @@ import {
   PROGRAMMING_CASES,
   tokenize,
 } from '@/lib/caseify';
+import { copyToClipboard } from '@/lib/clipboard';
 
 // ---------------------------------------------------------------------------
 // Sub-components
@@ -169,12 +170,8 @@ export default function CaseifyPage() {
   const hasInput = deferredInput.trim().length > 0;
 
   const handleCopy = async (text: string, id: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      trigger(id);
-    } catch {
-      trigger(id, { error: true });
-    }
+    if (await copyToClipboard(text)) trigger(id);
+    else trigger(id, { error: true });
   };
 
   return (

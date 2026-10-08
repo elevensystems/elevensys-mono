@@ -21,6 +21,7 @@ import { ToolPageHeader } from '@/components/layouts/tool-page-header';
 import { useActionFeedback } from '@/hooks/use-action-feedback';
 import { useUrlHistory } from '@/hooks/use-url-history';
 import type { UrlHistoryItem } from '@/hooks/use-url-history';
+import { copyToClipboard } from '@/lib/clipboard';
 
 interface ShortenedUrlResult {
   shortUrl: string;
@@ -119,12 +120,8 @@ export default function UrlifyPage() {
 
   const handleCopy = useCallback(
     async (shortUrl: string, feedbackId: string) => {
-      try {
-        await navigator.clipboard.writeText(shortUrl);
-        trigger(feedbackId);
-      } catch {
-        trigger(feedbackId, { error: true });
-      }
+      if (await copyToClipboard(shortUrl)) trigger(feedbackId);
+      else trigger(feedbackId, { error: true });
     },
     [trigger]
   );

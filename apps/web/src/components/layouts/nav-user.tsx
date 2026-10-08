@@ -21,6 +21,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@workspace/ui/components/sidebar';
+import type { AuthUser } from '@workspace/ui/lib/utils';
 import {
   BadgeCheck,
   ChevronsUpDown,
@@ -29,8 +30,6 @@ import {
   Sparkles,
   UserPlus,
 } from 'lucide-react';
-
-import { AuthUser } from '@/types/auth';
 
 export function NavUser({ user }: { user?: AuthUser | null }) {
   const { isMobile } = useSidebar();

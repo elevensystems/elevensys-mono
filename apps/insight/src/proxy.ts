@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { env } from '@/env';
 import {
   AUTH_COOKIES,
+  REFRESH_TOKEN_MAX_AGE,
   decodeJwt,
   isTokenExpired,
   userFromPayload,
+} from '@workspace/ui/lib/auth';
+import { requestCognitoTokens } from '@workspace/ui/lib/auth-server';
+
+import {
+  authCookie,
+  cognito,
+  deletedCookie,
+  hasInsightAccess,
 } from '@/lib/auth';
 
 const PUBLIC_PATH_PREFIXES = ['/login', '/api/auth/'];
@@ -14,57 +22,12 @@ const isPublicPath = (pathname: string): boolean => {
   return PUBLIC_PATH_PREFIXES.some(prefix => pathname.startsWith(prefix));
 };
 
-type TokenResponse = {
-  id_token?: string;
-  access_token?: string;
-  refresh_token?: string;
-  expires_in?: number;
-};
-
-async function refreshTokens(
-  refreshToken: string
-): Promise<TokenResponse | null> {
-  const body = new URLSearchParams({
-    grant_type: 'refresh_token',
-    client_id: env.COGNITO_CLIENT_ID,
-    refresh_token: refreshToken,
-  });
-
-  const res = await fetch(`${env.COGNITO_DOMAIN}/oauth2/token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body.toString(),
-  });
-
-  if (!res.ok) return null;
-  return (await res.json()) as TokenResponse;
-}
-
-const isSecure = process.env.NODE_ENV === 'production';
-
-const baseCookieOptions = {
-  httpOnly: true,
-  secure: isSecure,
-  sameSite: 'lax' as const,
-  path: '/',
-  domain: env.COOKIE_DOMAIN,
-};
-
 const redirectToLogin = (request: NextRequest): NextResponse => {
   const loginUrl = new URL('/login', request.url);
   const response = NextResponse.redirect(loginUrl);
-  response.cookies.set(AUTH_COOKIES.idToken, '', {
-    ...baseCookieOptions,
-    maxAge: 0,
-  });
-  response.cookies.set(AUTH_COOKIES.accessToken, '', {
-    ...baseCookieOptions,
-    maxAge: 0,
-  });
-  response.cookies.set(AUTH_COOKIES.refreshToken, '', {
-    ...baseCookieOptions,
-    maxAge: 0,
-  });
+  response.cookies.set(AUTH_COOKIES.idToken, '', deletedCookie());
+  response.cookies.set(AUTH_COOKIES.accessToken, '', deletedCookie());
+  response.cookies.set(AUTH_COOKIES.refreshToken, '', deletedCookie());
   return response;
 };
 
@@ -84,8 +47,7 @@ export async function proxy(request: NextRequest) {
   if (idToken && accessToken) {
     const payload = decodeJwt(idToken);
     if (payload && !isTokenExpired(payload)) {
-      const user = userFromPayload(payload);
-      if (!user.groups.includes(env.COGNITO_REQUIRED_GROUP)) {
+      if (!hasInsightAccess(userFromPayload(payload))) {
         return redirectToLogin(request);
       }
       return NextResponse.next();
@@ -93,29 +55,34 @@ export async function proxy(request: NextRequest) {
   }
 
   if (refreshToken) {
-    const tokens = await refreshTokens(refreshToken);
+    const tokens = await requestCognitoTokens(cognito, {
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
+    });
     if (tokens?.id_token && tokens.access_token && tokens.expires_in) {
       const payload = decodeJwt(tokens.id_token);
       if (!payload) return redirectToLogin(request);
-      const user = userFromPayload(payload);
-      if (!user.groups.includes(env.COGNITO_REQUIRED_GROUP)) {
+      if (!hasInsightAccess(userFromPayload(payload))) {
         return redirectToLogin(request);
       }
 
       const response = NextResponse.next();
-      response.cookies.set(AUTH_COOKIES.idToken, tokens.id_token, {
-        ...baseCookieOptions,
-        maxAge: tokens.expires_in,
-      });
-      response.cookies.set(AUTH_COOKIES.accessToken, tokens.access_token, {
-        ...baseCookieOptions,
-        maxAge: tokens.expires_in,
-      });
+      response.cookies.set(
+        AUTH_COOKIES.idToken,
+        tokens.id_token,
+        authCookie(tokens.expires_in)
+      );
+      response.cookies.set(
+        AUTH_COOKIES.accessToken,
+        tokens.access_token,
+        authCookie(tokens.expires_in)
+      );
       if (tokens.refresh_token) {
-        response.cookies.set(AUTH_COOKIES.refreshToken, tokens.refresh_token, {
-          ...baseCookieOptions,
-          maxAge: 60 * 60 * 24 * 30,
-        });
+        response.cookies.set(
+          AUTH_COOKIES.refreshToken,
+          tokens.refresh_token,
+          authCookie(REFRESH_TOKEN_MAX_AGE)
+        );
       }
       return response;
     }

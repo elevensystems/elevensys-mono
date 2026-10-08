@@ -3,9 +3,9 @@ import { Ubuntu, Ubuntu_Mono } from 'next/font/google';
 
 import { SiteAnnouncementProvider } from '@workspace/ui/components/site-announcement-provider';
 import { Toaster } from '@workspace/ui/components/sonner';
+import { ThemeProvider } from '@workspace/ui/components/theme-provider';
 import { getSiteAnnouncements } from '@workspace/ui/lib/site-announcement-server';
 
-import { ThemeProvider } from '@/components/theme-provider';
 import '@/styles/globals.css';
 
 const ubuntu = Ubuntu({

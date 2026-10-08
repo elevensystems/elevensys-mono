@@ -1,23 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { errorResponse } from '@/lib/api-fetch';
 import { getUserFromSession } from '@/lib/auth';
 import {
   readSiteBannerSnapshot,
   writeSiteBannerValue,
 } from '@/lib/global-config-admin';
-import { GlobalConfigError } from '@/lib/global-config-client';
 import { siteBannerRequestSchema } from '@/lib/site-banner-schema';
-
-function handleError(error: unknown) {
-  if (error instanceof GlobalConfigError) {
-    return NextResponse.json(
-      { error: error.message },
-      { status: error.status }
-    );
-  }
-  console.error('site-banner error:', error);
-  return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-}
 
 export async function GET() {
   const user = await getUserFromSession();
@@ -28,7 +17,7 @@ export async function GET() {
   try {
     return NextResponse.json(await readSiteBannerSnapshot());
   } catch (error) {
-    return handleError(error);
+    return errorResponse(error, 'site-banner error');
   }
 }
 
@@ -55,6 +44,6 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json(snapshot);
   } catch (error) {
-    return handleError(error);
+    return errorResponse(error, 'site-banner error');
   }
 }

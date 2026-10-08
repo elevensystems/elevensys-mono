@@ -2,9 +2,15 @@
 
 import { useCallback, useRef, useState } from 'react';
 
+import { readErrorMessage } from '@workspace/ui/lib/http';
 import { toast } from 'sonner';
 
-import { formatDateForApi, getMonthEnd, getMonthStart } from '@/lib/timesheet';
+import {
+  formatDateForApi,
+  getMonthEnd,
+  getMonthStart,
+  validateDateRange,
+} from '@/lib/timesheet';
 import type {
   MyWorklogsData,
   MyWorklogsRow,
@@ -100,9 +106,11 @@ export function useWorklogs({ settings, isConfigured }: UseWorklogsParams) {
         );
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => null);
           throw new Error(
-            errorData?.error || `Failed to fetch: HTTP ${response.status}`
+            await readErrorMessage(
+              response,
+              `Failed to fetch: HTTP ${response.status}`
+            )
           );
         }
 
@@ -147,12 +155,9 @@ export function useWorklogs({ settings, isConfigured }: UseWorklogsParams) {
       setError('Please select a project.');
       return;
     }
-    if (!fromDate || !toDate) {
-      setError('Please select a date range.');
-      return;
-    }
-    if (new Date(fromDate) > new Date(toDate)) {
-      setError('Start date must be before or equal to end date.');
+    const rangeError = validateDateRange(fromDate, toDate);
+    if (rangeError) {
+      setError(rangeError);
       return;
     }
 

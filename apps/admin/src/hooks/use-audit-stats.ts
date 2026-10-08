@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+import { readErrorMessage } from '@workspace/ui/lib/http';
+
 export type AuditStatsType = 'volume' | 'latency' | 'status' | 'events';
 
 export interface AuditStatsBucket {
@@ -119,13 +121,12 @@ function useAuditStatsQuery<T>(
         }),
       })
         .then(async res => {
-          const body = await res.json().catch(() => null);
           if (!res.ok) {
             throw new Error(
-              body?.error ?? `Request failed: HTTP ${res.status}`
+              await readErrorMessage(res, `Request failed: HTTP ${res.status}`)
             );
           }
-          return body as T;
+          return (await res.json().catch(() => null)) as T;
         })
         .then(data => {
           if (cancelled || id !== requestId.current) return;
