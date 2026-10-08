@@ -33,7 +33,7 @@ export function ToolPageHeader({
         )}
       >
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold mb-2">{title}</h1>
+          <h1 className="font-heading text-2xl font-bold mb-2">{title}</h1>
           {subtitle ??
             (description && (
               <p className="text-sm text-muted-foreground">{description}</p>

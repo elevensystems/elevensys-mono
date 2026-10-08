@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Ubuntu, Ubuntu_Mono } from 'next/font/google';
+import { Merriweather, Ubuntu, Ubuntu_Mono } from 'next/font/google';
 
 import { AuthProvider } from '@workspace/ui/components/auth-provider';
 import { SiteAnnouncementProvider } from '@workspace/ui/components/site-announcement-provider';
@@ -22,6 +22,11 @@ const ubuntuMono = Ubuntu_Mono({
   variable: '--font-ubuntu-mono',
 });
 
+const merriweather = Merriweather({
+  subsets: ['latin'],
+  variable: '--font-merriweather',
+});
+
 export const metadata: Metadata = {
   title: 'Admin',
   description: 'Admin Interface',
@@ -37,7 +42,9 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${ubuntu.variable} ${ubuntuMono.variable} antialiased`}>
+      <body
+        className={`${ubuntu.variable} ${ubuntuMono.variable} ${merriweather.variable} antialiased`}
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

@@ -33,7 +33,7 @@ export function ToolPageHeader({
         )}
       >
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold mb-2">{title}</h1>
+          <h1 className="font-heading text-2xl font-bold mb-2">{title}</h1>
           {/* The subtitle line is always reserved, even when a page has nothing
               to say yet: pages swap its text as they search, and a collapsing
               line would shift everything below it on every state change. */}

@@ -130,7 +130,9 @@ export default function TimesheetConfigPage() {
       <section className="container mx-auto px-4 py-12">
         <div className="max-w-5xl mx-auto space-y-6">
           {/* Page header */}
-          <h1 className="text-2xl font-bold tracking-tight">Configurations</h1>
+          <h1 className="font-heading text-2xl font-bold tracking-tight">
+            Configurations
+          </h1>
 
           {/* Token status */}
           {isConfigured ? (

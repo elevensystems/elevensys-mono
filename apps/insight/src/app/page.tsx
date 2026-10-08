@@ -13,7 +13,7 @@ export default async function InsightDashboardPage() {
       <section className="container mx-auto px-2 py-8">
         <div className="flex flex-col gap-6">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight">
+            <h1 className="font-heading text-3xl font-semibold tracking-tight">
               Welcome, {user.name}
             </h1>
             <p className="text-sm text-muted-foreground">{user.email}</p>
