@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 
-import { useRouter } from 'next/navigation';
-
 import { Badge } from '@workspace/ui/components/badge';
 import { Button } from '@workspace/ui/components/button';
 import { Separator } from '@workspace/ui/components/separator';
@@ -50,6 +48,7 @@ interface ConfigDetailSheetProps {
   onOpenChange: (open: boolean) => void;
   onDelete: (configId: string) => Promise<boolean>;
   onRun: (configId: string) => Promise<boolean>;
+  onEdit: (config: AutologConfig) => void;
 }
 
 function TicketRow({
@@ -97,8 +96,8 @@ export function ConfigDetailSheet({
   onOpenChange,
   onDelete,
   onRun,
+  onEdit,
 }: ConfigDetailSheetProps) {
-  const router = useRouter();
   const isMobile = useIsMobile();
   const [isRunning, setIsRunning] = useState(false);
   const [runSuccess, setRunSuccess] = useState(false);
@@ -130,7 +129,7 @@ export function ConfigDetailSheet({
 
   const handleEdit = () => {
     onOpenChange(false);
-    router.push(`/autolog/${config.configId}/edit`);
+    onEdit(config);
   };
 
   const totalHours = config.tickets.reduce((sum, t) => sum + t.hours, 0);

@@ -64,7 +64,7 @@ export default async function RootLayout({
             <VisibleToolsProvider value={visibleTools}>
               <SiteAnnouncementProvider announcements={announcements}>
                 {children}
-                <Toaster position="bottom-right" />
+                <Toaster position="top-center" />
               </SiteAnnouncementProvider>
             </VisibleToolsProvider>
           </AuthProvider>

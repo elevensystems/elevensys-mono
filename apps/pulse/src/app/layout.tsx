@@ -55,7 +55,7 @@ export default async function RootLayout({
         >
           <SiteAnnouncementProvider announcements={announcements}>
             {children}
-            <Toaster position="bottom-right" />
+            <Toaster position="top-center" />
           </SiteAnnouncementProvider>
         </ThemeProvider>
       </body>

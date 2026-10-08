@@ -7,15 +7,18 @@ import { Label } from '@workspace/ui/components/label';
 import { NativeSelect } from '@workspace/ui/components/native-select';
 import { Spinner } from '@workspace/ui/components/spinner';
 import { Tabs, TabsList, TabsTrigger } from '@workspace/ui/components/tabs';
-import { Clock, MessageSquare, PlusCircle, Save } from 'lucide-react';
+import { Clock, MessageSquare, Plus, PlusCircle, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { WorkEntriesPanel } from '@/components/features/timesheet/work-entries-panel';
 import { useProjectIssues } from '@/hooks/use-project-issues';
 import {
   createDefaultEntry,
+  createWorklogProfile,
   generateEntryId,
-  loadSavedEntries,
+  loadWorklogProfiles,
+  nextProfileName,
+  profileTicketEntries,
 } from '@/lib/timesheet';
 import type {
   AutologConfig,
@@ -32,6 +35,7 @@ import type {
   JiraProject,
   TimesheetSettings,
   WorkEntry,
+  WorklogProfile,
 } from '@/types/timesheet';
 
 interface ConfigFormProps {
@@ -41,17 +45,12 @@ interface ConfigFormProps {
   editing?: AutologConfig;
   onSave: (payload: CreateAutologConfigPayload) => Promise<boolean>;
   onCancel: () => void;
-  /**
-   * Page title node. When provided, the form renders it in a row with the
-   * action buttons aligned to the top right instead of a bottom action bar.
-   */
-  header?: React.ReactNode;
-  /** Adds a Cancel button next to Save — for the modal, which has no back nav. */
-  showCancelButton?: boolean;
 }
 
 // Autolog is still in development — saving is disabled until the backend is ready.
 const SAVE_ENABLED = true;
+
+const SAVED_CONFIG_TAB = 'Saved config';
 
 function toWorkEntries(config?: AutologConfig): WorkEntry[] {
   if (!config?.tickets.length) {
@@ -73,8 +72,6 @@ export function ConfigForm({
   editing,
   onSave,
   onCancel,
-  header,
-  showCancelButton = false,
 }: ConfigFormProps) {
   const [isSaving, setIsSaving] = useState(false);
 
@@ -89,10 +86,45 @@ export function ConfigForm({
       : null
   );
 
-  // Tickets as WorkEntry[]
-  const [entries, setEntries] = useState<WorkEntry[]>(() =>
-    toWorkEntries(editing)
+  // The project's Log Work profiles plus any temporary ones added here. All of
+  // it lives in memory only — nothing here writes back to localStorage. Editing
+  // opens on a tab holding the config's saved tickets.
+  const [profiles, setProfiles] = useState<WorklogProfile[]>(() =>
+    editing
+      ? [
+          createWorklogProfile(SAVED_CONFIG_TAB, toWorkEntries(editing)),
+          ...loadWorklogProfiles(editing.projectId).profiles,
+        ]
+      : []
   );
+  const [profileId, setProfileId] = useState(() => profiles[0]?.id ?? '');
+
+  // Tickets of the active tab, as WorkEntry[]
+  const [entries, setEntries] = useState<WorkEntry[]>(
+    () => profiles[0]?.entries ?? [createDefaultEntry()]
+  );
+
+  const showProfile = (profile: WorklogProfile) => {
+    setProfileId(profile.id);
+    setEntries(profileTicketEntries(profile));
+  };
+
+  // Keeps the active tab's edits for when the user switches back to it.
+  const withCurrentEntries = (list: WorklogProfile[]) =>
+    list.map(p => (p.id === profileId ? { ...p, entries } : p));
+
+  const switchProfile = (id: string) => {
+    const profile = profiles.find(p => p.id === id);
+    if (!profile) return;
+    setProfiles(withCurrentEntries);
+    showProfile(profile);
+  };
+
+  const createProfile = () => {
+    const profile = createWorklogProfile(nextProfileName(profiles));
+    setProfiles(prev => [...withCurrentEntries(prev), profile]);
+    showProfile(profile);
+  };
 
   // Schedule — frequency is the only thing the user picks. The backend derives
   // the run instant from it, their timezone, and a stable per-user offset.
@@ -186,11 +218,9 @@ export function ConfigForm({
           Autolog is still in development.
         </p>
       )}
-      {showCancelButton && (
-        <Button variant="outline" onClick={onCancel} disabled={isSaving}>
-          Cancel
-        </Button>
-      )}
+      <Button variant="outline" onClick={onCancel} disabled={isSaving}>
+        Cancel
+      </Button>
       <Button onClick={handleSubmit} disabled={isSaving || !SAVE_ENABLED}>
         {isSaving ? (
           <>
@@ -213,14 +243,7 @@ export function ConfigForm({
   );
 
   return (
-    <div className="min-w-0 space-y-8">
-      {header && (
-        <div className="flex items-start justify-between gap-4">
-          {header}
-          {actions}
-        </div>
-      )}
-
+    <div className="flex min-w-0 flex-col space-y-8">
       {/* Project + frequency */}
       <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-[1fr_auto]">
         <div className="min-w-0 space-y-2">
@@ -230,7 +253,18 @@ export function ConfigForm({
             onChange={e => {
               const p = projects.find(x => x.id === e.target.value);
               setSelectedProject(p ?? null);
-              setEntries(p ? loadSavedEntries(p.id) : [createDefaultEntry()]);
+              if (!p) {
+                setProfiles([]);
+                setProfileId('');
+                setEntries([createDefaultEntry()]);
+                return;
+              }
+              const store = loadWorklogProfiles(p.id);
+              setProfiles(store.profiles);
+              showProfile(
+                store.profiles.find(x => x.id === store.activeId) ??
+                  store.profiles[0]
+              );
             }}
             disabled={isLoadingProjects || !!editing}
           >
@@ -239,7 +273,7 @@ export function ConfigForm({
             </option>
             {projects.map(p => (
               <option key={p.id} value={p.id}>
-                [{p.key}] {p.name}
+                {p.name}
               </option>
             ))}
           </NativeSelect>
@@ -285,6 +319,47 @@ export function ConfigForm({
             onAdd={addEntry}
             addDisabled={!selectedProject}
             rowsDisabled={!selectedProject}
+            tabs={
+              // Always rendered, even empty before a project is chosen, so the
+              // header keeps the same layout and nothing shifts on selection.
+              <Tabs
+                value={profileId}
+                onValueChange={switchProfile}
+                className="min-w-48 flex-1 gap-0 self-stretch"
+              >
+                <div className="flex h-full min-w-0 items-stretch gap-1 overflow-x-auto">
+                  <TabsList
+                    aria-label="Fill tickets from a worklog profile"
+                    className="h-full items-stretch gap-1 rounded-none bg-transparent p-0"
+                  >
+                    {profiles.map(profile => (
+                      <TabsTrigger
+                        key={profile.id}
+                        value={profile.id}
+                        title="Fill tickets from this Log Work profile"
+                        className="text-muted-foreground hover:text-foreground data-[state=active]:text-foreground relative h-full flex-none border-0 bg-transparent px-3 after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-full after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:after:bg-foreground dark:data-[state=active]:border-transparent dark:data-[state=active]:bg-transparent"
+                      >
+                        <span className="max-w-40 truncate">
+                          {profile.name}
+                        </span>
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                  <div className="flex shrink-0 items-center pl-1">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={createProfile}
+                      disabled={!selectedProject}
+                      aria-label="New temporary profile"
+                      title="New temporary profile — not saved to Log Work"
+                    >
+                      <Plus />
+                    </Button>
+                  </div>
+                </div>
+              </Tabs>
+            }
           />
         </div>
       </div>
@@ -342,12 +417,11 @@ export function ConfigForm({
         </p>
       </div>
 
-      {/* Actions */}
-      {!header && (
-        <div className="flex items-center justify-end border-t pt-6">
-          {actions}
-        </div>
-      )}
+      {/* Actions — sticky so Save stays reachable while scrolling a long
+          ticket list in the modal. */}
+      <div className="sticky bottom-0 z-10 mt-auto flex items-center justify-end border-t bg-background py-4">
+        {actions}
+      </div>
     </div>
   );
 }

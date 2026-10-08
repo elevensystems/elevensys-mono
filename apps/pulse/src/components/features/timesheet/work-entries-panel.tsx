@@ -3,7 +3,12 @@
 import { type ReactNode, useMemo } from 'react';
 
 import { Button } from '@workspace/ui/components/button';
-import { Panel, PanelBody, PanelHeader } from '@workspace/ui/components/panel';
+import {
+  Panel,
+  PanelBody,
+  PanelHeader,
+  PanelTitle,
+} from '@workspace/ui/components/panel';
 import { Token } from '@workspace/ui/components/token';
 import { cn } from '@workspace/ui/lib/utils';
 import { Plus } from 'lucide-react';
@@ -91,9 +96,9 @@ export function WorkEntriesPanel({
             tabs && 'ml-auto flex shrink-0 items-center gap-3 py-2'
           )}
         >
-          {/* Daily target */}
+          {/* Quota */}
           <div className="flex items-center gap-2.5">
-            <span className="text-sm font-semibold">Daily target</span>
+            <PanelTitle>Quota</PanelTitle>
             <Token
               color={hoursTokenColor}
               density="compact"

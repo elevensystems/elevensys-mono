@@ -47,7 +47,7 @@ export default async function RootLayout({
           <AuthProvider user={user}>
             <SiteAnnouncementProvider announcements={announcements}>
               {children}
-              <Toaster position="bottom-right" />
+              <Toaster position="top-center" />
             </SiteAnnouncementProvider>
           </AuthProvider>
         </ThemeProvider>

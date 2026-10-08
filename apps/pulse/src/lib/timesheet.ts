@@ -414,11 +414,14 @@ export function reconcileFailedWorklogs(
   }));
 }
 
-/** The rows with a ticket in a project's active worklog profile (for Autolog prefill). */
-export function loadSavedEntries(projectId: string): WorkEntry[] {
-  const store = loadWorklogProfiles(projectId);
-  const active = store.profiles.find(p => p.id === store.activeId);
-  const keyed = active?.entries.filter(e => e.issueKey.trim()) ?? [];
+/**
+ * A profile's rows that have a ticket, as a copy with fresh ids (for Autolog
+ * prefill — edits there never write back to the profile).
+ */
+export function profileTicketEntries(profile: WorklogProfile): WorkEntry[] {
+  const keyed = profile.entries
+    .filter(e => e.issueKey.trim())
+    .map(e => ({ ...e, id: generateEntryId() }));
   return keyed.length > 0 ? keyed : [createDefaultEntry()];
 }
 

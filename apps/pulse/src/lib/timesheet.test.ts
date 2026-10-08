@@ -6,10 +6,10 @@ import {
   createDefaultEntry,
   createWorklogProfile,
   loadFailedWorklogs,
-  loadSavedEntries,
   loadWorklogProfiles,
   nextProfileName,
   parseWarningEntries,
+  profileTicketEntries,
   reconcileFailedWorklogs,
   saveFailedWorklogs,
   saveWorklogProfiles,
@@ -119,7 +119,9 @@ describe('worklog profiles', () => {
     expect(store.activeId).toBe(b.id);
     expect(store.profiles.map(p => p.name)).toEqual(['Sprint', 'Support']);
     expect(store.profiles[0].entries.map(e => e.issueKey)).toEqual(['ABC-1']);
-    expect(loadSavedEntries('P1').map(e => e.issueKey)).toEqual(['ABC-2']);
+    expect(
+      profileTicketEntries(store.profiles[1]).map(e => e.issueKey)
+    ).toEqual(['ABC-2']);
   });
 
   it('keeps a row whose ticket was cleared but still has a description', () => {
@@ -131,11 +133,21 @@ describe('worklog profiles', () => {
     ]);
   });
 
-  it('prefills Autolog with only the rows that have a ticket', () => {
+  it('prefills Autolog with a copy of only the rows that have a ticket', () => {
     const a = createWorklogProfile('Sprint', [entry(''), entry('ABC-1')]);
-    saveWorklogProfiles({ activeId: a.id, profiles: [a] }, 'P1');
 
-    expect(loadSavedEntries('P1').map(e => e.issueKey)).toEqual(['ABC-1']);
+    const copy = profileTicketEntries(a);
+
+    expect(copy.map(e => e.issueKey)).toEqual(['ABC-1']);
+    expect(copy[0].id).not.toBe(a.entries[1].id);
+  });
+
+  it('prefills Autolog with one blank row for a profile without tickets', () => {
+    const a = createWorklogProfile('Sprint', [entry('')]);
+
+    expect(profileTicketEntries(a)).toEqual([
+      expect.objectContaining({ issueKey: '' }),
+    ]);
   });
 
   it('keeps profiles separate per project', () => {

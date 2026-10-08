@@ -164,7 +164,7 @@ elevensys-mono/
 │       │   │   ├── timesheet/      # logwork, my-worklogs, project-worklogs
 │       │   │   │                   #   (each with page-local _components)
 │       │   │   ├── worklog-management/  # Hidden page (direct URL only)
-│       │   │   └── autolog/        # Autolog configs (list, new, edit)
+│       │   │   └── autolog/        # Autolog configs (list; create/edit in a modal)
 │       │   ├── components/
 │       │   │   ├── layouts/        # main-layout, app-sidebar, nav-*, tool-page-header
 │       │   │   └── features/       # timesheet + autolog shared components

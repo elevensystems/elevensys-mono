@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 
-import { Banner } from '@workspace/ui/components/banner';
 import { Button } from '@workspace/ui/components/button';
 import { Card, CardContent, CardHeader } from '@workspace/ui/components/card';
 import { Skeleton } from '@workspace/ui/components/skeleton';
@@ -10,7 +9,7 @@ import { PlusCircle } from 'lucide-react';
 
 import { ConfigCard } from '@/components/features/autolog/config-card';
 import { ConfigDetailSheet } from '@/components/features/autolog/config-detail-sheet';
-import { NewConfigDialog } from '@/components/features/autolog/new-config-dialog';
+import { ConfigDialog } from '@/components/features/autolog/config-dialog';
 import { NotConfiguredAlert } from '@/components/features/timesheet/not-configured-alert';
 import MainLayout from '@/components/layouts/main-layout';
 import { ToolPageHeader } from '@/components/layouts/tool-page-header';
@@ -24,6 +23,7 @@ export default function AutologPage() {
     configs,
     isLoading,
     createConfig,
+    updateConfig,
     deleteConfig,
     runConfig,
     canAddMore,
@@ -37,7 +37,14 @@ export default function AutologPage() {
     null
   );
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [newConfigOpen, setNewConfigOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  // Kept after close so the dialog does not flip to "New Config" mid-fade.
+  const [editingConfig, setEditingConfig] = useState<AutologConfig>();
+
+  const openForm = (config?: AutologConfig) => {
+    setEditingConfig(config);
+    setFormOpen(true);
+  };
 
   const handleCardClick = (config: AutologConfig) => {
     setSelectedConfig(config);
@@ -59,10 +66,7 @@ export default function AutologPage() {
               className=""
             />
             {isLoaded && isConfigured && (
-              <Button
-                onClick={() => setNewConfigOpen(true)}
-                disabled={!canAddMore}
-              >
+              <Button onClick={() => openForm()} disabled={!canAddMore}>
                 <PlusCircle />
                 Add Config
               </Button>
@@ -130,14 +134,20 @@ export default function AutologPage() {
         onOpenChange={setSheetOpen}
         onDelete={deleteConfig}
         onRun={runConfig}
+        onEdit={openForm}
       />
 
-      <NewConfigDialog
-        open={newConfigOpen}
-        onOpenChange={setNewConfigOpen}
+      <ConfigDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
         settings={settings}
         isConfigured={isConfigured}
-        onSave={createConfig}
+        editing={editingConfig}
+        onSave={
+          editingConfig
+            ? payload => updateConfig(editingConfig.configId, payload)
+            : createConfig
+        }
       />
     </MainLayout>
   );
